@@ -9,3 +9,6 @@ test-results
 playwright-report
 .terraform
 *.tfstate*
+backend.hcl
+*.tfvars
+!*.tfvars.example
