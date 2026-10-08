@@ -10,6 +10,13 @@ import { projectHref } from '@/lib/project';
 
 type State = 'connecting' | 'open' | 'closed';
 
+const CLOSE_MESSAGES: Record<number, string> = {
+  4401: 'The console link ran out of time. Connect again.',
+  4404: 'We could not find this VM.',
+  1011: 'The console could not open. The VM may still be starting.',
+};
+const CLOSE_DEFAULT = 'The console closed. The VM may have stopped, or another console opened.';
+
 function Console() {
   const params = useSearchParams();
   const project = params.get('project') ?? '';
@@ -74,10 +81,10 @@ function Console() {
         if (m.data instanceof ArrayBuffer) term.write(new Uint8Array(m.data));
         else term.write(String(m.data));
       };
-      ws.onclose = () => {
+      ws.onclose = (e) => {
         if (stopped) return;
         setState('closed');
-        setMessage('The console closed. The VM may have stopped, or another console opened.');
+        setMessage(CLOSE_MESSAGES[e.code] ?? CLOSE_DEFAULT);
       };
     })();
 

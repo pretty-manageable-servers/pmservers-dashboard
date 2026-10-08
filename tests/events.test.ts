@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { backoffDelay } from '@/lib/api/events';
+import { backoffDelay, toastText } from '@/lib/api/events';
 
 describe('backoffDelay', () => {
   it('doubles each time, from 1 s', () => {
@@ -7,5 +7,18 @@ describe('backoffDelay', () => {
   });
   it('stops at 30 s', () => {
     expect(backoffDelay(10)).toBe(30_000);
+  });
+});
+
+describe('toastText', () => {
+  it('adds the resource name', () => {
+    expect(toastText({ resource_name: 'worker-1', message: 'VM is running' })).toBe(
+      'worker-1: VM is running',
+    );
+  });
+  it('keeps a message that has the name', () => {
+    expect(toastText({ resource_name: 'worker-1', message: 'worker-1 is running' })).toBe(
+      'worker-1 is running',
+    );
   });
 });

@@ -73,7 +73,7 @@ function lifecycle(vm: Vm, s: ProjectState, steps: [number, Vm['status'], (() =>
         level: 'info',
         resource_id: vm.id,
         resource_name: vm.name,
-        message: `is ${status}`,
+        message: `VM is ${status}`,
         project_id: projectOf(s),
       });
     }, ms);
@@ -199,7 +199,7 @@ export const handlers = [
       created_at: new Date().toISOString(),
     };
     s.vms.unshift(vm);
-    pushEvent(s, 'success', vm.id, vm.name, 'create requested');
+    pushEvent(s, 'info', vm.id, vm.name, 'Creating VM');
     lifecycle(vm, s, [
       [1500, 'provisioning'],
       [
@@ -208,7 +208,7 @@ export const handlers = [
         () => {
           vm.private_ip = `10.40.0.${40 + Math.floor(Math.random() * 120)}`;
           s.metrics[vm.id] = series(60, 0.3, 0.3);
-          pushEvent(s, 'success', vm.id, vm.name, 'is running');
+          pushEvent(s, 'success', vm.id, vm.name, 'VM is running');
         },
       ],
     ]);
@@ -225,7 +225,7 @@ export const handlers = [
     const vm = s?.vms.find((v) => v.id === params.vid);
     if (!s || !vm) return notFound();
     vm.status = 'deleting';
-    pushEvent(s, 'info', vm.id, vm.name, 'delete requested');
+    pushEvent(s, 'info', vm.id, vm.name, 'Deleting VM');
     setTimeout(() => {
       s.vms = s.vms.filter((v) => v.id !== vm.id);
       broadcast({
@@ -234,7 +234,7 @@ export const handlers = [
         level: 'info',
         resource_id: vm.id,
         resource_name: vm.name,
-        message: 'is deleted',
+        message: 'VM deleted',
         project_id: projectOf(s),
       });
     }, 2500);
@@ -259,7 +259,7 @@ export const handlers = [
             'info',
             vm.id,
             vm.name,
-            action === 'stop' ? 'stopped' : action === 'start' ? 'started' : 'restarted',
+            action === 'stop' ? 'VM stopped' : action === 'start' ? 'VM started' : 'VM restarted',
           ),
       ],
     ]);

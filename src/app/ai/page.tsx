@@ -27,6 +27,7 @@ function Ai() {
   const catalog = useCatalog();
   const models = catalog.data?.ai_models ?? [];
   const llm = models.find((m) => m.type === 'llm')?.id ?? '<model>';
+  const decision = models.find((m) => m.type === 'decision')?.id ?? '<decision-model>';
   const emb = models.find((m) => m.type === 'embedding')?.id ?? '<embedding-model>';
 
   const samples = {
@@ -38,8 +39,17 @@ function Ai() {
 
 client = OpenAI(base_url="${ENDPOINT}",
                 api_key=os.environ["PMS_API_KEY"])
-# Embeddings and decisions use the same client.
+# Embeddings use the same client.
 client.embeddings.create(model="${emb}", input="hello")`,
+    decision: `curl ${ENDPOINT}/systemone \\
+  -H "Authorization: Bearer $PMS_API_KEY" \\
+  -d '{"model": "${decision}",
+       "state": "A user said hi in the channel.",
+       "questions": {"reply": {
+         "type": "choice",
+         "instructions": "Should the bot answer?",
+         "criteria": {"respond": "Answer the message",
+                      "ignore": "Do nothing"}}}}'`,
   };
 
   return (

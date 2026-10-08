@@ -12,13 +12,17 @@ const MAX_DELAY = 30_000;
 /** Wait time before reconnect n (0, 1, 2, ...): 1 s, 2 s, 4 s, up to 30 s. */
 export const backoffDelay = (n: number) => Math.min(MAX_DELAY, MIN_DELAY * 2 ** n);
 
+/** Add the resource name, unless the message has it already. */
+export const toastText = (e: Pick<StreamEvent, 'resource_name' | 'message'>) =>
+  e.message.includes(e.resource_name) ? e.message : `${e.resource_name}: ${e.message}`;
+
 /** Refresh the data that one event can change. */
 export function applyEvent(qc: QueryClient, e: StreamEvent) {
   const p = e.project_id;
   for (const key of [keys.vms(p), keys.aiKeys(p), keys.events(p), keys.usage(p)]) {
     qc.invalidateQueries({ queryKey: key });
   }
-  const text = `${e.resource_name} ${e.message}`;
+  const text = toastText(e);
   if (e.level === 'success') toast.success(text);
   else if (e.level === 'error') toast.error(text);
   else if (e.level === 'warning') toast.warning(text);
@@ -32,6 +36,7 @@ export function useEventStream(enabled: boolean) {
     let source: EventSource | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let failures = 0;
+    let lastId = '';
     let stopped = false;
 
     const retry = () => {
@@ -46,16 +51,18 @@ export function useEventStream(enabled: boolean) {
         const base = env.apiUrl || window.location.origin;
         const url = new URL('/v1/events/stream', base);
         url.searchParams.set('ticket', ticket);
+        // After a drop, ask the server for the events we missed.
+        if (lastId) url.searchParams.set('last_event_id', lastId);
         const opened = new EventSource(url);
         source = opened;
         opened.onopen = () => {
-          // Events can be missed while we were away. Load everything again.
-          if (failures > 0) qc.invalidateQueries();
           failures = 0;
         };
         opened.addEventListener('event', (m) => {
+          const msg = m as MessageEvent<string>;
+          if (msg.lastEventId) lastId = msg.lastEventId;
           try {
-            applyEvent(qc, JSON.parse((m as MessageEvent<string>).data) as StreamEvent);
+            applyEvent(qc, JSON.parse(msg.data) as StreamEvent);
           } catch {}
         });
         opened.onerror = () => {
