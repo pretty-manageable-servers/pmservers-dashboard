@@ -41,8 +41,8 @@ function Console() {
       if (stopped) return;
       const term = new Terminal({
         cursorBlink: true,
-        fontFamily: 'var(--font-geist-mono), monospace',
-        fontSize: 14,
+        fontFamily: 'ui-monospace, Menlo, Consolas, monospace',
+        fontSize: 13,
       });
       const fit = new FitAddon();
       term.loadAddon(fit);

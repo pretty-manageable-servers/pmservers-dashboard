@@ -6,8 +6,9 @@ import { Page } from '@/components/Page';
 import { PageHead } from '@/components/PageHead';
 import { Modal } from '@/components/Modal';
 import { useSession } from '@/lib/auth';
-import { useDeleteProject, useMe } from '@/lib/api/hooks';
+import { useDeleteProject, useMe, useRenameProject } from '@/lib/api/hooks';
 import { useProject } from '@/lib/project';
+import { validateName } from '@/lib/validation';
 import { toast } from 'sonner';
 
 function Settings() {
@@ -16,6 +17,9 @@ function Settings() {
   const { project, projects } = useProject();
   const me = useMe();
   const del = useDeleteProject();
+  const rename = useRenameProject();
+  const [newName, setNewName] = useState('');
+  const [renameTouched, setRenameTouched] = useState(false);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState('');
@@ -27,6 +31,14 @@ function Settings() {
   const connectGitHub = async () => {
     const err = await linkGitHub();
     if (err) toast.error(err);
+  };
+
+  const nameErr = validateName(newName);
+  const submitRename = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRenameTouched(true);
+    if (nameErr || newName === project.name) return;
+    rename.mutate({ id: project.id, name: newName }, { onSuccess: () => setRenameTouched(false) });
   };
 
   const confirmDelete = () =>
@@ -72,6 +84,29 @@ function Settings() {
             {project.name} · {project.region}
           </dd>
         </dl>
+      </section>
+      <section className="ucard" style={{ padding: 20, gap: 12 }}>
+        <form onSubmit={submitRename} noValidate className="field" style={{ margin: 0 }}>
+          <label htmlFor="proj-name">Project name</label>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input
+              id="proj-name"
+              value={newName}
+              placeholder={project.name}
+              onChange={(e) => setNewName(e.target.value)}
+              autoComplete="off"
+              style={{ flex: '1 1 220px' }}
+            />
+            <button
+              className="btn"
+              type="submit"
+              disabled={rename.isPending || newName === '' || newName === project.name}
+            >
+              Rename
+            </button>
+          </div>
+          {renameTouched && nameErr && <span className="err-t">{nameErr}</span>}
+        </form>
       </section>
       <section
         className="ucard"

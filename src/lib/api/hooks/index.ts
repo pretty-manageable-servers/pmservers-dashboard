@@ -42,6 +42,24 @@ export function useCreateProject() {
   });
 }
 
+export function useRenameProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; name: string }) =>
+      unwrap(
+        await api.PATCH('/v1/projects/{project_id}', {
+          params: { path: { project_id: v.id } },
+          body: { name: v.name },
+        }),
+      ),
+    onSuccess: (p) => {
+      qc.invalidateQueries({ queryKey: keys.projects });
+      toast.success(`Renamed project to ${p.name}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
 export function useDeleteProject() {
   const qc = useQueryClient();
   return useMutation({
