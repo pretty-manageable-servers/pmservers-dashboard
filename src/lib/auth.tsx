@@ -20,6 +20,9 @@ interface AuthValue {
   signInWithGitHub: () => Promise<string | null>;
   sendResetEmail: (email: string) => Promise<string | null>;
   updatePassword: (password: string) => Promise<string | null>;
+  /** Provider names linked to this user, for example `email` and `github`. */
+  getLinkedProviders: () => Promise<string[]>;
+  linkGitHub: () => Promise<string | null>;
   signOut: () => Promise<void>;
 }
 
@@ -140,6 +143,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       updatePassword: async (password) => {
         if (env.authMock) return null;
         const { error } = await getSupabase().auth.updateUser({ password });
+        return error?.message ?? null;
+      },
+      getLinkedProviders: async () => {
+        if (env.authMock) return ['github'];
+        const { data } = await getSupabase().auth.getUserIdentities();
+        return data?.identities.map((i) => i.provider) ?? [];
+      },
+      linkGitHub: async () => {
+        if (env.authMock) return null;
+        const { error } = await getSupabase().auth.linkIdentity({
+          provider: 'github',
+          options: { redirectTo: `${window.location.origin}/settings` },
+        });
         return error?.message ?? null;
       },
       signOut,

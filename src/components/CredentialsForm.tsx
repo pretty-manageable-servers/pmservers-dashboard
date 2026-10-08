@@ -27,8 +27,8 @@ export function CredentialsForm({ mode }: { mode: 'login' | 'signup' }) {
     else setNotice('Check your email. We sent a link to confirm your account.');
   };
 
-  const github = async () => {
-    const err = await signInWithGitHub();
+  const oauth = (start: () => Promise<string | null>) => async () => {
+    const err = await start();
     if (err) setError(err);
     else if (process.env.NEXT_PUBLIC_AUTH_MOCK === '1') router.replace('/');
   };
@@ -40,7 +40,7 @@ export function CredentialsForm({ mode }: { mode: 'login' | 'signup' }) {
           <h1>{isLogin ? 'Sign in' : 'Create your account'}</h1>
           <p>{isLogin ? 'Welcome back to the console.' : 'Get a project and start in a minute.'}</p>
         </div>
-        <button className="btn" type="button" onClick={github}>
+        <button className="btn" type="button" onClick={oauth(signInWithGitHub)}>
           <GitHubIcon />
           Continue with GitHub
         </button>

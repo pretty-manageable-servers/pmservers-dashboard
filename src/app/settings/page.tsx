@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Page } from '@/components/Page';
 import { PageHead } from '@/components/PageHead';
@@ -11,13 +11,23 @@ import { useProject } from '@/lib/project';
 import { toast } from 'sonner';
 
 function Settings() {
-  const { user } = useSession();
+  const { user, getLinkedProviders, linkGitHub } = useSession();
+  const [providers, setProviders] = useState<string[] | null>(null);
   const { project, projects } = useProject();
   const me = useMe();
   const del = useDeleteProject();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState('');
+
+  useEffect(() => {
+    getLinkedProviders().then(setProviders);
+  }, [getLinkedProviders, user]);
+
+  const connectGitHub = async () => {
+    const err = await linkGitHub();
+    if (err) toast.error(err);
+  };
 
   const confirmDelete = () =>
     del.mutate(project.id, {
@@ -39,7 +49,18 @@ function Settings() {
           <dt>Email</dt>
           <dd>{user?.email}</dd>
           <dt>Sign-in</dt>
-          <dd>{user?.provider === 'github' ? 'GitHub' : 'Email and password'}</dd>
+          <dd style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            {providers?.map((p) => (
+              <span key={p} className="badge">
+                {p === 'github' ? 'GitHub' : p === 'email' ? 'Email and password' : p}
+              </span>
+            ))}
+            {providers && !providers.includes('github') && (
+              <button className="btn sm" type="button" onClick={connectGitHub}>
+                Connect GitHub
+              </button>
+            )}
+          </dd>
           <dt>User ID</dt>
           <dd className="mono">{user?.id}</dd>
           <dt>Plan</dt>
