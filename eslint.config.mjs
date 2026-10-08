@@ -10,7 +10,8 @@ const config = [
       'src/lib/api/schema.d.ts',
       'public/mockServiceWorker.js',
       'node_modules/',
-      'next-env.d.ts',    ],
+      'next-env.d.ts',
+    ],
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
 ];
