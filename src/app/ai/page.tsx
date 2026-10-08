@@ -7,6 +7,7 @@ import { NewCard, ResourceCard } from '@/components/ResourceCard';
 import { CardsSkeleton, EmptyState, ErrorState } from '@/components/States';
 import { CopyField } from '@/components/CopyField';
 import { CodeSample } from '@/components/CodeSample';
+import { PremiumModels } from '@/components/PremiumModels';
 import { useAiKeys, useCatalog } from '@/lib/api/hooks';
 import { env } from '@/lib/env';
 import { useProject } from '@/lib/project';
@@ -25,8 +26,8 @@ function Ai() {
   const keys = useAiKeys(project.id);
   const catalog = useCatalog();
   const models = catalog.data?.ai_models ?? [];
-  const llm = models.find((m) => m.type === 'llm')?.id ?? 'gemma-4-e4b';
-  const emb = models.find((m) => m.type === 'embedding')?.id ?? 'embeddinggemma-2';
+  const llm = models.find((m) => m.type === 'llm')?.id ?? '<model>';
+  const emb = models.find((m) => m.type === 'embedding')?.id ?? '<embedding-model>';
 
   const samples = {
     curl: `curl ${ENDPOINT}/chat/completions \\
@@ -109,6 +110,7 @@ client.embeddings.create(model="${emb}", input="hello")`,
           ))}
         </div>
       )}
+      <PremiumModels />
     </>
   );
 }

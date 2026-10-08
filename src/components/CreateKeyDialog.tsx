@@ -21,7 +21,10 @@ export function CreateKeyDialog(props: {
   const catalog = useCatalog();
   const create = useCreateAiKey(project.id);
   const [name, setName] = useState('');
-  const [models, setModels] = useState<string[]>(['embeddinggemma-2', 'kev-4b']);
+  const [picked, setModels] = useState<string[] | null>(null);
+  // Until the user picks, select the embedding and decision models from the catalog.
+  const models =
+    picked ?? catalog.data?.ai_models.filter((m) => m.type !== 'llm').map((m) => m.id) ?? [];
   const [budget, setBudget] = useState('1');
   const [touched, setTouched] = useState(false);
 
@@ -74,8 +77,8 @@ export function CreateKeyDialog(props: {
                   type="checkbox"
                   checked={models.includes(m.id)}
                   onChange={(e) =>
-                    setModels((cur) =>
-                      e.target.checked ? [...cur, m.id] : cur.filter((x) => x !== m.id),
+                    setModels(
+                      e.target.checked ? [...models, m.id] : models.filter((x) => x !== m.id),
                     )
                   }
                 />
