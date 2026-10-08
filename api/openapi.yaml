@@ -170,6 +170,55 @@ paths:
             content: { application/json: { schema: { $ref: '#/components/schemas/VmMetrics' } } },
           }
         default: { $ref: '#/components/responses/Error' }
+  /v1/events/ticket:
+    post:
+      operationId: createEventsTicket
+      description: Get a short-lived ticket (60 s) to open the event stream.
+      responses:
+        '200':
+          {
+            description: Ticket,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Ticket' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/events/stream:
+    get:
+      operationId: streamEvents
+      description: >
+        Server-sent events for all projects of the user. Authenticate with `?ticket=` from
+        `POST /v1/events/ticket`, because `EventSource` cannot send headers. Each message has
+        `id`, `event: event` and `data` with a StreamEvent as JSON. After a reconnect, send
+        `Last-Event-ID` to get missed events first. A `: ping` comment comes every 15 s.
+      security: []
+      parameters:
+        - { name: ticket, in: query, required: true, schema: { type: string } }
+      responses:
+        '200':
+          {
+            description: Event stream,
+            content:
+              { text/event-stream: { schema: { $ref: '#/components/schemas/StreamEvent' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/vms/{vm_id}/console/ticket:
+    parameters:
+      [{ $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/VmId' }]
+    post:
+      operationId: createConsoleTicket
+      description: >
+        Get a ticket (60 s) for the serial console. The VM must be `running`, else `409`.
+        Then open a WebSocket at `url` (same host, `ws` or `wss`). OpenAPI 3.1 cannot
+        describe WebSockets, so the socket is described here. Messages are binary frames
+        with raw terminal bytes in both directions. The server closes the socket when the VM
+        stops, after 30 minutes with no data, or when another console opens.
+      responses:
+        '200':
+          {
+            description: Ticket,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/ConsoleTicket' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
   /v1/projects/{project_id}/ai-keys:
     parameters: [{ $ref: '#/components/parameters/ProjectId' }]
     get:
@@ -318,6 +367,24 @@ components:
         resource_id: { type: string }
         resource_name: { type: string }
         message: { type: string }
+    Ticket:
+      type: object
+      required: [ticket]
+      properties:
+        ticket: { type: string }
+    ConsoleTicket:
+      type: object
+      required: [ticket, url]
+      properties:
+        ticket: { type: string }
+        url: { type: string, description: Path and query for the WebSocket }
+    StreamEvent:
+      allOf:
+        - { $ref: '#/components/schemas/Event' }
+        - type: object
+          required: [project_id]
+          properties:
+            project_id: { type: string }
     EventList:
       type: object
       required: [items]

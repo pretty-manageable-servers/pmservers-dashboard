@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { SideSheet } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { CopyField } from './CopyField';
@@ -15,7 +16,7 @@ import {
   useVmAction,
   useVmMetrics,
 } from '@/lib/api/hooks';
-import { useProject } from '@/lib/project';
+import { projectHref, useProject } from '@/lib/project';
 import { isBusy } from '@/lib/status';
 import { timeAgo } from '@/lib/utils';
 import type { AiKey, Vm } from '@/lib/api/types';
@@ -56,6 +57,9 @@ export function VmSheet({ vm, onClose }: { vm: Vm; onClose: () => void }) {
       <div className="acts">
         {vm.status === 'running' && (
           <>
+            <Link className="btn sm" href={projectHref('/vms/console', project.id, { vm: vm.id })}>
+              Console
+            </Link>
             <button
               className="btn sm"
               type="button"

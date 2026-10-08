@@ -1,24 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { pollInterval } from '@/lib/status';
+import { isBusy } from '@/lib/status';
 
-describe('pollInterval', () => {
-  it('polls every 3 s while any item is busy', () => {
+describe('isBusy', () => {
+  it('is true while a resource changes state', () => {
     for (const status of ['pending', 'provisioning', 'deleting'] as const) {
-      expect(pollInterval([{ status: 'running' }, { status }])).toBe(3000);
+      expect(isBusy(status)).toBe(true);
     }
   });
-  it('stops when all items are stable', () => {
-    expect(
-      pollInterval([
-        { status: 'running' },
-        { status: 'stopped' },
-        { status: 'failed' },
-        { status: 'sleeping' },
-      ]),
-    ).toBe(false);
-  });
-  it('stops for an empty or missing list', () => {
-    expect(pollInterval([])).toBe(false);
-    expect(pollInterval(undefined)).toBe(false);
+  it('is false for stable states', () => {
+    for (const status of ['running', 'stopped', 'failed', 'sleeping'] as const) {
+      expect(isBusy(status)).toBe(false);
+    }
   });
 });

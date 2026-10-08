@@ -1,5 +1,13 @@
-import { delay, http, HttpResponse } from 'msw';
-import type { AiKey, AiKeyCreate, ApiEvent, Project, Vm, VmCreate } from '@/lib/api/types';
+import { delay, http, HttpResponse, sse, ws } from 'msw';
+import type {
+  AiKey,
+  AiKeyCreate,
+  ApiEvent,
+  Project,
+  StreamEvent,
+  Vm,
+  VmCreate,
+} from '@/lib/api/types';
 import {
   catalog,
   computeUsage,
@@ -27,21 +35,31 @@ const err = (status: number, code: string, message: string) =>
 
 const notFound = () => err(404, 'not_found', 'We could not find that resource.');
 
+const listeners = new Set<(e: StreamEvent) => void>();
+
+/** Send an event to open streams. Quiet events are not kept in the activity feed. */
+const broadcast = (e: StreamEvent) => listeners.forEach((fn) => fn(e));
+
+const projectOf = (s: ProjectState) => Object.keys(state).find((k) => state[k] === s) ?? '';
+
 const pushEvent = (
   s: ProjectState,
   level: ApiEvent['level'],
   rid: string,
   rname: string,
   message: string,
-) =>
-  s.events.unshift({
+) => {
+  const e: ApiEvent = {
     id: id('ev'),
     time: new Date().toISOString(),
     level,
     resource_id: rid,
     resource_name: rname,
     message,
-  });
+  };
+  s.events.unshift(e);
+  broadcast({ ...e, project_id: projectOf(s) });
+};
 
 /** Move a resource through a list of [delay ms, status] steps. */
 function lifecycle(vm: Vm, s: ProjectState, steps: [number, Vm['status'], (() => void)?][]) {
@@ -49,6 +67,15 @@ function lifecycle(vm: Vm, s: ProjectState, steps: [number, Vm['status'], (() =>
     setTimeout(() => {
       vm.status = status;
       fn?.();
+      broadcast({
+        id: id('ev'),
+        time: new Date().toISOString(),
+        level: 'info',
+        resource_id: vm.id,
+        resource_name: vm.name,
+        message: `is ${status}`,
+        project_id: projectOf(s),
+      });
     }, ms);
   }
 }
@@ -61,6 +88,8 @@ const IMAGE_USER: Record<string, string> = {
 };
 
 const base = '*/v1';
+
+const consoleSocket = ws.link('*/v1/projects/:pid/vms/:vid/console');
 
 export const handlers = [
   http.get(`${base}/me`, async () => {
@@ -199,6 +228,15 @@ export const handlers = [
     pushEvent(s, 'info', vm.id, vm.name, 'delete requested');
     setTimeout(() => {
       s.vms = s.vms.filter((v) => v.id !== vm.id);
+      broadcast({
+        id: id('ev'),
+        time: new Date().toISOString(),
+        level: 'info',
+        resource_id: vm.id,
+        resource_name: vm.name,
+        message: 'is deleted',
+        project_id: projectOf(s),
+      });
     }, 2500);
     return new HttpResponse(null, { status: 202 });
   }),
@@ -297,6 +335,49 @@ export const handlers = [
     return HttpResponse.json({
       ...k,
       secret: `${k.prefix}${hex()}${hex()}${hex()}${hex()}${hex()}`,
+    });
+  }),
+  http.post(`${base}/events/ticket`, async () => {
+    await delay(LATENCY);
+    return HttpResponse.json({ ticket: 'mock-events-ticket' });
+  }),
+  sse<{ event: StreamEvent }>(`${base}/events/stream`, ({ client, request }) => {
+    const send = (e: StreamEvent) => client.send({ id: e.id, event: 'event', data: e });
+    listeners.add(send);
+    request.signal.addEventListener('abort', () => listeners.delete(send));
+  }),
+  http.post(`${base}/projects/:pid/vms/:vid/console/ticket`, async ({ params }) => {
+    await delay(LATENCY);
+    const vm = state[params.pid as string]?.vms.find((v) => v.id === params.vid);
+    if (!vm) return notFound();
+    if (vm.status !== 'running') return err(409, 'conflict', 'The VM must be running.');
+    return HttpResponse.json({
+      ticket: 'mock-console-ticket',
+      url: `/v1/projects/${params.pid}/vms/${params.vid}/console?ticket=mock-console-ticket`,
+    });
+  }),
+  consoleSocket.addEventListener('connection', ({ client }) => {
+    const enc = new TextEncoder();
+    const say = (t: string) => client.send(enc.encode(t));
+    let line = '';
+    say('Mock console. Type something and it is echoed.\r\n$ ');
+    client.addEventListener('message', (m) => {
+      const text =
+        typeof m.data === 'string' ? m.data : new TextDecoder().decode(m.data as ArrayBuffer);
+      for (const ch of text) {
+        if (ch === '\r' || ch === '\n') {
+          say(`\r\n${line ? `you typed: ${line}\r\n` : ''}$ `);
+          line = '';
+        } else if (ch === '\x7f') {
+          if (line) {
+            line = line.slice(0, -1);
+            say('\b \b');
+          }
+        } else {
+          line += ch;
+          say(ch);
+        }
+      }
     });
   }),
 ];

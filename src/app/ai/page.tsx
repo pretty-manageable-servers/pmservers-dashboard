@@ -8,10 +8,11 @@ import { CardsSkeleton, EmptyState, ErrorState } from '@/components/States';
 import { CopyField } from '@/components/CopyField';
 import { CodeSample } from '@/components/CodeSample';
 import { useAiKeys, useCatalog } from '@/lib/api/hooks';
+import { env } from '@/lib/env';
 import { useProject } from '@/lib/project';
 import { useNavActions } from '@/lib/nav-actions';
 
-const ENDPOINT = 'https://api.pmservers.org/ai/v1';
+const ENDPOINT = env.aiUrl;
 const BADGE = {
   llm: ['llm', 'LLM'],
   embedding: ['emb', 'Embedding'],

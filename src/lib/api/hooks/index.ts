@@ -1,8 +1,6 @@
-import { useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, unwrap } from '../client';
-import { pollInterval, type Status } from '@/lib/status';
 import type { AiKeyCreate, VmCreate } from '../types';
 
 export const keys = {
@@ -82,25 +80,6 @@ export const useEvents = (project: string) =>
     refetchInterval: 15_000,
   });
 
-/** Show a toast when a resource gets to running or failed after it was busy. */
-export function useStatusToasts(items: { id: string; name: string; status: Status }[] | undefined) {
-  const prev = useRef(new Map<string, Status>());
-  useEffect(() => {
-    if (!items) return;
-    for (const i of items) {
-      const was = prev.current.get(i.id);
-      if (was && was !== i.status) {
-        if (i.status === 'running' && (was === 'pending' || was === 'provisioning')) {
-          toast.success(`${i.name} is running`);
-        } else if (i.status === 'failed') {
-          toast.error(`${i.name} failed`);
-        }
-      }
-      prev.current.set(i.id, i.status);
-    }
-  }, [items]);
-}
-
 export function useVms(project: string) {
   const q = useQuery({
     queryKey: keys.vms(project),
@@ -111,9 +90,7 @@ export function useVms(project: string) {
         }),
       ).items,
     enabled: !!project,
-    refetchInterval: (query) => pollInterval(query.state.data),
   });
-  useStatusToasts(q.data);
   return q;
 }
 
@@ -149,7 +126,7 @@ export function useCreateVm(project: string) {
       ),
     onSuccess: (vm) => {
       refresh(project, 'vms', 'events', 'usage');
-      toast(`Creating ${vm.name}`, { description: 'Status updates every few seconds.' });
+      toast(`Creating ${vm.name}`, { description: 'This page updates when it is ready.' });
     },
     onError: (e) => toast.error(e.message),
   });
@@ -201,7 +178,6 @@ export const useAiKeys = (project: string) =>
         }),
       ).items,
     enabled: !!project,
-    refetchInterval: (query) => pollInterval(query.state.data),
   });
 
 export function useCreateAiKey(project: string) {

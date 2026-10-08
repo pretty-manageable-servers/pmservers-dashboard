@@ -181,6 +181,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/events/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Get a short-lived ticket (60 s) to open the event stream. */
+        post: operations["createEventsTicket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/events/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Server-sent events for all projects of the user. Authenticate with `?ticket=` from `POST /v1/events/ticket`, because `EventSource` cannot send headers. Each message has `id`, `event: event` and `data` with a StreamEvent as JSON. After a reconnect, send `Last-Event-ID` to get missed events first. A `: ping` comment comes every 15 s. */
+        get: operations["streamEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/vms/{vm_id}/console/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                vm_id: components["parameters"]["VmId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Get a ticket (60 s) for the serial console. The VM must be `running`, else `409`. Then open a WebSocket at `url` (same host, `ws` or `wss`). OpenAPI 3.1 cannot describe WebSockets, so the socket is described here. Messages are binary frames with raw terminal bytes in both directions. The server closes the socket when the VM stops, after 30 minutes with no data, or when another console opens. */
+        post: operations["createConsoleTicket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/projects/{project_id}/ai-keys": {
         parameters: {
             query?: never;
@@ -294,6 +348,17 @@ export interface components {
             resource_id: string;
             resource_name: string;
             message: string;
+        };
+        Ticket: {
+            ticket: string;
+        };
+        ConsoleTicket: {
+            ticket: string;
+            /** @description Path and query for the WebSocket */
+            url: string;
+        };
+        StreamEvent: components["schemas"]["Event"] & {
+            project_id: string;
         };
         EventList: {
             items: components["schemas"]["Event"][];
@@ -751,6 +816,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VmMetrics"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    createEventsTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ticket */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ticket"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    streamEvents: {
+        parameters: {
+            query: {
+                ticket: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Event stream */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": components["schemas"]["StreamEvent"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    createConsoleTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                vm_id: components["parameters"]["VmId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ticket */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsoleTicket"];
                 };
             };
             default: components["responses"]["Error"];
