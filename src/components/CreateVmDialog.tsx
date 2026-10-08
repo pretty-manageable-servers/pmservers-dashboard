@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
 import { useCatalog, useCreateVm } from '@/lib/api/hooks';
+import { chooseId } from '@/lib/catalog';
 import { useProject } from '@/lib/project';
 import { validateName, validateSshKey } from '@/lib/validation';
 
@@ -17,8 +18,10 @@ export function CreateVmDialog({
   const catalog = useCatalog();
   const create = useCreateVm(project.id);
   const [name, setName] = useState('worker-1');
-  const [size, setSize] = useState('pm.small');
-  const [image, setImage] = useState('Debian 13');
+  const [pickedSize, setSize] = useState<string | null>(null);
+  const [pickedImage, setImage] = useState<string | null>(null);
+  const size = chooseId(pickedSize, catalog.data?.vm_sizes);
+  const image = chooseId(pickedImage, catalog.data?.vm_images);
   const [key, setKey] = useState('');
   const [touched, setTouched] = useState(false);
 
@@ -28,7 +31,7 @@ export function CreateVmDialog({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (nameErr || keyErr) return;
+    if (nameErr || keyErr || !size || !image) return;
     create.mutate(
       { name, size, image, disk_gb: 10, ssh_public_key: key.trim() },
       { onSuccess: () => onOpenChange(false) },
@@ -83,15 +86,14 @@ export function CreateVmDialog({
           <span className="fl">Image</span>
           <div className="opts">
             {catalog.data?.vm_images.map((i) => {
-              const label = `${i.name} ${i.version}`;
               return (
                 <label className="opt" key={i.id}>
                   <input
                     type="radio"
                     name="image"
-                    value={label}
-                    checked={image === label}
-                    onChange={() => setImage(label)}
+                    value={i.id}
+                    checked={image === i.id}
+                    onChange={() => setImage(i.id)}
                   />
                   <span>
                     <b style={{ fontFamily: 'var(--font-ui)' }}>{i.name}</b>

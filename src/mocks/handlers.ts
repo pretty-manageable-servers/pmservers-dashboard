@@ -81,10 +81,10 @@ function lifecycle(vm: Vm, s: ProjectState, steps: [number, Vm['status'], (() =>
 }
 
 const IMAGE_USER: Record<string, string> = {
-  Debian: 'debian',
-  Ubuntu: 'ubuntu',
-  Alpine: 'alpine',
-  Fedora: 'fedora',
+  debian: 'debian',
+  ubuntu: 'ubuntu',
+  alpine: 'alpine',
+  fedora: 'fedora',
 };
 
 const base = '*/v1';
@@ -184,7 +184,7 @@ export const handlers = [
         'This project has no vCPU left. Delete a VM or ask for more.',
       );
     }
-    const imageName = body.image.split(' ')[0] ?? 'Debian';
+    const imageName = body.image.split('-')[0] ?? 'debian';
     const vm: Vm = {
       id: id('vm'),
       name: body.name,
