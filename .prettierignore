@@ -1,0 +1,7 @@
+.next
+out
+pnpm-lock.yaml
+src/lib/api/schema.d.ts
+public/mockServiceWorker.js
+docs
+PLAN.md

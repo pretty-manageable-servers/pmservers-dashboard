@@ -1,0 +1,6 @@
+bucket = "<STATE_BUCKET_NAME>"
+key    = "pmservers-dashboard/terraform.tfstate"
+
+endpoints = {
+  s3 = "https://<ACCOUNT_ID>.r2.cloudflarestorage.com"
+}

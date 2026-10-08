@@ -1,0 +1,451 @@
+openapi: 3.1.0
+info:
+  title: PMS Cloud API
+  version: 0.1.0
+  description: >
+    Contract between the open source dashboard and the private PMS Cloud backend.
+    All calls need `Authorization: Bearer <supabase access token>`.
+servers:
+  - url: https://api.pmservers.org
+security:
+  - bearer: []
+paths:
+  /v1/me:
+    get:
+      operationId: getMe
+      responses:
+        '200':
+          {
+            description: The user,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Me' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/catalog:
+    get:
+      operationId: getCatalog
+      responses:
+        '200':
+          {
+            description: Options for create forms,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Catalog' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects:
+    get:
+      operationId: listProjects
+      responses:
+        '200':
+          {
+            description: Projects,
+            content: { application/json: { schema: { $ref: '#/components/schemas/ProjectList' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createProject
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/ProjectCreate' } } }
+      responses:
+        '201':
+          {
+            description: Created,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Project' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      operationId: getProject
+      responses:
+        '200':
+          {
+            description: Project,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Project' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      operationId: updateProject
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/ProjectUpdate' } } }
+      responses:
+        '200':
+          {
+            description: Updated,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Project' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: deleteProject
+      responses:
+        '202': { description: Accepted }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/usage:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      operationId: getUsage
+      responses:
+        '200':
+          {
+            description: Usage,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Usage' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/events:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      operationId: listEvents
+      responses:
+        '200':
+          {
+            description: Activity,
+            newest first,
+            content: { application/json: { schema: { $ref: '#/components/schemas/EventList' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/vms:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      operationId: listVms
+      responses:
+        '200':
+          {
+            description: VMs,
+            content: { application/json: { schema: { $ref: '#/components/schemas/VmList' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createVm
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/VmCreate' } } }
+      responses:
+        '202':
+          {
+            description: Accepted,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Vm' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/vms/{vm_id}:
+    parameters:
+      [{ $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/VmId' }]
+    get:
+      operationId: getVm
+      responses:
+        '200':
+          {
+            description: VM,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Vm' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: deleteVm
+      responses:
+        '202': { description: Accepted }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/vms/{vm_id}/actions:
+    parameters:
+      [{ $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/VmId' }]
+    post:
+      operationId: vmAction
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/VmAction' } } }
+      responses:
+        '202':
+          {
+            description: Accepted,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Vm' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/vms/{vm_id}/metrics:
+    parameters:
+      [{ $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/VmId' }]
+    get:
+      operationId: getVmMetrics
+      responses:
+        '200':
+          {
+            description: CPU series for the last hour,
+            content: { application/json: { schema: { $ref: '#/components/schemas/VmMetrics' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/ai-keys:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      operationId: listAiKeys
+      responses:
+        '200':
+          {
+            description: AI keys,
+            content: { application/json: { schema: { $ref: '#/components/schemas/AiKeyList' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createAiKey
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/AiKeyCreate' } } }
+      responses:
+        '201':
+          {
+            description: Created. The secret is shown once.,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/AiKeyCreated' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/ai-keys/{key_id}:
+    parameters:
+      [{ $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/KeyId' }]
+    get:
+      operationId: getAiKey
+      responses:
+        '200':
+          {
+            description: AI key,
+            content: { application/json: { schema: { $ref: '#/components/schemas/AiKey' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      operationId: updateAiKey
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/AiKeyUpdate' } } }
+      responses:
+        '200':
+          {
+            description: Updated,
+            content: { application/json: { schema: { $ref: '#/components/schemas/AiKey' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: deleteAiKey
+      responses:
+        '204': { description: Revoked }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/ai-keys/{key_id}/rotate:
+    parameters:
+      [{ $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/KeyId' }]
+    post:
+      operationId: rotateAiKey
+      responses:
+        '200':
+          {
+            description: The new key. Shown once.,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/AiKeyCreated' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    ProjectId: { name: project_id, in: path, required: true, schema: { type: string } }
+    VmId: { name: vm_id, in: path, required: true, schema: { type: string } }
+    KeyId: { name: key_id, in: path, required: true, schema: { type: string } }
+  responses:
+    Error:
+      description: Error
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorBody' } } }
+  schemas:
+    ErrorBody:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string, examples: [quota_exceeded] }
+            message: { type: string }
+    Status:
+      type: string
+      enum: [pending, provisioning, running, stopped, sleeping, failed, deleting]
+    Me:
+      type: object
+      required: [id, email, plan]
+      properties:
+        id: { type: string }
+        email: { type: string }
+        plan: { type: string }
+    Project:
+      type: object
+      required: [id, name, region, created_at]
+      properties:
+        id: { type: string, examples: [prj_01] }
+        name: { type: string }
+        region: { type: string, examples: [ca-tor-1] }
+        created_at: { type: string, format: date-time }
+    ProjectList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Project' } }
+    ProjectCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+    ProjectUpdate:
+      type: object
+      properties:
+        name: { type: string }
+    UsageMetric:
+      type: object
+      required: [used, limit, series]
+      properties:
+        used: { type: number }
+        limit: { type: number }
+        series:
+          type: array
+          description: 28 daily values from 0 to 1, oldest first.
+          items: { type: number }
+    Usage:
+      type: object
+      required: [vcpu, memory_gib, storage_gb, ai_spend_usd]
+      properties:
+        vcpu: { $ref: '#/components/schemas/UsageMetric' }
+        memory_gib: { $ref: '#/components/schemas/UsageMetric' }
+        storage_gb: { $ref: '#/components/schemas/UsageMetric' }
+        ai_spend_usd: { $ref: '#/components/schemas/UsageMetric' }
+    Event:
+      type: object
+      required: [id, time, level, resource_id, resource_name, message]
+      properties:
+        id: { type: string }
+        time: { type: string, format: date-time }
+        level: { type: string, enum: [info, success, warning, error] }
+        resource_id: { type: string }
+        resource_name: { type: string }
+        message: { type: string }
+    EventList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Event' } }
+    Vm:
+      type: object
+      required:
+        [
+          id,
+          name,
+          status,
+          status_message,
+          size,
+          image,
+          disk_gb,
+          private_ip,
+          ssh_host,
+          ssh_user,
+          created_at,
+        ]
+      properties:
+        id: { type: string, examples: [vm_01] }
+        name: { type: string }
+        status: { $ref: '#/components/schemas/Status' }
+        status_message: { type: [string, 'null'] }
+        size: { type: string }
+        image: { type: string }
+        disk_gb: { type: integer }
+        private_ip: { type: [string, 'null'] }
+        ssh_host: { type: string }
+        ssh_user: { type: string }
+        created_at: { type: string, format: date-time }
+    VmList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Vm' } }
+    VmCreate:
+      type: object
+      required: [name, size, image, disk_gb, ssh_public_key]
+      properties:
+        name: { type: string }
+        size: { type: string }
+        image: { type: string }
+        disk_gb: { type: integer }
+        ssh_public_key: { type: string }
+    VmAction:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [start, stop, restart] }
+    VmMetrics:
+      type: object
+      required: [cpu]
+      properties:
+        cpu:
+          type: array
+          description: CPU use from 0 to 1 for the last hour.
+          items: { type: number }
+    AiKey:
+      type: object
+      required:
+        [id, name, status, prefix, models, budget_usd, spend_usd, rate_limit_rpm, created_at]
+      properties:
+        id: { type: string, examples: [key_01] }
+        name: { type: string }
+        status: { $ref: '#/components/schemas/Status' }
+        prefix: { type: string }
+        models: { type: array, items: { type: string } }
+        budget_usd: { type: number }
+        spend_usd: { type: number }
+        rate_limit_rpm: { type: integer }
+        created_at: { type: string, format: date-time }
+    AiKeyList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AiKey' } }
+    AiKeyCreate:
+      type: object
+      required: [name, models, budget_usd]
+      properties:
+        name: { type: string }
+        models: { type: array, items: { type: string } }
+        budget_usd: { type: number }
+    AiKeyUpdate:
+      type: object
+      properties:
+        models: { type: array, items: { type: string } }
+        budget_usd: { type: number }
+    AiKeyCreated:
+      allOf:
+        - $ref: '#/components/schemas/AiKey'
+        - type: object
+          required: [secret]
+          properties:
+            secret: { type: string }
+    Catalog:
+      type: object
+      required: [vm_sizes, vm_images, ai_models, regions]
+      properties:
+        regions: { type: array, items: { type: string } }
+        vm_sizes:
+          type: array
+          items:
+            type: object
+            required: [id, vcpu, memory_gib]
+            properties:
+              id: { type: string }
+              vcpu: { type: number }
+              memory_gib: { type: number }
+        vm_images:
+          type: array
+          items:
+            type: object
+            required: [id, name, version]
+            properties:
+              id: { type: string }
+              name: { type: string }
+              version: { type: string }
+        ai_models:
+          type: array
+          items:
+            type: object
+            required: [id, type, description, detail]
+            properties:
+              id: { type: string }
+              type: { type: string, enum: [llm, embedding, decision] }
+              description: { type: string }
+              detail: { type: string, description: 'Context size, vector dims or latency.' }
