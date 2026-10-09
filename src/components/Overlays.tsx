@@ -1,12 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useQueryParam, useProject } from '@/lib/project';
 import { useAiKeys, useVms } from '@/lib/api/hooks';
-import { VmSheet, AiKeySheet } from './ResourceSheets';
-import { CreateVmDialog } from './CreateVmDialog';
-import { CreateKeyDialog } from './CreateKeyDialog';
-import { SecretDialog } from './SecretDialog';
+
+// Loaded only when opened, to keep the first page load small.
+const VmSheet = dynamic(() => import('./ResourceSheets').then((m) => m.VmSheet));
+const AiKeySheet = dynamic(() => import('./ResourceSheets').then((m) => m.AiKeySheet));
+const CreateVmDialog = dynamic(() => import('./CreateVmDialog').then((m) => m.CreateVmDialog));
+const CreateKeyDialog = dynamic(() => import('./CreateKeyDialog').then((m) => m.CreateKeyDialog));
+const SecretDialog = dynamic(() => import('./SecretDialog').then((m) => m.SecretDialog));
 
 /** Side sheet (`r`), create dialogs (`new`) and the one-time secret dialog. Driven by the URL. */
 export function Overlays() {
@@ -30,17 +34,17 @@ export function Overlays() {
           onSecret={(value) => setSecret({ title: 'New API key', value })}
         />
       )}
-      <CreateVmDialog open={creating === 'vm'} onOpenChange={(o) => !o && setCreating(null)} />
-      <CreateKeyDialog
-        open={creating === 'ai'}
-        onOpenChange={(o) => !o && setCreating(null)}
-        onCreated={(value) => setSecret({ title: 'API key created', value })}
-      />
-      <SecretDialog
-        secret={secret?.value ?? null}
-        title={secret?.title ?? ''}
-        onClose={() => setSecret(null)}
-      />
+      {creating === 'vm' && <CreateVmDialog open onOpenChange={(o) => !o && setCreating(null)} />}
+      {creating === 'ai' && (
+        <CreateKeyDialog
+          open
+          onOpenChange={(o) => !o && setCreating(null)}
+          onCreated={(value) => setSecret({ title: 'API key created', value })}
+        />
+      )}
+      {secret && (
+        <SecretDialog secret={secret.value} title={secret.title} onClose={() => setSecret(null)} />
+      )}
     </>
   );
 }

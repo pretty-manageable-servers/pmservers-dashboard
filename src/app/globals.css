@@ -14,47 +14,48 @@
 
 /* Layout: sticky top bar with breadcrumb project switcher and tabs; card grids per service; side sheet for detail; centered dialog for create; ⌘K palette. Dark first. */
 :root {
-  --bg: #1a1d23;
-  --bg-glow: rgba(79, 124, 255, 0.13);
-  --panel: #232730;
-  --panel-2: #2a2e38;
-  --line: #353a45;
-  --line-strong: #444a57;
-  --fg: #f4f5f7;
-  --muted: #a3a8b4;
-  --faint: #5d616b;
-  --accent: #5b8cff;
-  --accent-2: #9b7bff;
-  --accent-soft: rgba(91, 140, 255, 0.14);
-  --on-accent: #ffffff;
+  --bg: #161615;
+  --bg-glow: transparent;
+  --panel: #1f1e1d;
+  --panel-2: #2b2a28;
+  --line: #33322f;
+  --line-strong: #45433f;
+  --fg: #f5f4ef;
+  --muted: #9a978f;
+  --faint: #6b6862;
+  --accent: #7ea6ff;
+  --accent-2: #5b8cff;
+  --accent-soft: rgba(126, 166, 255, 0.14);
+  --on-accent: #161615;
   --ok: #3ddc84;
   --ok-soft: rgba(61, 220, 132, 0.12);
   --warn: #f5b84a;
   --warn-soft: rgba(245, 184, 74, 0.12);
   --bad: #ff6b6b;
   --bad-soft: rgba(255, 107, 107, 0.12);
-  --idle: #8d919c;
+  --idle: #9a978f;
   --idle-soft: rgba(141, 145, 156, 0.12);
   --scrim: rgba(0, 0, 0, 0.6);
   --shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--line);
-  --font-ui: var(--font-geist-sans), system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-serif: var(--font-source-serif), Georgia, serif;
+  --font-ui: var(--font-inter), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, 'SF Mono', Menlo, monospace;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
-    --bg: #f6f7f9;
-    --bg-glow: rgba(91, 140, 255, 0.1);
-    --panel: #ffffff;
-    --panel-2: #fbfbfc;
-    --line: #e6e7eb;
-    --line-strong: #d6d8de;
-    --fg: #0b0c0f;
-    --muted: #646874;
-    --faint: #9a9ea8;
-    --accent: #2f63f0;
-    --accent-2: #7a55f0;
-    --accent-soft: rgba(47, 99, 240, 0.09);
+    --bg: #faf9f5;
+    --bg-glow: transparent;
+    --panel: #f3f1ea;
+    --panel-2: #e9e6dc;
+    --line: #e2dfd5;
+    --line-strong: #d3cfc3;
+    --fg: #1a1916;
+    --muted: #737069;
+    --faint: #a19d94;
+    --accent: #2f5fd0;
+    --accent-2: #5b8cff;
+    --accent-soft: rgba(47, 95, 208, 0.09);
     --on-accent: #ffffff;
     --ok: #12924a;
     --ok-soft: rgba(18, 146, 74, 0.1);
@@ -62,7 +63,7 @@
     --warn-soft: rgba(176, 113, 3, 0.1);
     --bad: #d93a3a;
     --bad-soft: rgba(217, 58, 58, 0.09);
-    --idle: #646874;
+    --idle: #737069;
     --idle-soft: rgba(100, 104, 116, 0.1);
     --scrim: rgba(15, 17, 22, 0.35);
     --shadow: 0 24px 60px -16px rgba(15, 17, 22, 0.25), 0 0 0 1px var(--line);
@@ -70,18 +71,18 @@
   }
 }
 :root[data-theme='light'] {
-  --bg: #f6f7f9;
-  --bg-glow: rgba(91, 140, 255, 0.1);
-  --panel: #ffffff;
-  --panel-2: #fbfbfc;
-  --line: #e6e7eb;
-  --line-strong: #d6d8de;
-  --fg: #0b0c0f;
-  --muted: #646874;
-  --faint: #9a9ea8;
-  --accent: #2f63f0;
-  --accent-2: #7a55f0;
-  --accent-soft: rgba(47, 99, 240, 0.09);
+  --bg: #faf9f5;
+  --bg-glow: transparent;
+  --panel: #f3f1ea;
+  --panel-2: #e9e6dc;
+  --line: #e2dfd5;
+  --line-strong: #d3cfc3;
+  --fg: #1a1916;
+  --muted: #737069;
+  --faint: #a19d94;
+  --accent: #2f5fd0;
+  --accent-2: #5b8cff;
+  --accent-soft: rgba(47, 95, 208, 0.09);
   --on-accent: #ffffff;
   --ok: #12924a;
   --ok-soft: rgba(18, 146, 74, 0.1);
@@ -89,7 +90,7 @@
   --warn-soft: rgba(176, 113, 3, 0.1);
   --bad: #d93a3a;
   --bad-soft: rgba(217, 58, 58, 0.09);
-  --idle: #646874;
+  --idle: #737069;
   --idle-soft: rgba(100, 104, 116, 0.1);
   --scrim: rgba(15, 17, 22, 0.35);
   --shadow: 0 24px 60px -16px rgba(15, 17, 22, 0.25), 0 0 0 1px var(--line);
@@ -103,9 +104,7 @@ body {
   min-height: 100%;
 }
 body {
-  background:
-    radial-gradient(1200px 500px at 70% -200px, var(--bg-glow), transparent 70%), var(--bg);
-  background-attachment: fixed;
+  background: var(--bg);
   color: var(--fg);
   font-family: var(--font-ui);
   font-size: 14px;
@@ -162,17 +161,13 @@ button {
 .logo {
   width: 24px;
   height: 24px;
-  border-radius: 7px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
   display: grid;
   place-items: center;
   flex: none;
-  box-shadow: 0 0 18px -2px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 .logo svg {
-  width: 13px;
-  height: 13px;
-  color: #fff;
+  width: 24px;
+  height: 24px;
 }
 .slash {
   color: var(--line-strong);
@@ -197,7 +192,7 @@ button {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  background: var(--accent-2);
   display: grid;
   place-items: center;
   font-size: 10px;
@@ -271,7 +266,7 @@ button {
   height: 30px;
   border-radius: 50%;
   border: 0;
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  background: var(--accent-2);
   color: #fff;
   font-weight: 600;
   font-size: 12px;
@@ -384,8 +379,9 @@ button {
 }
 .head h1 {
   margin: 0;
+  font-family: var(--font-serif);
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.025em;
   text-wrap: balance;
 }
@@ -512,7 +508,7 @@ button {
   display: block;
   height: 100%;
   border-radius: 4px;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  background: var(--accent);
 }
 .bar-mini i.hi {
   background: var(--warn);
@@ -1422,6 +1418,8 @@ button {
 }
 .auth form h1 {
   margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
   font-size: 24px;
   letter-spacing: -0.02em;
 }

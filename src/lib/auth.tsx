@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { env } from './env';
-import { getSupabase } from './supabase';
+import { getSupabase, readStoredSession } from './supabase';
 import { configureApi } from './api/client';
 
 export interface SessionUser {
@@ -53,7 +53,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       return;
     }
-    const sb = getSupabase();
     const apply = (
       s: { user: { id: string; email?: string; app_metadata: { provider?: string } } } | null,
     ) =>
@@ -66,12 +65,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
           : null,
       );
-    sb.auth.getSession().then(({ data }) => {
-      apply(data.session);
+    // Show the page at once from the saved session. supabase-js then loads and checks it.
+    const stored = readStoredSession();
+    if (stored) {
+      apply(stored);
+      setLoading(false);
+    }
+    let unsubscribe: (() => void) | null = null;
+    let closed = false;
+    getSupabase().then(async (sb) => {
+      if (closed) return;
+      const { data } = sb.auth.onAuthStateChange((_e, session) => apply(session));
+      unsubscribe = () => data.subscription.unsubscribe();
+      const { data: current } = await sb.auth.getSession();
+      if (closed) return;
+      apply(current.session);
       setLoading(false);
     });
-    const { data } = sb.auth.onAuthStateChange((_e, session) => apply(session));
-    return () => data.subscription.unsubscribe();
+    return () => {
+      closed = true;
+      unsubscribe?.();
+    };
   }, []);
 
   const signOut = useCallback(async () => {
@@ -82,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       return;
     }
-    await getSupabase().auth.signOut();
+    await (await getSupabase()).auth.signOut();
     setUser(null);
   }, []);
 
@@ -90,7 +104,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     configureApi({
       getToken: async () => {
         if (env.authMock) return 'mock-token';
-        const { data } = await getSupabase().auth.getSession();
+        const stored = readStoredSession();
+        if (stored) return stored.access_token;
+        const { data } = await (await getSupabase()).auth.getSession();
         return data.session?.access_token ?? null;
       },
       onUnauthorized: () => {
@@ -113,12 +129,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       signInWithPassword: async (email, password) => {
         if (env.authMock) return mockIn();
-        const { error } = await getSupabase().auth.signInWithPassword({ email, password });
+        const { error } = await (await getSupabase()).auth.signInWithPassword({ email, password });
         return error?.message ?? null;
       },
       signUp: async (email, password) => {
         if (env.authMock) return mockIn();
-        const { error } = await getSupabase().auth.signUp({
+        const { error } = await (
+          await getSupabase()
+        ).auth.signUp({
           email,
           password,
           options: { emailRedirectTo: redirect() },
@@ -127,7 +145,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       signInWithGitHub: async () => {
         if (env.authMock) return mockIn();
-        const { error } = await getSupabase().auth.signInWithOAuth({
+        const { error } = await (
+          await getSupabase()
+        ).auth.signInWithOAuth({
           provider: 'github',
           options: { redirectTo: redirect() },
         });
@@ -135,24 +155,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       sendResetEmail: async (email) => {
         if (env.authMock) return null;
-        const { error } = await getSupabase().auth.resetPasswordForEmail(email, {
+        const { error } = await (
+          await getSupabase()
+        ).auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,
         });
         return error?.message ?? null;
       },
       updatePassword: async (password) => {
         if (env.authMock) return null;
-        const { error } = await getSupabase().auth.updateUser({ password });
+        const { error } = await (await getSupabase()).auth.updateUser({ password });
         return error?.message ?? null;
       },
       getLinkedProviders: async () => {
         if (env.authMock) return ['github'];
-        const { data } = await getSupabase().auth.getUserIdentities();
+        const { data } = await (await getSupabase()).auth.getUserIdentities();
         return data?.identities.map((i) => i.provider) ?? [];
       },
       linkGitHub: async () => {
         if (env.authMock) return null;
-        const { error } = await getSupabase().auth.linkIdentity({
+        const { error } = await (
+          await getSupabase()
+        ).auth.linkIdentity({
           provider: 'github',
           options: { redirectTo: `${window.location.origin}/settings` },
         });

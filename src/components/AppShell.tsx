@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { RequireAuth } from '@/lib/auth';
 import { LAST_PROJECT_KEY, ProjectContext } from '@/lib/project';
 import { useProjects } from '@/lib/api/hooks';
 import { TopBar } from './TopBar';
-import { CommandPalette } from './CommandPalette';
 import { ErrorState } from './States';
 import { Overlays } from './Overlays';
+
+const CommandPalette = dynamic(() => import('./CommandPalette').then((m) => m.CommandPalette));
 
 function Shell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -77,7 +79,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       <TopBar onOpenPalette={() => setPalette(true)} />
       <main className="page">{children}</main>
       <Overlays />
-      <CommandPalette open={palette} onOpenChange={setPalette} />
+      {palette && <CommandPalette open onOpenChange={setPalette} />}
     </ProjectContext.Provider>
   );
 }

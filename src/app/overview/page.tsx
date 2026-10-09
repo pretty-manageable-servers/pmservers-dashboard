@@ -130,11 +130,19 @@ function Overview() {
               }}
             />
           ) : shown.length === 0 ? (
-            <EmptyState
-              text="No resources yet. Create a VM to get a Linux server with SSH."
-              action="Create VM"
-              onAction={() => create('/vms', 'vm')}
-            />
+            filter === 'ai' ? (
+              <EmptyState
+                text="No AI API keys yet. Create a key to call AI models."
+                action="Create API key"
+                onAction={() => create('/ai', 'ai')}
+              />
+            ) : (
+              <EmptyState
+                text={`No ${filter === 'vm' ? 'VMs' : 'resources'} yet. Create a VM to get a Linux server with SSH.`}
+                action="Create VM"
+                onAction={() => create('/vms', 'vm')}
+              />
+            )
           ) : (
             <div className="cards">
               {shown.map((r) => (
