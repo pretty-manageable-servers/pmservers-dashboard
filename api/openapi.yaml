@@ -78,7 +78,39 @@ paths:
     delete:
       operationId: deleteProject
       responses:
-        '202': { description: Accepted }
+        '202': { description: Accepted. 403 if the user is a member and not the owner. }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/members:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      operationId: listMembers
+      responses:
+        '200':
+          {
+            description: The owner first, then the members,
+            content: { application/json: { schema: { $ref: '#/components/schemas/MemberList' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: addMember
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/MemberCreate' } } }
+      responses:
+        '201':
+          {
+            description: Added at once. Owner only (403). A new email gets an invite email. 409 if already a member.,
+            content: { application/json: { schema: { $ref: '#/components/schemas/MemberAdded' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/members/{user_id}:
+    parameters:
+      - { $ref: '#/components/parameters/ProjectId' }
+      - { name: user_id, in: path, required: true, schema: { type: string } }
+    delete:
+      operationId: removeMember
+      responses:
+        '204': { description: Removed. The owner removes a member, or a member removes themselves to leave. }
         default: { $ref: '#/components/responses/Error' }
   /v1/projects/{project_id}/usage:
     parameters: [{ $ref: '#/components/parameters/ProjectId' }]
@@ -346,14 +378,43 @@ components:
         id: { type: string }
         email: { type: string }
         plan: { type: string }
+    Role:
+      type: string
+      enum: [owner, member]
     Project:
       type: object
-      required: [id, name, region, created_at]
+      required: [id, name, region, role, created_at]
       properties:
         id: { type: string, examples: [prj_01] }
         name: { type: string }
         region: { type: string, examples: [ca-tor-1] }
+        role: { $ref: '#/components/schemas/Role' }
         created_at: { type: string, format: date-time }
+    Member:
+      type: object
+      required: [user_id, email, role, created_at]
+      properties:
+        user_id: { type: string }
+        email: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+        created_at: { type: string, format: date-time }
+    MemberList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Member' } }
+    MemberCreate:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string }
+    MemberAdded:
+      allOf:
+        - { $ref: '#/components/schemas/Member' }
+        - type: object
+          required: [invited]
+          properties:
+            invited: { type: boolean, description: True if the user had no account and got an invite email. }
     ProjectList:
       type: object
       required: [items]

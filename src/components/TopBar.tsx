@@ -63,7 +63,7 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
                 <DropMenuItem
                   key={p.id}
                   on={p.id === project.id}
-                  hint={p.id === project.id ? '✓' : ''}
+                  hint={p.id === project.id ? '✓' : p.role === 'member' ? 'Shared' : ''}
                   onSelect={() => switchTo(p.id)}
                 >
                   {p.name}

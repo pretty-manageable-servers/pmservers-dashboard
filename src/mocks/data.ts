@@ -60,8 +60,20 @@ export const catalog: Catalog = {
 export const sizeSpec = (id: string) => catalog.vm_sizes.find((s) => s.id === id);
 
 export const projects: Project[] = [
-  { id: 'prj_discord-bots', name: 'discord-bots', region: 'ca-tor-1', created_at: ago(17 * DAY) },
-  { id: 'prj_personal-site', name: 'personal-site', region: 'ca-tor-1', created_at: ago(40 * DAY) },
+  {
+    id: 'prj_discord-bots',
+    name: 'discord-bots',
+    region: 'ca-tor-1',
+    role: 'owner',
+    created_at: ago(17 * DAY),
+  },
+  {
+    id: 'prj_personal-site',
+    name: 'personal-site',
+    region: 'ca-tor-1',
+    role: 'owner',
+    created_at: ago(40 * DAY),
+  },
 ];
 
 export interface ProjectState {

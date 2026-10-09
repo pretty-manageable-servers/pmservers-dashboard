@@ -3,6 +3,7 @@ import type {
   AiKey,
   AiKeyCreate,
   ApiEvent,
+  Member,
   Project,
   SshKey,
   SshKeyCreate,
@@ -25,6 +26,7 @@ const LATENCY = 200;
 let projects: Project[] = structuredClone(seedProjects);
 let state = seedState();
 let sshKeys: SshKey[] = [];
+let members: Record<string, Member[]> = {};
 let counter = 100;
 const id = (p: string) => `${p}_${(counter++).toString(36)}`;
 
@@ -32,7 +34,11 @@ export function resetMockState() {
   projects = structuredClone(seedProjects);
   state = seedState();
   sshKeys = [];
+  members = {};
 }
+
+// The same user as the mock sign-in in lib/auth.tsx.
+const MOCK_USER = { id: '5b1c0e2a-8d41-4f3e-9a77-1e0c3d2b6f90', email: 'robert@example.com' };
 
 // The key data is the second field. The real API makes a SHA256 fingerprint of it.
 const fingerprintOf = (publicKey: string) =>
@@ -102,7 +108,7 @@ const consoleSocket = ws.link('*/v1/projects/:pid/vms/:vid/console');
 export const handlers = [
   http.get(`${base}/me`, async () => {
     await delay(LATENCY);
-    return HttpResponse.json({ id: 'mock-user', email: 'robert@example.com', plan: 'Free' });
+    return HttpResponse.json({ ...MOCK_USER, plan: 'Free' });
   }),
   http.get(`${base}/catalog`, async () => {
     await delay(LATENCY);
@@ -159,6 +165,7 @@ export const handlers = [
       id: `prj_${name}`,
       name,
       region: 'ca-tor-1',
+      role: 'owner',
       created_at: new Date().toISOString(),
     };
     projects.push(p);
@@ -193,6 +200,44 @@ export const handlers = [
     projects = projects.filter((x) => x.id !== params.pid);
     delete state[params.pid as string];
     return new HttpResponse(null, { status: 202 });
+  }),
+
+  http.get(`${base}/projects/:pid/members`, async ({ params }) => {
+    await delay(LATENCY);
+    const p = projects.find((x) => x.id === params.pid);
+    if (!p) return notFound();
+    const owner: Member = {
+      user_id: MOCK_USER.id,
+      email: MOCK_USER.email,
+      role: 'owner',
+      created_at: p.created_at,
+    };
+    return HttpResponse.json({ items: [owner, ...(members[p.id] ?? [])] });
+  }),
+  http.post(`${base}/projects/:pid/members`, async ({ params, request }) => {
+    await delay(LATENCY);
+    const p = projects.find((x) => x.id === params.pid);
+    if (!p) return notFound();
+    const email = ((await request.json()) as { email: string }).email.trim().toLowerCase();
+    if (email === MOCK_USER.email) return err(409, 'conflict', 'You own this project.');
+    const list = (members[p.id] ??= []);
+    if (list.some((m) => m.email === email))
+      return err(409, 'conflict', 'This user is already a member.');
+    const m: Member = {
+      user_id: id('user'),
+      email,
+      role: 'member',
+      created_at: new Date().toISOString(),
+    };
+    list.push(m);
+    return HttpResponse.json({ ...m, invited: true }, { status: 201 });
+  }),
+  http.delete(`${base}/projects/:pid/members/:uid`, async ({ params }) => {
+    await delay(LATENCY);
+    const list = members[params.pid as string] ?? [];
+    if (!list.some((m) => m.user_id === params.uid)) return notFound();
+    members[params.pid as string] = list.filter((m) => m.user_id !== params.uid);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.get(`${base}/projects/:pid/usage`, async ({ params }) => {

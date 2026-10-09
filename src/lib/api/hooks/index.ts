@@ -13,6 +13,7 @@ export const keys = {
   vms: (p: string) => ['vms', p] as const,
   vmMetrics: (p: string, id: string) => ['vm-metrics', p, id] as const,
   aiKeys: (p: string) => ['ai-keys', p] as const,
+  members: (p: string) => ['members', p] as const,
 };
 
 export const useMe = () =>
@@ -101,6 +102,55 @@ export function useDeleteProject() {
         await api.DELETE('/v1/projects/{project_id}', { params: { path: { project_id: id } } }),
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.projects }),
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export const useMembers = (project: string) =>
+  useQuery({
+    queryKey: keys.members(project),
+    queryFn: async () =>
+      unwrap(
+        await api.GET('/v1/projects/{project_id}/members', {
+          params: { path: { project_id: project } },
+        }),
+      ).items,
+    enabled: !!project,
+  });
+
+export function useAddMember(project: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (email: string) =>
+      unwrap(
+        await api.POST('/v1/projects/{project_id}/members', {
+          params: { path: { project_id: project } },
+          body: { email },
+        }),
+      ),
+    onSuccess: (m) => {
+      qc.invalidateQueries({ queryKey: keys.members(project) });
+      qc.invalidateQueries({ queryKey: keys.events(project) });
+      toast.success(m.invited ? `Sent an invite to ${m.email}` : `Added ${m.email}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+/** The owner removes a member. A member removes themselves to leave the project. */
+export function useRemoveMember(project: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) =>
+      unwrap(
+        await api.DELETE('/v1/projects/{project_id}/members/{user_id}', {
+          params: { path: { project_id: project, user_id: userId } },
+        }),
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.members(project) });
+      qc.invalidateQueries({ queryKey: keys.events(project) });
+    },
     onError: (e) => toast.error(e.message),
   });
 }

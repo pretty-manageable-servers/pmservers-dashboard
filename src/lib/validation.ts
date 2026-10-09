@@ -12,3 +12,8 @@ export function validateSshKey(key: string): string | null {
     ? null
     : 'Paste a public SSH key. It starts with ssh-ed25519 or ssh-rsa.';
 }
+
+/** The same check as the API. Supabase checks more when it sends the invite. */
+export function validateEmail(email: string): string | null {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? null : 'Enter a valid email address.';
+}

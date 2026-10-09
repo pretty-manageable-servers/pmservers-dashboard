@@ -70,6 +70,43 @@ export interface paths {
         patch: operations["updateProject"];
         trace?: never;
     };
+    "/v1/projects/{project_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        get: operations["listMembers"];
+        put?: never;
+        post: operations["addMember"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/members/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["removeMember"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/projects/{project_id}/usage": {
         parameters: {
             query?: never;
@@ -343,14 +380,34 @@ export interface components {
             email: string;
             plan: string;
         };
+        /** @enum {string} */
+        Role: "owner" | "member";
         Project: {
             /** @example prj_01 */
             id: string;
             name: string;
             /** @example ca-tor-1 */
             region: string;
+            role: components["schemas"]["Role"];
             /** Format: date-time */
             created_at: string;
+        };
+        Member: {
+            user_id: string;
+            email: string;
+            role: components["schemas"]["Role"];
+            /** Format: date-time */
+            created_at: string;
+        };
+        MemberList: {
+            items: components["schemas"]["Member"][];
+        };
+        MemberCreate: {
+            email: string;
+        };
+        MemberAdded: components["schemas"]["Member"] & {
+            /** @description True if the user had no account and got an invite email. */
+            invited: boolean;
         };
         ProjectList: {
             items: components["schemas"]["Project"][];
@@ -640,7 +697,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Accepted */
+            /** @description Accepted. 403 if the user is a member and not the owner. */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -673,6 +730,78 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Project"];
                 };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The owner first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberList"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    addMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberCreate"];
+            };
+        };
+        responses: {
+            /** @description Added at once. Owner only (403). A new email gets an invite email. 409 if already a member. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberAdded"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    removeMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed. The owner removes a member */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             default: components["responses"]["Error"];
         };

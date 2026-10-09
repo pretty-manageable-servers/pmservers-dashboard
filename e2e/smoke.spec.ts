@@ -51,3 +51,25 @@ test('save an SSH key, then pick it when creating a VM', async ({ page }) => {
   await page.getByRole('dialog').getByRole('button', { name: 'Create VM' }).click();
   await expect(page.getByRole('button', { name: /saved-key-vm/ })).toBeVisible();
 });
+
+test('invite a member, then remove them', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByLabel('Email').fill('robert@example.com');
+  await page.getByLabel('Password').fill('correct-horse');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'discord-bots' })).toBeVisible();
+
+  await page.getByRole('link', { name: /Settings/ }).click();
+  await expect(page.getByText('robert@example.com (you)')).toBeVisible();
+  await page.getByLabel('Invite by email').fill('not-an-email');
+  await page.getByRole('button', { name: 'Invite' }).click();
+  await expect(page.getByText('Enter a valid email address.')).toBeVisible();
+
+  await page.getByLabel('Invite by email').fill('Ann@Example.com');
+  await page.getByRole('button', { name: 'Invite' }).click();
+  await expect(page.getByText('ann@example.com', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Remove' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Remove member' }).click();
+  await expect(page.getByText('ann@example.com', { exact: true })).toHaveCount(0);
+});

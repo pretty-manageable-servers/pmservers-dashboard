@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Page } from '@/components/Page';
 import { PageHead } from '@/components/PageHead';
 import { Modal } from '@/components/Modal';
+import { MembersCard } from '@/components/MembersCard';
 import { SshKeysCard } from '@/components/SshKeysCard';
 import { useSession } from '@/lib/auth';
 import { useDeleteProject, useMe, useRenameProject } from '@/lib/api/hooks';
@@ -84,6 +85,10 @@ function Settings() {
           <dd>
             {project.name} · {project.region}
           </dd>
+          <dt>Your role</dt>
+          <dd>
+            <span className="badge">{project.role === 'owner' ? 'Owner' : 'Member'}</span>
+          </dd>
         </dl>
       </section>
       <section className="ucard" style={{ padding: 20, gap: 12 }}>
@@ -109,34 +114,37 @@ function Settings() {
           {renameTouched && nameErr && <span className="err-t">{nameErr}</span>}
         </form>
       </section>
+      <MembersCard />
       <SshKeysCard />
-      <section
-        className="ucard"
-        style={{
-          padding: 20,
-          gap: 12,
-          borderColor: 'color-mix(in srgb, var(--bad) 35%, var(--line))',
-        }}
-      >
-        <div>
-          <b>Delete project</b>
-          <div className="muted" style={{ fontSize: 13 }}>
-            Deletes all VMs and keys in {project.name}. You cannot undo this.
+      {project.role === 'owner' && (
+        <section
+          className="ucard"
+          style={{
+            padding: 20,
+            gap: 12,
+            borderColor: 'color-mix(in srgb, var(--bad) 35%, var(--line))',
+          }}
+        >
+          <div>
+            <b>Delete project</b>
+            <div className="muted" style={{ fontSize: 13 }}>
+              Deletes all VMs and keys in {project.name}. You cannot undo this.
+            </div>
           </div>
-        </div>
-        <div>
-          <button
-            className="btn danger"
-            type="button"
-            onClick={() => {
-              setTyped('');
-              setOpen(true);
-            }}
-          >
-            Delete project
-          </button>
-        </div>
-      </section>
+          <div>
+            <button
+              className="btn danger"
+              type="button"
+              onClick={() => {
+                setTyped('');
+                setOpen(true);
+              }}
+            >
+              Delete project
+            </button>
+          </div>
+        </section>
+      )}
       <Modal
         open={open}
         onOpenChange={setOpen}

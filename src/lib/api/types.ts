@@ -4,6 +4,8 @@ type S = components['schemas'];
 
 export type Me = S['Me'];
 export type Project = S['Project'];
+export type Member = S['Member'];
+export type MemberAdded = S['MemberAdded'];
 export type Usage = S['Usage'];
 export type ApiEvent = S['Event'];
 export type StreamEvent = S['StreamEvent'];
