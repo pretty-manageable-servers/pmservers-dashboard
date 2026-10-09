@@ -1734,3 +1734,13 @@ svg.spark {
   border: 1px solid color-mix(in srgb, var(--claude) 40%, var(--line));
   color: var(--muted);
 }
+
+/* Links inside hint text, for example "Setup help" in the VM sheet. */
+.hint a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.hint a:hover {
+  text-decoration-thickness: 2px;
+}
