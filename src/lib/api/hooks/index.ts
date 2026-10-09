@@ -34,8 +34,9 @@ export function useCreateProject() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (name: string) => unwrap(await api.POST('/v1/projects', { body: { name } })),
-    onSuccess: (p) => {
-      qc.invalidateQueries({ queryKey: keys.projects });
+    // Wait for the list, so the page never opens a project that the cached list does not have.
+    onSuccess: async (p) => {
+      await qc.invalidateQueries({ queryKey: keys.projects });
       toast.success(`Created project ${p.name}`);
     },
     onError: (e) => toast.error(e.message),
