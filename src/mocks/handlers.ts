@@ -4,6 +4,8 @@ import type {
   AiKeyCreate,
   ApiEvent,
   Project,
+  SshKey,
+  SshKeyCreate,
   StreamEvent,
   Vm,
   VmCreate,
@@ -22,13 +24,19 @@ import {
 const LATENCY = 200;
 let projects: Project[] = structuredClone(seedProjects);
 let state = seedState();
+let sshKeys: SshKey[] = [];
 let counter = 100;
 const id = (p: string) => `${p}_${(counter++).toString(36)}`;
 
 export function resetMockState() {
   projects = structuredClone(seedProjects);
   state = seedState();
+  sshKeys = [];
 }
+
+// The key data is the second field. The real API makes a SHA256 fingerprint of it.
+const fingerprintOf = (publicKey: string) =>
+  `SHA256:${(publicKey.split(/\s+/)[1] ?? '').slice(-43)}`;
 
 const err = (status: number, code: string, message: string) =>
   HttpResponse.json({ error: { code, message } }, { status });
@@ -99,6 +107,43 @@ export const handlers = [
   http.get(`${base}/catalog`, async () => {
     await delay(LATENCY);
     return HttpResponse.json(catalog);
+  }),
+
+  http.get(`${base}/ssh-keys`, async () => {
+    await delay(LATENCY);
+    return HttpResponse.json({ items: sshKeys });
+  }),
+  http.post(`${base}/ssh-keys`, async ({ request }) => {
+    await delay(LATENCY);
+    const body = (await request.json()) as SshKeyCreate;
+    const publicKey = body.public_key.trim();
+    if (/PRIVATE KEY/.test(publicKey))
+      return err(
+        422,
+        'validation_error',
+        'That looks like a private key. Paste the public key only.',
+      );
+    if (!/^(ssh-ed25519|ssh-rsa|ecdsa-sha2-\S+)\s+\S+/.test(publicKey))
+      return err(422, 'validation_error', 'Paste a public SSH key.');
+    const fingerprint = fingerprintOf(publicKey);
+    if (sshKeys.some((k) => k.fingerprint === fingerprint))
+      return err(409, 'conflict', 'This SSH key is already saved.');
+    if (sshKeys.length >= 20) return err(409, 'quota_exceeded', 'You can save up to 20 SSH keys.');
+    const k: SshKey = {
+      id: id('sshkey'),
+      name: body.name,
+      public_key: publicKey,
+      fingerprint,
+      created_at: new Date().toISOString(),
+    };
+    sshKeys.unshift(k);
+    return HttpResponse.json(k, { status: 201 });
+  }),
+  http.delete(`${base}/ssh-keys/:kid`, async ({ params }) => {
+    await delay(LATENCY);
+    if (!sshKeys.some((k) => k.id === params.kid)) return notFound();
+    sshKeys = sshKeys.filter((k) => k.id !== params.kid);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.get(`${base}/projects`, async () => {

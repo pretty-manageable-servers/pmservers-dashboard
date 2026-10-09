@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, unwrap } from '../client';
-import type { AiKeyCreate, VmCreate } from '../types';
+import type { AiKeyCreate, SshKeyCreate, VmCreate } from '../types';
 
 export const keys = {
   me: ['me'] as const,
+  sshKeys: ['ssh-keys'] as const,
   catalog: ['catalog'] as const,
   projects: ['projects'] as const,
   usage: (p: string) => ['usage', p] as const,
@@ -16,6 +17,37 @@ export const keys = {
 
 export const useMe = () =>
   useQuery({ queryKey: keys.me, queryFn: async () => unwrap(await api.GET('/v1/me')) });
+
+export const useSshKeys = () =>
+  useQuery({
+    queryKey: keys.sshKeys,
+    queryFn: async () => unwrap(await api.GET('/v1/ssh-keys')).items,
+  });
+
+export function useCreateSshKey() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: SshKeyCreate) => unwrap(await api.POST('/v1/ssh-keys', { body })),
+    onSuccess: (k) => {
+      qc.invalidateQueries({ queryKey: keys.sshKeys });
+      toast.success(`Saved SSH key ${k.name}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export function useDeleteSshKey() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) =>
+      unwrap(await api.DELETE('/v1/ssh-keys/{key_id}', { params: { path: { key_id: id } } })),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.sshKeys });
+      toast.success('Deleted SSH key. VMs that have it keep it.');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
 
 export const useCatalog = () =>
   useQuery({

@@ -285,6 +285,35 @@ paths:
               { application/json: { schema: { $ref: '#/components/schemas/AiKeyCreated' } } },
           }
         default: { $ref: '#/components/responses/Error' }
+  /v1/ssh-keys:
+    get:
+      operationId: listSshKeys
+      responses:
+        '200':
+          {
+            description: Saved public keys. Newest first.,
+            content: { application/json: { schema: { $ref: '#/components/schemas/SshKeyList' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createSshKey
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/SshKeyCreate' } } }
+      responses:
+        '201':
+          {
+            description: Saved. 409 for a key that is already saved or after 20 keys.,
+            content: { application/json: { schema: { $ref: '#/components/schemas/SshKey' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/ssh-keys/{key_id}:
+    parameters: [{ $ref: '#/components/parameters/KeyId' }]
+    delete:
+      operationId: deleteSshKey
+      responses:
+        '204': { description: Deleted. VMs that already have the key keep it. }
+        default: { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     bearer: { type: http, scheme: bearer, bearerFormat: JWT }
@@ -464,6 +493,26 @@ components:
       required: [items]
       properties:
         items: { type: array, items: { $ref: '#/components/schemas/AiKey' } }
+    SshKey:
+      type: object
+      required: [id, name, public_key, fingerprint, created_at]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        public_key: { type: string }
+        fingerprint: { type: string, examples: ['SHA256:abc'] }
+        created_at: { type: string, format: date-time }
+    SshKeyList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/SshKey' } }
+    SshKeyCreate:
+      type: object
+      required: [name, public_key]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+        public_key: { type: string }
     AiKeyCreate:
       type: object
       required: [name, models, budget_usd]

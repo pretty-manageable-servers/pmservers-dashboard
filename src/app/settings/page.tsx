@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Page } from '@/components/Page';
 import { PageHead } from '@/components/PageHead';
 import { Modal } from '@/components/Modal';
+import { SshKeysCard } from '@/components/SshKeysCard';
 import { useSession } from '@/lib/auth';
 import { useDeleteProject, useMe, useRenameProject } from '@/lib/api/hooks';
 import { useProject } from '@/lib/project';
@@ -108,6 +109,7 @@ function Settings() {
           {renameTouched && nameErr && <span className="err-t">{nameErr}</span>}
         </form>
       </section>
+      <SshKeysCard />
       <section
         className="ucard"
         style={{

@@ -73,6 +73,16 @@ export function encodeEd25519(seed: Uint8Array, pub: Uint8Array, comment: string
   };
 }
 
+/** Save a text file in the browser. */
+export function downloadText(filename: string, text: string) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/octet-stream' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /** True if this browser can make ed25519 keys (Chrome 137, Firefox 129, Safari 17). */
 export async function canGenerateSshKey(): Promise<boolean> {
   try {

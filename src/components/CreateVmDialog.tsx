@@ -3,20 +3,13 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Modal } from './Modal';
-import { useCatalog, useCreateVm } from '@/lib/api/hooks';
+import { useCatalog, useCreateSshKey, useCreateVm, useSshKeys } from '@/lib/api/hooks';
 import { chooseId } from '@/lib/catalog';
 import { useProject } from '@/lib/project';
-import { canGenerateSshKey, generateSshKey } from '@/lib/sshkey';
+import { canGenerateSshKey, downloadText, generateSshKey } from '@/lib/sshkey';
 import { validateName, validateSshKey } from '@/lib/validation';
 
-function downloadText(filename: string, text: string) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/octet-stream' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+const NEW_KEY = 'new';
 
 export function CreateVmDialog({
   open,
@@ -34,6 +27,13 @@ export function CreateVmDialog({
   const size = chooseId(pickedSize, catalog.data?.vm_sizes);
   const image = chooseId(pickedImage, catalog.data?.vm_images);
   const [key, setKey] = useState('');
+  const saved = useSshKeys().data ?? [];
+  const saveKey = useCreateSshKey();
+  const [pickedKey, setPickedKey] = useState<string | null>(null);
+  const [saveToAccount, setSaveToAccount] = useState(true);
+  // Use a saved key unless the user chose "New key". The first saved key is the default.
+  const savedChoice =
+    pickedKey === NEW_KEY ? undefined : (saved.find((k) => k.id === pickedKey) ?? saved[0]);
   const [touched, setTouched] = useState(false);
   const [canGenerate, setCanGenerate] = useState(false);
   // The private key stays in this state only. It is never sent to the API.
@@ -48,7 +48,8 @@ export function CreateVmDialog({
   }, [open]);
 
   const nameErr = validateName(name);
-  const keyErr = validateSshKey(key);
+  const publicKey = (savedChoice ? savedChoice.public_key : key).trim();
+  const keyErr = validateSshKey(publicKey);
 
   const generate = async () => {
     try {
@@ -67,8 +68,13 @@ export function CreateVmDialog({
     setTouched(true);
     if (nameErr || keyErr || !size || !image) return;
     create.mutate(
-      { name, size, image, disk_gb: 10, ssh_public_key: key.trim() },
-      { onSuccess: () => onOpenChange(false) },
+      { name, size, image, disk_gb: 10, ssh_public_key: publicKey },
+      {
+        onSuccess: () => {
+          if (!savedChoice && saveToAccount) saveKey.mutate({ name, public_key: publicKey });
+          onOpenChange(false);
+        },
+      },
     );
   };
 
@@ -139,27 +145,58 @@ export function CreateVmDialog({
           </div>
         </div>
         <div className="field">
-          <label htmlFor="vm-key">SSH public key</label>
-          <textarea
-            id="vm-key"
-            value={key}
-            onChange={(e) => setKey(e.target.value)}
-            placeholder="ssh-ed25519 AAAA… you@laptop"
-            aria-invalid={touched && !!keyErr}
-          />
-          {touched && keyErr ? (
-            <span className="err-t">{keyErr}</span>
+          {saved.length > 0 && (
+            <>
+              <label htmlFor="vm-saved-key">SSH key</label>
+              <select
+                id="vm-saved-key"
+                value={savedChoice?.id ?? NEW_KEY}
+                onChange={(e) => setPickedKey(e.target.value)}
+              >
+                {saved.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.name} · {k.fingerprint}
+                  </option>
+                ))}
+                <option value={NEW_KEY}>New key…</option>
+              </select>
+            </>
+          )}
+          {savedChoice ? (
+            <span className="hint">We add this saved key to the default user.</span>
           ) : (
-            <span className="hint">We add it to the default user.</span>
+            <>
+              <label htmlFor="vm-key">SSH public key</label>
+              <textarea
+                id="vm-key"
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                placeholder="ssh-ed25519 AAAA… you@laptop"
+                aria-invalid={touched && !!keyErr}
+              />
+              {touched && keyErr ? (
+                <span className="err-t">{keyErr}</span>
+              ) : (
+                <span className="hint">We add it to the default user.</span>
+              )}
+              {canGenerate && (
+                <div>
+                  <button className="btn sm" type="button" onClick={generate}>
+                    Generate a key pair
+                  </button>
+                </div>
+              )}
+              <label className="hint" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  type="checkbox"
+                  checked={saveToAccount}
+                  onChange={(e) => setSaveToAccount(e.target.checked)}
+                />
+                Save this public key to my account for next time
+              </label>
+            </>
           )}
-          {canGenerate && (
-            <div>
-              <button className="btn sm" type="button" onClick={generate}>
-                Generate a key pair
-              </button>
-            </div>
-          )}
-          {generated && (
+          {generated && !savedChoice && (
             <span className="hint" role="status">
               The private key was downloaded as <b>{generated.file}</b>. We do not keep it and
               cannot show it again.{' '}
