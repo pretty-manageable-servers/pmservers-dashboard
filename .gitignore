@@ -12,3 +12,4 @@ playwright-report
 backend.hcl
 *.tfvars
 !*.tfvars.example
+.DS_Store
