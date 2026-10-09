@@ -1,11 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Modal } from './Modal';
 import { useCatalog, useCreateVm } from '@/lib/api/hooks';
 import { chooseId } from '@/lib/catalog';
 import { useProject } from '@/lib/project';
+import { canGenerateSshKey, generateSshKey } from '@/lib/sshkey';
 import { validateName, validateSshKey } from '@/lib/validation';
+
+function downloadText(filename: string, text: string) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/octet-stream' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export function CreateVmDialog({
   open,
@@ -24,9 +35,32 @@ export function CreateVmDialog({
   const image = chooseId(pickedImage, catalog.data?.vm_images);
   const [key, setKey] = useState('');
   const [touched, setTouched] = useState(false);
+  const [canGenerate, setCanGenerate] = useState(false);
+  // The private key stays in this state only. It is never sent to the API.
+  const [generated, setGenerated] = useState<{ file: string; privateKey: string } | null>(null);
+
+  useEffect(() => {
+    canGenerateSshKey().then(setCanGenerate);
+  }, []);
+
+  useEffect(() => {
+    if (!open) setGenerated(null);
+  }, [open]);
 
   const nameErr = validateName(name);
   const keyErr = validateSshKey(key);
+
+  const generate = async () => {
+    try {
+      const pair = await generateSshKey(`${name}@pmservers`);
+      const file = `pms-${name}`;
+      setKey(pair.publicKey);
+      setGenerated({ file, privateKey: pair.privateKey });
+      downloadText(file, pair.privateKey);
+    } catch {
+      toast.error('Could not make a key in this browser. Paste a public key instead.');
+    }
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +151,29 @@ export function CreateVmDialog({
             <span className="err-t">{keyErr}</span>
           ) : (
             <span className="hint">We add it to the default user.</span>
+          )}
+          {canGenerate && (
+            <div>
+              <button className="btn sm" type="button" onClick={generate}>
+                Generate a key pair
+              </button>
+            </div>
+          )}
+          {generated && (
+            <span className="hint" role="status">
+              The private key was downloaded as <b>{generated.file}</b>. We do not keep it and
+              cannot show it again.{' '}
+              <button
+                className="btn sm"
+                type="button"
+                onClick={() => downloadText(generated.file, generated.privateKey)}
+              >
+                Download again
+              </button>
+              <br />
+              Then run <code>chmod 600 {generated.file}</code> and connect with{' '}
+              <code>ssh -i {generated.file} …</code>
+            </span>
           )}
         </div>
       </form>
