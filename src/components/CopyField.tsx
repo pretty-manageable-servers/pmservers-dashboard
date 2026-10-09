@@ -11,9 +11,18 @@ export async function copyText(text: string) {
   }
 }
 
-export function CopyField({ value, label }: { value: string; label?: string }) {
+export function CopyField({
+  value,
+  label,
+  block,
+}: {
+  value: string;
+  label?: string;
+  // Keep line breaks, for a file snippet.
+  block?: boolean;
+}) {
   return (
-    <div className="copy">
+    <div className={block ? 'copy block' : 'copy'}>
       {label && (
         <span className="muted" style={{ fontSize: 12.5 }}>
           {label}

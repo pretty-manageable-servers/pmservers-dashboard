@@ -91,7 +91,7 @@ const vm = (
   image,
   disk_gb: 10,
   private_ip: ip,
-  ssh_host: `${name}.${project}.vm.pmservers.org`,
+  ssh_host: 'jump.pmservers.org',
   ssh_user: image.startsWith('Debian') ? 'debian' : 'user',
   created_at: ago(age),
 });

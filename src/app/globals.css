@@ -14,14 +14,14 @@
 
 /* Layout: sticky top bar with breadcrumb project switcher and tabs; card grids per service; side sheet for detail; centered dialog for create; ⌘K palette. Dark first. */
 :root {
-  --bg: #08090b;
+  --bg: #1a1d23;
   --bg-glow: rgba(79, 124, 255, 0.13);
-  --panel: #101114;
-  --panel-2: #15161a;
-  --line: #22242a;
-  --line-strong: #2e3038;
+  --panel: #232730;
+  --panel-2: #2a2e38;
+  --line: #353a45;
+  --line-strong: #444a57;
   --fg: #f4f5f7;
-  --muted: #8d919c;
+  --muted: #a3a8b4;
   --faint: #5d616b;
   --accent: #5b8cff;
   --accent-2: #9b7bff;
@@ -149,9 +149,9 @@ button {
   border-bottom: 1px solid var(--line);
 }
 .bar-in {
-  max-width: 1240px;
+  max-width: 1680px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 16px;
 }
 .row1 {
   display: flex;
@@ -368,9 +368,9 @@ button {
 
 /* Page */
 .page {
-  max-width: 1240px;
+  max-width: 1680px;
   margin: 0 auto;
-  padding: 32px 24px 64px;
+  padding: 24px 16px 56px;
   display: flex;
   flex-direction: column;
   gap: 28px;
@@ -840,6 +840,13 @@ button {
   white-space: nowrap;
   font-family: var(--font-mono);
   font-size: 12.5px;
+}
+.copy.block {
+  align-items: flex-start;
+}
+.copy.block code {
+  white-space: pre;
+  padding: 4px 0;
 }
 
 .endpoint {

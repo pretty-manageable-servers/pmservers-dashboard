@@ -239,7 +239,7 @@ export const handlers = [
       image: body.image,
       disk_gb: body.disk_gb,
       private_ip: null,
-      ssh_host: `${body.name}.${p.name}.vm.pmservers.org`,
+      ssh_host: 'jump.pmservers.org',
       ssh_user: IMAGE_USER[imageName] ?? 'user',
       created_at: new Date().toISOString(),
     };

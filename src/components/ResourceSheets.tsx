@@ -41,7 +41,14 @@ export function VmSheet({ vm, onClose }: { vm: Vm; onClose: () => void }) {
   const [confirm, setConfirm] = useState(false);
   const busy = isBusy(vm.status);
   const spec = catalog.data?.vm_sizes.find((s) => s.id === vm.size);
-  const ssh = `ssh ${vm.ssh_user}@${vm.ssh_host}`;
+  // The jump host goes through a Cloudflare tunnel, so ssh needs cloudflared as ProxyCommand.
+  const sshConfig = [
+    'Host pms-jump',
+    `  HostName ${vm.ssh_host}`,
+    '  User jump',
+    '  ProxyCommand cloudflared access ssh --hostname %h',
+  ].join('\n');
+  const ssh = `ssh -J pms-jump ${vm.ssh_user}@${vm.private_ip}`;
   const act = (a: 'start' | 'stop' | 'restart') =>
     action.mutate({ id: vm.id, name: vm.name, action: a });
 
@@ -106,7 +113,24 @@ export function VmSheet({ vm, onClose }: { vm: Vm; onClose: () => void }) {
         <div className="lbl" style={{ marginBottom: 8 }}>
           SSH
         </div>
-        <CopyField value={ssh} />
+        {!vm.ssh_host ? (
+          <span className="hint">SSH is not available here. Use the console.</span>
+        ) : !vm.private_ip ? (
+          <span className="hint">The SSH command shows when the VM has a private IP.</span>
+        ) : (
+          <div style={{ display: 'grid', gap: 8 }}>
+            <span className="hint">
+              One time: install <code>cloudflared</code>, then add this to{' '}
+              <code>~/.ssh/config</code>.{' '}
+              <a href="https://docs.pmservers.org/vms/ssh/" target="_blank" rel="noreferrer">
+                Setup help, or use Docker
+              </a>
+            </span>
+            <CopyField value={sshConfig} block />
+            <span className="hint">Then connect:</span>
+            <CopyField value={ssh} />
+          </div>
+        )}
       </div>
       {metrics.data && vm.status === 'running' && (
         <div>

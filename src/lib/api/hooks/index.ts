@@ -141,6 +141,9 @@ export function useVms(project: string) {
         }),
       ).items,
     enabled: !!project,
+    // The private IP comes about 1 minute after `running`, with no status event. Poll until it is there.
+    refetchInterval: (query) =>
+      query.state.data?.some((vm) => vm.status === 'running' && !vm.private_ip) ? 5000 : false,
   });
   return q;
 }
