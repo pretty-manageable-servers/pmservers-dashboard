@@ -11,29 +11,9 @@ import {
   useCredentialChoice,
 } from './ContainerFields';
 import { useUpdateContainer } from '@/lib/api/hooks';
-import { envMap, validateEnv, validateImage, type EnvRow } from '@/lib/containers';
+import { changedFields, envMap, validateEnv, validateImage, type EnvRow } from '@/lib/containers';
 import { useProject } from '@/lib/project';
-import type { Container, ContainerUpdate, Runtime } from '@/lib/api/types';
-
-/** Only the fields that changed. `env` only in "replace" mode, because it replaces all. */
-export function changedFields(
-  c: Container,
-  next: {
-    image: string;
-    size: string;
-    credential: string | null;
-    runtime: Runtime;
-    env: Record<string, string> | null;
-  },
-): ContainerUpdate {
-  const body: ContainerUpdate = {};
-  if (next.image !== c.image) body.image = next.image;
-  if (next.size !== c.size) body.size = next.size;
-  if (next.credential !== c.registry_credential_id) body.registry_credential_id = next.credential;
-  if (next.runtime !== c.runtime) body.runtime = next.runtime;
-  if (next.env) body.env = next.env;
-  return body;
-}
+import type { Container, Runtime } from '@/lib/api/types';
 
 export function EditContainerDialog({
   container: c,

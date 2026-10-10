@@ -621,7 +621,10 @@ export const handlers = [
           `The registry credential is for ${cred.host}, not for this image.`,
         );
     }
-    const count = Object.values(state).reduce((a, x) => a + x.containers.length, 0);
+    const count = Object.values(state).reduce(
+      (a, x) => a + x.containers.filter((c) => c.status !== 'deleting').length,
+      0,
+    );
     if (count >= MAX_CONTAINERS)
       return err(
         409,

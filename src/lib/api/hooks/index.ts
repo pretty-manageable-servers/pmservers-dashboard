@@ -356,7 +356,7 @@ export const useAccess = () =>
     refetchInterval: (query) => {
       const a = query.state.data;
       if (!a) return false;
-      if (a.access === 'pending') return 30_000;
+      if (a.access === 'pending') return 10_000;
       if (a.access !== 'approved') return false;
       if (a.vcluster === 'creating' || a.vcluster === 'none') return 5000;
       if (a.vcluster === 'failed') return 30_000;

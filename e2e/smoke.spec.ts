@@ -73,3 +73,54 @@ test('invite a member, then remove them', async ({ page }) => {
   await page.getByRole('dialog').getByRole('button', { name: 'Remove member' }).click();
   await expect(page.getByText('ann@example.com', { exact: true })).toHaveCount(0);
 });
+
+test('request container access, create a container, stop it, delete it', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByLabel('Email').fill('robert@example.com');
+  await page.getByLabel('Password').fill('correct-horse');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'discord-bots' })).toBeVisible();
+
+  // The mock reads the access state from the page URL.
+  await page.goto('/containers?project=prj_discord-bots&mockAccess=none');
+  await page.getByRole('button', { name: 'Request access' }).click();
+  await expect(page.getByText('Tell us what you want to run.')).toBeVisible();
+  await page.getByLabel('What do you want to run?').fill('A Discord bot for my server.');
+  await page.getByRole('button', { name: 'Request access' }).click();
+  await expect(page.getByText('Your request is waiting for review.')).toBeVisible();
+  // The mock admin approves. The page goes to the list with no reload.
+  await expect(page.getByRole('button', { name: /relay-bot/ })).toBeVisible({ timeout: 30_000 });
+
+  // The account has 2 containers, the limit. Delete one first.
+  await page.getByRole('button', { name: /cron-worker/ }).click();
+  await expect(page.getByText("KeyError: 'API_TOKEN'")).toHaveCount(0);
+  await page.getByLabel('Previous run').check();
+  await expect(page.getByText("KeyError: 'API_TOKEN'")).toBeVisible();
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete container' }).click();
+  await expect(page.getByRole('button', { name: /cron-worker/ })).toHaveCount(0, {
+    timeout: 20_000,
+  });
+
+  await page.getByRole('button', { name: 'Create container' }).first().click();
+  await page.getByLabel('Name').fill('smoke-ct');
+  await page.getByLabel('Image').fill('ghcr.io/robert/smoke:1.0');
+  await expect(page.getByLabel('Registry credential')).toContainText('ghcr-bots');
+  await page.getByRole('button', { name: 'Add variable' }).click();
+  await page.getByLabel('Variable 1 name').fill('TOKEN');
+  await page.getByLabel('Variable 1 value').fill('secret');
+  await page.getByRole('dialog').getByRole('button', { name: 'Create container' }).click();
+
+  const card = page.getByRole('button', { name: /smoke-ct/ });
+  await expect(card).toContainText('Running', { timeout: 20_000 });
+  await card.click();
+  await expect(page.getByText('Heartbeat')).not.toHaveCount(0, { timeout: 10_000 });
+  await expect(page.getByText('TOKEN', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Stop', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Start', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete container' }).click();
+  await expect(page.getByRole('button', { name: /smoke-ct/ })).toHaveCount(0, {
+    timeout: 20_000,
+  });
+});

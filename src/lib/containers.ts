@@ -1,3 +1,5 @@
+import type { Container, ContainerUpdate, Runtime } from './api/types';
+
 /** Client checks for containers. The API checks again. Keep them the same as the API. */
 
 export const CONTAINER_NAME = /^[a-z][a-z0-9-]{0,62}$/;
@@ -77,3 +79,23 @@ export const runtimeLabel = (r: string) => (r === 'native' ? 'Native' : 'gVisor'
 
 export const sizeLabel = (s: { vcpu: number | null; memory_mib: number | null }) =>
   s.vcpu === null || s.memory_mib === null ? '' : `${s.vcpu} vCPU · ${s.memory_mib} MiB`;
+
+/** Only the fields that changed. `env` only in "replace" mode, because it replaces all. */
+export function changedFields(
+  c: Container,
+  next: {
+    image: string;
+    size: string;
+    credential: string | null;
+    runtime: Runtime;
+    env: Record<string, string> | null;
+  },
+): ContainerUpdate {
+  const body: ContainerUpdate = {};
+  if (next.image !== c.image) body.image = next.image;
+  if (next.size !== c.size) body.size = next.size;
+  if (next.credential !== c.registry_credential_id) body.registry_credential_id = next.credential;
+  if (next.runtime !== c.runtime) body.runtime = next.runtime;
+  if (next.env) body.env = next.env;
+  return body;
+}
