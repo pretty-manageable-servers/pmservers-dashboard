@@ -26,7 +26,7 @@ export function NewMenu() {
         <DropMenuItem onSelect={() => create('/vms', 'vm')}>
           {TYPE_ICON.vm}Virtual machine
         </DropMenuItem>
-        <DropMenuItem disabled hint="Coming soon">
+        <DropMenuItem onSelect={() => create('/containers', 'ct')}>
           {TYPE_ICON.ct}Container
         </DropMenuItem>
         <DropMenuItem disabled hint="Coming soon">

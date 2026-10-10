@@ -7,14 +7,14 @@ import { UsageCard } from '@/components/UsageCard';
 import { ResourceCard, type Resource } from '@/components/ResourceCard';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { CardsSkeleton, EmptyState, ErrorState } from '@/components/States';
-import { useAiKeys, useUsage, useVms } from '@/lib/api/hooks';
+import { useAiKeys, useContainers, useUsage, useVms } from '@/lib/api/hooks';
 import { useProject } from '@/lib/project';
 import { useNavActions } from '@/lib/nav-actions';
 
 const FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'vm', label: 'VMs' },
-  { id: 'ct', label: 'Containers', soon: true },
+  { id: 'ct', label: 'Containers' },
   { id: 's3', label: 'Buckets', soon: true },
   { id: 'ai', label: 'AI keys' },
 ];
@@ -26,14 +26,17 @@ function Overview() {
   const usage = useUsage(project.id);
   const vms = useVms(project.id);
   const keys = useAiKeys(project.id);
+  // A 403 means no container access. Show no containers then, and no error.
+  const containers = useContainers(project.id);
 
   const all: Resource[] = [
     ...(vms.data ?? []).map((v) => ({ kind: 'vm' as const, ...v })),
+    ...(containers.data ?? []).map((c) => ({ kind: 'ct' as const, ...c })),
     ...(keys.data ?? []).map((k) => ({ kind: 'ai' as const, ...k })),
   ];
   const shown = all.filter((r) => filter === 'all' || r.kind === filter);
   const running = all.filter((r) => r.status === 'running').length;
-  const issues = all.filter((r) => r.status === 'failed').length;
+  const issues = all.filter((r) => r.status === 'failed' || r.status === 'unknown').length;
   const u = usage.data;
 
   return (
@@ -136,6 +139,12 @@ function Overview() {
                 action="Create API key"
                 onAction={() => create('/ai', 'ai')}
               />
+            ) : filter === 'ct' ? (
+              <EmptyState
+                text="No containers yet. Create a container to run a worker, for example a bot."
+                action="Create container"
+                onAction={() => create('/containers', 'ct')}
+              />
             ) : (
               <EmptyState
                 text={`No ${filter === 'vm' ? 'VMs' : 'resources'} yet. Create a VM to get a Linux server with SSH.`}
@@ -149,7 +158,9 @@ function Overview() {
                 <ResourceCard
                   key={r.id}
                   r={r}
-                  onOpen={() => openResource(r.kind === 'vm' ? '/vms' : '/ai', r.id)}
+                  onOpen={() =>
+                    openResource({ vm: '/vms', ct: '/containers', ai: '/ai' }[r.kind], r.id)
+                  }
                 />
               ))}
             </div>

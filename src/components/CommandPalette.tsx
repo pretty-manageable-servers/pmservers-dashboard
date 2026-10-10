@@ -7,7 +7,7 @@ import { Home, Plus } from 'lucide-react';
 import { TABS } from './nav';
 import { TYPE_ICON } from './icons';
 import { projectHref, useProject } from '@/lib/project';
-import { useAiKeys, useVms } from '@/lib/api/hooks';
+import { useAiKeys, useContainers, useVms } from '@/lib/api/hooks';
 
 export function CommandPalette({
   open,
@@ -20,6 +20,7 @@ export function CommandPalette({
   const { project } = useProject();
   const vms = useVms(project.id);
   const keys = useAiKeys(project.id);
+  const containers = useContainers(project.id);
 
   const run = (fn: () => void) => () => {
     onOpenChange(false);
@@ -44,6 +45,14 @@ export function CommandPalette({
                   onSelect={run(() => router.push(projectHref('/vms', project.id, { new: 'vm' })))}
                 >
                   Create virtual machine
+                </Item>
+                <Item
+                  icon={<Plus />}
+                  onSelect={run(() =>
+                    router.push(projectHref('/containers', project.id, { new: 'ct' })),
+                  )}
+                >
+                  Create container
                 </Item>
                 <Item
                   icon={<Plus />}
@@ -73,6 +82,19 @@ export function CommandPalette({
                     onSelect={run(() => router.push(projectHref('/vms', project.id, { r: v.id })))}
                   >
                     {v.name}
+                  </Item>
+                ))}
+                {containers.data?.map((c) => (
+                  <Item
+                    key={c.id}
+                    icon={TYPE_ICON.ct}
+                    sub="Container"
+                    value={`${c.name} container`}
+                    onSelect={run(() =>
+                      router.push(projectHref('/containers', project.id, { r: c.id })),
+                    )}
+                  >
+                    {c.name}
                   </Item>
                 ))}
                 {keys.data?.map((k) => (

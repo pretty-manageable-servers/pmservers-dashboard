@@ -4,14 +4,17 @@ import { StatusDot } from './StatusDot';
 import { timeAgo } from '@/lib/utils';
 import { useVmMetrics } from '@/lib/api/hooks';
 import { useProject } from '@/lib/project';
-import type { AiKey, Vm } from '@/lib/api/types';
+import type { AiKey, Container, Vm } from '@/lib/api/types';
+import { runtimeLabel, sizeLabel } from '@/lib/containers';
 
-export type Resource = ({ kind: 'vm' } & Vm) | ({ kind: 'ai' } & AiKey);
+export type Resource =
+  ({ kind: 'vm' } & Vm) | ({ kind: 'ct' } & Container) | ({ kind: 'ai' } & AiKey);
 
-const LABEL = { vm: 'Virtual machine', ai: 'API key' };
+const LABEL = { vm: 'Virtual machine', ct: 'Container', ai: 'API key' };
 
 export function infoLine(r: Resource): string {
   if (r.kind === 'vm') return `${r.size} · ${r.image}${r.private_ip ? ` · ${r.private_ip}` : ''}`;
+  if (r.kind === 'ct') return `${sizeLabel(r)} · ${runtimeLabel(r.runtime)} · ${r.image}`;
   return `${r.prefix}… · $${r.spend_usd.toFixed(2)} of $${r.budget_usd}`;
 }
 
@@ -22,7 +25,9 @@ function VmSpark({ id }: { id: string }) {
 }
 
 export function ResourceCard({ r, onOpen }: { r: Resource; onOpen: () => void }) {
-  const failed = r.kind === 'vm' && r.status === 'failed';
+  const failed =
+    (r.kind === 'vm' && r.status === 'failed') ||
+    (r.kind === 'ct' && (r.status === 'failed' || r.status === 'unknown'));
   return (
     <button className="card" type="button" onClick={onOpen}>
       <div className="top">
@@ -38,7 +43,7 @@ export function ResourceCard({ r, onOpen }: { r: Resource; onOpen: () => void })
         </span>
       </div>
       <div className="info">{infoLine(r)}</div>
-      {failed && r.kind === 'vm' && r.status_message ? (
+      {failed && 'status_message' in r && r.status_message ? (
         <div className="err">{r.status_message}</div>
       ) : r.kind === 'vm' && r.status === 'running' ? (
         <VmSpark id={r.id} />
