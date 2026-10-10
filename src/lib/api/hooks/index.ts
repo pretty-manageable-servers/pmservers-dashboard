@@ -5,6 +5,7 @@ import type {
   AiKeyCreate,
   ContainerCreate,
   ContainerUpdate,
+  DatabaseCreate,
   RegistryCredentialCreate,
   SshKeyCreate,
   VmCreate,
@@ -24,6 +25,7 @@ export const keys = {
   access: ['access'] as const,
   registryCredentials: ['registry-credentials'] as const,
   containers: (p: string) => ['containers', p] as const,
+  databases: (p: string) => ['databases', p] as const,
   containerLogs: (p: string, id: string, previous: boolean) =>
     ['container-logs', p, id, previous] as const,
 };
@@ -224,11 +226,15 @@ export const useVmMetrics = (project: string, id: string | undefined, enabled: b
 
 function useInvalidating() {
   const qc = useQueryClient();
-  return (project: string, ...which: ('vms' | 'ai' | 'containers' | 'events' | 'usage')[]) => {
+  return (
+    project: string,
+    ...which: ('vms' | 'ai' | 'containers' | 'databases' | 'events' | 'usage')[]
+  ) => {
     const map = {
       vms: keys.vms,
       ai: keys.aiKeys,
       containers: keys.containers,
+      databases: keys.databases,
       events: keys.events,
       usage: keys.usage,
     };
@@ -527,3 +533,86 @@ export const useContainerLogs = (
     enabled: !!project && opts.enabled,
     refetchInterval: opts.live ? 5000 : false,
   });
+
+export const useDatabases = (project: string) =>
+  useQuery({
+    queryKey: keys.databases(project),
+    queryFn: async () =>
+      unwrap(
+        await api.GET('/v1/projects/{project_id}/databases', {
+          params: { path: { project_id: project } },
+        }),
+      ).items,
+    enabled: !!project,
+    refetchInterval: (query) =>
+      query.state.data?.some((d) => d.status === 'provisioning' || d.status === 'deleting')
+        ? 5000
+        : false,
+  });
+
+export function useCreateDatabase(project: string) {
+  const refresh = useInvalidating();
+  return useMutation({
+    mutationFn: async (body: DatabaseCreate) =>
+      unwrap(
+        await api.POST('/v1/projects/{project_id}/databases', {
+          params: { path: { project_id: project } },
+          body,
+        }),
+      ),
+    onSuccess: (d) => {
+      refresh(project, 'databases', 'events', 'usage');
+      toast(`Creating ${d.name}`, { description: 'This page updates when it is ready.' });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export function useSetDatabaseVector(project: string) {
+  const refresh = useInvalidating();
+  return useMutation({
+    mutationFn: async (v: { id: string; vector: boolean }) =>
+      unwrap(
+        await api.PATCH('/v1/projects/{project_id}/databases/{database_id}', {
+          params: { path: { project_id: project, database_id: v.id } },
+          body: { vector: v.vector },
+        }),
+      ),
+    onSuccess: (d) => {
+      refresh(project, 'databases', 'events');
+      toast(d.vector ? `Turning on vector for ${d.name}` : `Turned off vector for ${d.name}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export function useResetDatabasePassword(project: string) {
+  const refresh = useInvalidating();
+  return useMutation({
+    mutationFn: async (id: string) =>
+      unwrap(
+        await api.POST('/v1/projects/{project_id}/databases/{database_id}/reset-password', {
+          params: { path: { project_id: project, database_id: id } },
+        }),
+      ),
+    onSuccess: () => refresh(project, 'databases', 'events'),
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export function useDeleteDatabase(project: string) {
+  const refresh = useInvalidating();
+  return useMutation({
+    mutationFn: async (v: { id: string; name: string }) =>
+      unwrap(
+        await api.DELETE('/v1/projects/{project_id}/databases/{database_id}', {
+          params: { path: { project_id: project, database_id: v.id } },
+        }),
+      ),
+    onSuccess: (_d, v) => {
+      refresh(project, 'databases', 'events', 'usage');
+      toast(`Deleting ${v.name}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}

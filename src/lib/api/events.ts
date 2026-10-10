@@ -22,6 +22,7 @@ export function applyEvent(qc: QueryClient, e: StreamEvent) {
   for (const key of [
     keys.vms(p),
     keys.containers(p),
+    keys.databases(p),
     keys.aiKeys(p),
     keys.events(p),
     keys.usage(p),

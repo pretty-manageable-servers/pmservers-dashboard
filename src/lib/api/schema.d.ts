@@ -486,6 +486,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/projects/{project_id}/databases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        get: operations["listDatabases"];
+        put?: never;
+        post: operations["createDatabase"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/databases/{database_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                database_id: components["parameters"]["DatabaseId"];
+            };
+            cookie?: never;
+        };
+        get: operations["getDatabase"];
+        put?: never;
+        post?: never;
+        /** @description No backups. The data is lost. */
+        delete: operations["deleteDatabase"];
+        options?: never;
+        head?: never;
+        /** @description Turn vector on or off. 409 if a column or index uses vector. */
+        patch: operations["updateDatabase"];
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/databases/{database_id}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                database_id: components["parameters"]["DatabaseId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resetDatabasePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/projects/{project_id}/containers/{container_id}/logs": {
         parameters: {
             query?: {
@@ -696,6 +754,12 @@ export interface components {
                 vcpu: number;
                 memory_mib: number;
             }[];
+            database_sizes: {
+                /** @example pms-db-250m-512 */
+                id: string;
+                vcpu: number;
+                memory_mib: number;
+            }[];
             ai_models: {
                 id: string;
                 /** @enum {string} */
@@ -789,6 +853,49 @@ export interface components {
             };
             runtime?: components["schemas"]["Runtime"];
         };
+        /** @enum {string} */
+        DatabaseStatus: "provisioning" | "running" | "read_only" | "suspended" | "failed" | "deleting" | "unknown";
+        Database: {
+            /** @example db_01 */
+            id: string;
+            name: string;
+            /** @enum {string} */
+            engine: "postgres";
+            size: string;
+            vcpu: number | null;
+            memory_mib: number | null;
+            vector: boolean;
+            status: components["schemas"]["DatabaseStatus"];
+            status_message: string | null;
+            host: string;
+            port: number;
+            database: string;
+            user: string;
+            used_bytes: number;
+            /** @description The limit for all databases of the account. */
+            storage_limit_bytes: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        DatabaseSecret: components["schemas"]["Database"] & {
+            /** @description Shown one time. */
+            password: string;
+            /** @description Shown one time. */
+            connection_url: string;
+        };
+        DatabaseList: {
+            items: components["schemas"]["Database"][];
+        };
+        DatabaseCreate: {
+            name: string;
+            size?: string;
+            vector?: boolean;
+        };
+        DatabaseUpdate: {
+            vector?: boolean;
+        };
         ContainerLogs: {
             lines: {
                 time: string;
@@ -812,6 +919,7 @@ export interface components {
         VmId: string;
         KeyId: string;
         ContainerId: string;
+        DatabaseId: string;
     };
     requestBodies: never;
     headers: never;
@@ -1787,6 +1895,154 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Container"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listDatabases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Databases */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatabaseList"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    createDatabase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DatabaseCreate"];
+            };
+        };
+        responses: {
+            /** @description Creating. The response has the password one time. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatabaseSecret"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getDatabase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                database_id: components["parameters"]["DatabaseId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Database */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Database"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    deleteDatabase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                database_id: components["parameters"]["DatabaseId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleting */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    updateDatabase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                database_id: components["parameters"]["DatabaseId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DatabaseUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Database"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    resetDatabasePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                database_id: components["parameters"]["DatabaseId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A new password */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatabaseSecret"];
                 };
             };
             default: components["responses"]["Error"];

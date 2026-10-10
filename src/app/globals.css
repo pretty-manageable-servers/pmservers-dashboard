@@ -672,8 +672,12 @@ button {
 .dot.deleting::before {
   animation: pulse 1.2s ease-in-out infinite;
 }
-.dot.failed {
+.dot.failed,
+.dot.suspended {
   color: var(--bad);
+}
+.dot.read_only {
+  color: var(--warn);
 }
 .dot.stopped,
 .dot.sleeping,

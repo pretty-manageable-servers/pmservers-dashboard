@@ -7,7 +7,7 @@ import { UsageCard } from '@/components/UsageCard';
 import { ResourceCard, type Resource } from '@/components/ResourceCard';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { CardsSkeleton, EmptyState, ErrorState } from '@/components/States';
-import { useAiKeys, useContainers, useUsage, useVms } from '@/lib/api/hooks';
+import { useAiKeys, useContainers, useDatabases, useUsage, useVms } from '@/lib/api/hooks';
 import { useProject } from '@/lib/project';
 import { useNavActions } from '@/lib/nav-actions';
 
@@ -15,6 +15,7 @@ const FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'vm', label: 'VMs' },
   { id: 'ct', label: 'Containers' },
+  { id: 'db', label: 'Databases' },
   { id: 's3', label: 'Buckets', soon: true },
   { id: 'ai', label: 'AI keys' },
 ];
@@ -28,10 +29,12 @@ function Overview() {
   const keys = useAiKeys(project.id);
   // A 403 means no container access. Show no containers then, and no error.
   const containers = useContainers(project.id);
+  const databases = useDatabases(project.id);
 
   const all: Resource[] = [
     ...(vms.data ?? []).map((v) => ({ kind: 'vm' as const, ...v })),
     ...(containers.data ?? []).map((c) => ({ kind: 'ct' as const, ...c })),
+    ...(databases.data ?? []).map((d) => ({ kind: 'db' as const, ...d })),
     ...(keys.data ?? []).map((k) => ({ kind: 'ai' as const, ...k })),
   ];
   const shown = all.filter((r) => filter === 'all' || r.kind === filter);
@@ -139,6 +142,12 @@ function Overview() {
                 action="Create API key"
                 onAction={() => create('/ai', 'ai')}
               />
+            ) : filter === 'db' ? (
+              <EmptyState
+                text="No databases yet. Create a Postgres database for your containers."
+                action="Create database"
+                onAction={() => create('/databases', 'db')}
+              />
             ) : filter === 'ct' ? (
               <EmptyState
                 text="No containers yet. Create a container to run a worker, for example a bot."
@@ -159,7 +168,10 @@ function Overview() {
                   key={r.id}
                   r={r}
                   onOpen={() =>
-                    openResource({ vm: '/vms', ct: '/containers', ai: '/ai' }[r.kind], r.id)
+                    openResource(
+                      { vm: '/vms', ct: '/containers', db: '/databases', ai: '/ai' }[r.kind],
+                      r.id,
+                    )
                   }
                 />
               ))}

@@ -87,7 +87,8 @@ paths:
       responses:
         '200':
           {
-            description: The owner first, then the members,
+            description: The owner first,
+            then the members,
             content: { application/json: { schema: { $ref: '#/components/schemas/MemberList' } } },
           }
         default: { $ref: '#/components/responses/Error' }
@@ -110,7 +111,11 @@ paths:
     delete:
       operationId: removeMember
       responses:
-        '204': { description: Removed. The owner removes a member, or a member removes themselves to leave. }
+        '204':
+          {
+            description: Removed. The owner removes a member,
+            or a member removes themselves to leave.,
+          }
         default: { $ref: '#/components/responses/Error' }
   /v1/projects/{project_id}/usage:
     parameters: [{ $ref: '#/components/parameters/ProjectId' }]
@@ -389,7 +394,9 @@ paths:
       requestBody:
         required: true
         content:
-          { application/json: { schema: { $ref: '#/components/schemas/RegistryCredentialCreate' } } }
+          {
+            application/json: { schema: { $ref: '#/components/schemas/RegistryCredentialCreate' } },
+          }
       responses:
         '201':
           {
@@ -480,11 +487,91 @@ paths:
             content: { application/json: { schema: { $ref: '#/components/schemas/Container' } } },
           }
         default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/databases:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      operationId: listDatabases
+      responses:
+        '200':
+          {
+            description: Databases,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/DatabaseList' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createDatabase
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/DatabaseCreate' } } }
+      responses:
+        '202':
+          {
+            description: Creating. The response has the password one time.,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/DatabaseSecret' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/databases/{database_id}:
+    parameters:
+      [
+        { $ref: '#/components/parameters/ProjectId' },
+        { $ref: '#/components/parameters/DatabaseId' },
+      ]
+    get:
+      operationId: getDatabase
+      responses:
+        '200':
+          {
+            description: Database,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Database' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      operationId: updateDatabase
+      description: Turn vector on or off. 409 if a column or index uses vector.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/DatabaseUpdate' } } }
+      responses:
+        '202':
+          {
+            description: Updated,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Database' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: deleteDatabase
+      description: No backups. The data is lost.
+      responses:
+        '202': { description: Deleting }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/databases/{database_id}/reset-password:
+    parameters:
+      [
+        { $ref: '#/components/parameters/ProjectId' },
+        { $ref: '#/components/parameters/DatabaseId' },
+      ]
+    post:
+      operationId: resetDatabasePassword
+      responses:
+        '200':
+          {
+            description: A new password,
+            one time.,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/DatabaseSecret' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
   /v1/projects/{project_id}/containers/{container_id}/logs:
     parameters:
       - { $ref: '#/components/parameters/ProjectId' }
       - { $ref: '#/components/parameters/ContainerId' }
-      - { name: tail, in: query, schema: { type: integer, minimum: 1, maximum: 2000, default: 200 } }
+      - {
+          name: tail,
+          in: query,
+          schema: { type: integer, minimum: 1, maximum: 2000, default: 200 },
+        }
       - {
           name: previous,
           in: query,
@@ -509,6 +596,7 @@ components:
     VmId: { name: vm_id, in: path, required: true, schema: { type: string } }
     KeyId: { name: key_id, in: path, required: true, schema: { type: string } }
     ContainerId: { name: container_id, in: path, required: true, schema: { type: string } }
+    DatabaseId: { name: database_id, in: path, required: true, schema: { type: string } }
   responses:
     Error:
       description: Error
@@ -570,7 +658,11 @@ components:
         - type: object
           required: [invited]
           properties:
-            invited: { type: boolean, description: True if the user had no account and got an invite email. }
+            invited:
+              {
+                type: boolean,
+                description: True if the user had no account and got an invite email.,
+              }
     ProjectList:
       type: object
       required: [items]
@@ -751,7 +843,7 @@ components:
             secret: { type: string }
     Catalog:
       type: object
-      required: [vm_sizes, vm_images, container_sizes, ai_models, regions]
+      required: [vm_sizes, vm_images, container_sizes, database_sizes, ai_models, regions]
       properties:
         regions: { type: array, items: { type: string } }
         vm_sizes:
@@ -779,6 +871,15 @@ components:
             required: [id, vcpu, memory_mib]
             properties:
               id: { type: string, examples: [pms-c-250m-512] }
+              vcpu: { type: number }
+              memory_mib: { type: integer }
+        database_sizes:
+          type: array
+          items:
+            type: object
+            required: [id, vcpu, memory_mib]
+            properties:
+              id: { type: string, examples: [pms-db-250m-512] }
               vcpu: { type: number }
               memory_mib: { type: integer }
         ai_models:
@@ -890,6 +991,74 @@ components:
         registry_credential_id: { type: [string, 'null'] }
         env: { type: object, additionalProperties: { type: string } }
         runtime: { $ref: '#/components/schemas/Runtime' }
+    DatabaseStatus:
+      type: string
+      enum: [provisioning, running, read_only, suspended, failed, deleting, unknown]
+    Database:
+      type: object
+      required:
+        [
+          id,
+          name,
+          engine,
+          size,
+          vcpu,
+          memory_mib,
+          vector,
+          status,
+          status_message,
+          host,
+          port,
+          database,
+          user,
+          used_bytes,
+          storage_limit_bytes,
+          created_at,
+          updated_at,
+        ]
+      properties:
+        id: { type: string, examples: [db_01] }
+        name: { type: string }
+        engine: { type: string, enum: [postgres] }
+        size: { type: string }
+        vcpu: { type: [number, 'null'] }
+        memory_mib: { type: [integer, 'null'] }
+        vector: { type: boolean }
+        status: { $ref: '#/components/schemas/DatabaseStatus' }
+        status_message: { type: [string, 'null'] }
+        host: { type: string }
+        port: { type: integer }
+        database: { type: string }
+        user: { type: string }
+        used_bytes: { type: integer }
+        storage_limit_bytes:
+          { type: integer, description: The limit for all databases of the account. }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    DatabaseSecret:
+      allOf:
+        - $ref: '#/components/schemas/Database'
+        - type: object
+          required: [password, connection_url]
+          properties:
+            password: { type: string, description: Shown one time. }
+            connection_url: { type: string, description: Shown one time. }
+    DatabaseList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Database' } }
+    DatabaseCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        size: { type: string }
+        vector: { type: boolean }
+    DatabaseUpdate:
+      type: object
+      properties:
+        vector: { type: boolean }
     ContainerLogs:
       type: object
       required: [lines]

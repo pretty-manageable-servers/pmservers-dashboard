@@ -7,7 +7,7 @@ import { Home, Plus } from 'lucide-react';
 import { TABS } from './nav';
 import { TYPE_ICON } from './icons';
 import { projectHref, useProject } from '@/lib/project';
-import { useAiKeys, useContainers, useVms } from '@/lib/api/hooks';
+import { useAiKeys, useContainers, useDatabases, useVms } from '@/lib/api/hooks';
 
 export function CommandPalette({
   open,
@@ -21,6 +21,7 @@ export function CommandPalette({
   const vms = useVms(project.id);
   const keys = useAiKeys(project.id);
   const containers = useContainers(project.id);
+  const databases = useDatabases(project.id);
 
   const run = (fn: () => void) => () => {
     onOpenChange(false);
@@ -53,6 +54,14 @@ export function CommandPalette({
                   )}
                 >
                   Create container
+                </Item>
+                <Item
+                  icon={<Plus />}
+                  onSelect={run(() =>
+                    router.push(projectHref('/databases', project.id, { new: 'db' })),
+                  )}
+                >
+                  Create database
                 </Item>
                 <Item
                   icon={<Plus />}
@@ -95,6 +104,19 @@ export function CommandPalette({
                     )}
                   >
                     {c.name}
+                  </Item>
+                ))}
+                {databases.data?.map((d) => (
+                  <Item
+                    key={d.id}
+                    icon={TYPE_ICON.db}
+                    sub="Database"
+                    value={`${d.name} database`}
+                    onSelect={run(() =>
+                      router.push(projectHref('/databases', project.id, { r: d.id })),
+                    )}
+                  >
+                    {d.name}
                   </Item>
                 ))}
                 {keys.data?.map((k) => (

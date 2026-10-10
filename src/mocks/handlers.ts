@@ -7,6 +7,10 @@ import type {
   Container,
   ContainerCreate,
   ContainerUpdate,
+  Database,
+  DatabaseCreate,
+  DatabaseSecret,
+  DatabaseUpdate,
   Member,
   Project,
   RegistryCredential,
@@ -17,6 +21,7 @@ import type {
   Vm,
   VmCreate,
 } from '@/lib/api/types';
+import { validateDatabaseName } from '@/lib/databases';
 import {
   credentialsFor,
   imageHost,
@@ -28,6 +33,8 @@ import {
   catalog,
   computeUsage,
   containerSizeSpec,
+  databaseSizeSpec,
+  mockDatabase,
   LIMITS,
   projects as seedProjects,
   seedCredentials,
@@ -116,6 +123,31 @@ function accessError() {
 }
 
 const MAX_CONTAINERS = 2;
+const MAX_DATABASES = 1;
+
+const randomPassword = () =>
+  Array.from(
+    { length: 32 },
+    () => 'abcdefghijkmnpqrstuvwxyz23456789'[Math.floor(Math.random() * 32)],
+  ).join('');
+
+const withSecret = (d: Database, password: string): DatabaseSecret => ({
+  ...d,
+  password,
+  connection_url: `postgresql://${d.user}:${password}@${d.host}:${d.port}/${d.database}`,
+});
+
+function dbStatus(
+  x: Database,
+  s: ProjectState,
+  status: Database['status'],
+  message: string,
+  level: ApiEvent['level'] = 'info',
+) {
+  x.status = status;
+  x.updated_at = new Date().toISOString();
+  pushEvent(s, level, x.id, x.name, message);
+}
 
 /** Log lines that grow over time, one each 2 s since the container started. */
 function mockLogs(c: Container, previous: boolean) {
@@ -300,6 +332,7 @@ export const handlers = [
     state[p.id] = {
       vms: [],
       containers: [],
+      databases: [],
       aiKeys: [],
       events: [],
       metrics: {},
@@ -326,6 +359,13 @@ export const handlers = [
   }),
   http.delete(`${base}/projects/:pid`, async ({ params }) => {
     await delay(LATENCY);
+    const used = state[params.pid as string];
+    if (used?.databases.length)
+      return err(
+        409,
+        'conflict',
+        'Delete the VMs, containers, databases and AI keys of this project first.',
+      );
     projects = projects.filter((x) => x.id !== params.pid);
     delete state[params.pid as string];
     return new HttpResponse(null, { status: 202 });
@@ -722,6 +762,87 @@ export const handlers = [
     if (!c) return notFound();
     const previous = new URL(request.url).searchParams.get('previous') === 'true';
     return HttpResponse.json({ lines: mockLogs(c, previous) });
+  }),
+
+  // Databases
+  http.get(`${base}/projects/:pid/databases`, async ({ params }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    return s ? HttpResponse.json({ items: s.databases }) : notFound();
+  }),
+  http.post(`${base}/projects/:pid/databases`, async ({ params, request }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    if (!s) return notFound();
+    const body = (await request.json()) as DatabaseCreate;
+    const nameErr = validateDatabaseName(body.name);
+    if (nameErr) return err(422, 'validation_error', nameErr);
+    const spec = databaseSizeSpec(body.size ?? 'pms-db-250m-512');
+    if (!spec) return err(422, 'validation_error', 'Unknown size.');
+    const count = Object.values(state).reduce((a, x) => a + x.databases.length, 0);
+    if (count >= MAX_DATABASES)
+      return err(
+        409,
+        'quota_exceeded',
+        `You can have ${MAX_DATABASES} database. Delete one first.`,
+      );
+    if (s.databases.some((x) => x.name === body.name))
+      return err(409, 'conflict', 'A database with this name exists in this project.');
+    const dbId = id('db');
+    const x = mockDatabase(dbId, body.name, 'provisioning', 0, {
+      size: spec.id,
+      vcpu: spec.vcpu,
+      memory_mib: spec.memory_mib,
+      vector: !!body.vector,
+      status_message: 'Creating',
+    });
+    s.databases.push(x);
+    pushEvent(s, 'info', x.id, x.name, 'Creating database');
+    setTimeout(() => {
+      if (x.status !== 'provisioning') return;
+      x.status_message = null;
+      dbStatus(x, s, 'running', 'Database is running', 'success');
+    }, 2500);
+    return HttpResponse.json(withSecret(x, randomPassword()), { status: 202 });
+  }),
+  http.get(`${base}/projects/:pid/databases/:did`, async ({ params }) => {
+    await delay(LATENCY);
+    const x = state[params.pid as string]?.databases.find((y) => y.id === params.did);
+    return x ? HttpResponse.json(x) : notFound();
+  }),
+  http.patch(`${base}/projects/:pid/databases/:did`, async ({ params, request }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    const x = s?.databases.find((y) => y.id === params.did);
+    if (!s || !x) return notFound();
+    const body = (await request.json()) as DatabaseUpdate;
+    if (body.vector === false && x.name.includes('vec'))
+      return err(409, 'conflict', 'A column or index uses vector. Remove it first.');
+    if (body.vector !== undefined) x.vector = body.vector;
+    x.updated_at = new Date().toISOString();
+    pushEvent(s, 'info', x.id, x.name, body.vector ? 'Turning on vector' : 'Turned off vector');
+    return HttpResponse.json(x, { status: 202 });
+  }),
+  http.post(`${base}/projects/:pid/databases/:did/reset-password`, async ({ params }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    const x = s?.databases.find((y) => y.id === params.did);
+    if (!s || !x) return notFound();
+    pushEvent(s, 'info', x.id, x.name, 'Database password reset');
+    return HttpResponse.json(withSecret(x, randomPassword()));
+  }),
+  http.delete(`${base}/projects/:pid/databases/:did`, async ({ params }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    const x = s?.databases.find((y) => y.id === params.did);
+    if (!s || !x) return notFound();
+    x.status = 'deleting';
+    pushEvent(s, 'info', x.id, x.name, 'Deleting database');
+    setTimeout(() => {
+      s.databases = s.databases.filter((y) => y.id !== x.id);
+      pushEvent(s, 'info', x.id, x.name, 'Database deleted');
+    }, 2000);
+    return new HttpResponse(null, { status: 202 });
   }),
 
   // AI keys
