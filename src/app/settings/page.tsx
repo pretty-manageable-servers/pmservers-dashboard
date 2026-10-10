@@ -7,6 +7,7 @@ import { PageHead } from '@/components/PageHead';
 import { Modal } from '@/components/Modal';
 import { MembersCard } from '@/components/MembersCard';
 import { SshKeysCard } from '@/components/SshKeysCard';
+import { RegistryCredentialsCard } from '@/components/RegistryCredentialsCard';
 import { useSession } from '@/lib/auth';
 import { useDeleteProject, useMe, useRenameProject } from '@/lib/api/hooks';
 import { useProject } from '@/lib/project';
@@ -116,6 +117,7 @@ function Settings() {
       </section>
       <MembersCard />
       <SshKeysCard />
+      <RegistryCredentialsCard />
       {project.role === 'owner' && (
         <section
           className="ucard"
@@ -128,7 +130,7 @@ function Settings() {
           <div>
             <b>Delete project</b>
             <div className="muted" style={{ fontSize: 13 }}>
-              Deletes all VMs and keys in {project.name}. You cannot undo this.
+              Delete the VMs, containers and AI keys in {project.name} first. You cannot undo this.
             </div>
           </div>
           <div>
