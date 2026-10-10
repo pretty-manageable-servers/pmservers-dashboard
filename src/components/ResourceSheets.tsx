@@ -455,6 +455,31 @@ export function ContainerSheet({ c, onClose }: { c: Container; onClose: () => vo
             </>,
           ],
           ['Runtime', runtimeLabel(c.runtime)],
+          [
+            'Ports',
+            c.ports.length === 0 ? (
+              'None'
+            ) : (
+              <span key="p" style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap' }}>
+                {c.ports.map((p) => (
+                  <span key={p} className="badge mono">
+                    {p}
+                  </span>
+                ))}
+                <span className="hint">Private. Same project only.</span>
+              </span>
+            ),
+          ],
+          ...(c.internal_host && c.ports.length > 0
+            ? [
+                [
+                  'Internal address',
+                  <span key="h" className="mono">
+                    {c.ports.map((p) => `${c.internal_host}:${p}`).join(', ')}
+                  </span>,
+                ] as [string, React.ReactNode],
+              ]
+            : []),
           ['Registry credential', credential],
           [
             'Variables',

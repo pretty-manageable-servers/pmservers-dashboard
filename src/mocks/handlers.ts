@@ -685,6 +685,8 @@ export const handlers = [
       registry_credential_id: body.registry_credential_id ?? null,
       env_names: Object.keys(body.env ?? {}).sort(),
       runtime: body.runtime ?? 'gvisor',
+      ports: body.ports ?? [],
+      internal_host: body.ports?.length ? body.name : null,
       status: 'provisioning',
       status_message: 'Creating',
       created_at: now,
@@ -724,6 +726,10 @@ export const handlers = [
       c.registry_credential_id = body.registry_credential_id;
     if (body.env !== undefined) c.env_names = Object.keys(body.env).sort();
     if (body.runtime !== undefined) c.runtime = body.runtime;
+    if (body.ports !== undefined) {
+      c.ports = body.ports;
+      c.internal_host = body.ports.length ? c.name : null;
+    }
     c.updated_at = new Date().toISOString();
     pushEvent(s, 'info', c.id, c.name, 'Redeploying container');
     startContainer(c, s);

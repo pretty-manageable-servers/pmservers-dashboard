@@ -136,6 +136,8 @@ const container = (
     registry_credential_id: null,
     env_names: [],
     runtime: 'gvisor',
+    ports: [],
+    internal_host: null,
     status,
     status_message: null,
     created_at: ago(age),

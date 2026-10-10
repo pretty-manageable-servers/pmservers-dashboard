@@ -6,12 +6,22 @@ import {
   CredentialField,
   EnvEditor,
   ImageField,
+  PortsField,
   RuntimeField,
   SizeField,
   useCredentialChoice,
 } from './ContainerFields';
 import { useUpdateContainer } from '@/lib/api/hooks';
-import { changedFields, envMap, validateEnv, validateImage, type EnvRow } from '@/lib/containers';
+import {
+  changedFields,
+  envMap,
+  parsePorts,
+  portsText as formatPorts,
+  validateEnv,
+  validateImage,
+  validatePorts,
+  type EnvRow,
+} from '@/lib/containers';
 import { useProject } from '@/lib/project';
 import type { Container, Runtime } from '@/lib/api/types';
 
@@ -29,18 +39,21 @@ export function EditContainerDialog({
   const [picked, setPicked] = useState<string | null>(c.registry_credential_id);
   const { chosen } = useCredentialChoice(image, picked);
   const [runtime, setRuntime] = useState<Runtime>(c.runtime);
+  const [portsText, setPortsText] = useState(formatPorts(c.ports));
   const [replaceEnv, setReplaceEnv] = useState(false);
   // The API never returns values. Start with the names and empty values.
   const [env, setEnv] = useState<EnvRow[]>(c.env_names.map((name) => ({ name, value: '' })));
   const [touched, setTouched] = useState(false);
 
   const imageErr = validateImage(image);
+  const portsErr = validatePorts(portsText);
   const envErr = replaceEnv ? validateEnv(env) : null;
   const body = changedFields(c, {
     image,
     size,
     credential: chosen,
     runtime,
+    ports: parsePorts(portsText) ?? c.ports,
     env: replaceEnv ? envMap(env) : null,
   });
   const nothing = Object.keys(body).length === 0;
@@ -48,7 +61,7 @@ export function EditContainerDialog({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (imageErr || envErr || nothing) return;
+    if (imageErr || envErr || portsErr || nothing) return;
     update.mutate({ id: c.id, body }, { onSuccess: () => onOpenChange(false) });
   };
 
@@ -70,6 +83,13 @@ export function EditContainerDialog({
         <SizeField size={size} setSize={setSize} />
         <CredentialField id="ct-edit-cred" image={image} chosen={chosen} setPicked={setPicked} />
         <RuntimeField id="ct-edit-runtime" runtime={runtime} setRuntime={setRuntime} />
+        <PortsField
+          id="ct-edit-ports"
+          value={portsText}
+          setValue={setPortsText}
+          error={portsErr}
+          touched={touched}
+        />
         <div className="field" role="radiogroup" aria-label="Environment variables">
           <span className="fl">Environment variables</span>
           <label className="hint" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

@@ -15,6 +15,29 @@ export function validateContainerName(name: string): string | null {
     : 'Use 1 to 63 lowercase letters, numbers or dashes. Start with a letter.';
 }
 
+export const MAX_PORTS = 5;
+
+/** Read "8080, 9000" as a list of numbers. Returns null if a part is not a whole number. */
+export function parsePorts(text: string): number[] | null {
+  const parts = text
+    .split(/[\s,]+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const ports = parts.map((p) => (/^[0-9]{1,5}$/.test(p) ? Number(p) : NaN));
+  return ports.some(Number.isNaN) ? null : ports;
+}
+
+export function validatePorts(text: string): string | null {
+  const ports = parsePorts(text);
+  if (!ports) return 'Enter port numbers with commas. Example: 8080, 9000';
+  if (ports.length > MAX_PORTS) return `You can open ${MAX_PORTS} ports at most.`;
+  if (ports.some((p) => p < 1 || p > 65535)) return 'A port must be from 1 to 65535.';
+  if (new Set(ports).size !== ports.length) return 'A port is in the list two times.';
+  return null;
+}
+
+export const portsText = (ports: number[]) => ports.join(', ');
+
 export function validateImage(image: string): string | null {
   if (image.length > 512) return 'The image reference is too long.';
   return IMAGE.test(image) ? null : 'Enter a valid image. Example: ghcr.io/owner/app:1.0';
@@ -88,6 +111,7 @@ export function changedFields(
     size: string;
     credential: string | null;
     runtime: Runtime;
+    ports: number[];
     env: Record<string, string> | null;
   },
 ): ContainerUpdate {
@@ -96,6 +120,7 @@ export function changedFields(
   if (next.size !== c.size) body.size = next.size;
   if (next.credential !== c.registry_credential_id) body.registry_credential_id = next.credential;
   if (next.runtime !== c.runtime) body.runtime = next.runtime;
+  if (next.ports.join() !== c.ports.join()) body.ports = next.ports;
   if (next.env) body.env = next.env;
   return body;
 }

@@ -127,6 +127,38 @@ export function RuntimeField(props: {
   );
 }
 
+export function PortsField(props: {
+  id: string;
+  value: string;
+  setValue: (v: string) => void;
+  error: string | null;
+  touched: boolean;
+}) {
+  return (
+    <div className="field">
+      <label htmlFor={props.id}>Ports</label>
+      <input
+        id={props.id}
+        value={props.value}
+        onChange={(e) => props.setValue(e.target.value)}
+        placeholder="8080, 9000"
+        autoComplete="off"
+        spellCheck={false}
+        className="mono"
+        aria-invalid={props.touched && !!props.error}
+      />
+      {props.touched && props.error ? (
+        <span className="err-t">{props.error}</span>
+      ) : (
+        <span className="hint">
+          Optional. Up to 5 TCP ports. Only containers in the same project can connect. Leave empty
+          for no ports.
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function EnvEditor(props: {
   rows: EnvRow[];
   setRows: (rows: EnvRow[]) => void;

@@ -5,9 +5,11 @@ import {
   envMap,
   imageHost,
   normalizeHost,
+  parsePorts,
   validateContainerName,
   validateEnv,
   validateImage,
+  validatePorts,
 } from '@/lib/containers';
 import type { Container } from '@/lib/api/types';
 
@@ -95,12 +97,14 @@ describe('changedFields', () => {
     size: 'pms-c-250m-512',
     registry_credential_id: 'reg_1',
     runtime: 'gvisor',
+    ports: [8080],
   } as Container;
   const same = {
     image: c.image,
     size: c.size,
     credential: 'reg_1',
     runtime: 'gvisor' as const,
+    ports: [8080],
     env: null,
   };
   it('sends nothing when nothing changed', () => {
@@ -112,7 +116,26 @@ describe('changedFields', () => {
       registry_credential_id: null,
     });
   });
+  it('sends ports when they change, [] to clear them', () => {
+    expect(changedFields(c, { ...same, ports: [8080, 9000] })).toEqual({ ports: [8080, 9000] });
+    expect(changedFields(c, { ...same, ports: [] })).toEqual({ ports: [] });
+  });
   it('sends env only to replace all variables', () => {
     expect(changedFields(c, { ...same, env: {} })).toEqual({ env: {} });
+  });
+});
+
+describe('validatePorts', () => {
+  it('accepts empty and valid lists', () => {
+    expect(validatePorts('')).toBeNull();
+    expect(validatePorts('8080, 9000 5432')).toBeNull();
+    expect(parsePorts('8080, 9000')).toEqual([8080, 9000]);
+  });
+  it('rejects bad lists', () => {
+    expect(validatePorts('abc')).not.toBeNull();
+    expect(validatePorts('0')).not.toBeNull();
+    expect(validatePorts('65536')).not.toBeNull();
+    expect(validatePorts('80, 80')).not.toBeNull();
+    expect(validatePorts('1,2,3,4,5,6')).not.toBeNull();
   });
 });

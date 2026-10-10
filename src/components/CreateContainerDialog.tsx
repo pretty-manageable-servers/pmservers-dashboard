@@ -6,6 +6,7 @@ import {
   CredentialField,
   EnvEditor,
   ImageField,
+  PortsField,
   RuntimeField,
   SizeField,
   useCredentialChoice,
@@ -14,9 +15,11 @@ import { useCatalog, useCreateContainer } from '@/lib/api/hooks';
 import { chooseId } from '@/lib/catalog';
 import {
   envMap,
+  parsePorts,
   validateContainerName,
   validateEnv,
   validateImage,
+  validatePorts,
   type EnvRow,
 } from '@/lib/containers';
 import { useProject } from '@/lib/project';
@@ -40,16 +43,18 @@ export function CreateContainerDialog({
   const { chosen } = useCredentialChoice(image, picked);
   const [env, setEnv] = useState<EnvRow[]>([]);
   const [runtime, setRuntime] = useState<Runtime>('gvisor');
+  const [portsText, setPortsText] = useState('');
   const [touched, setTouched] = useState(false);
 
   const nameErr = validateContainerName(name);
   const imageErr = validateImage(image);
   const envErr = validateEnv(env);
+  const portsErr = validatePorts(portsText);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (nameErr || imageErr || envErr || !size) return;
+    if (nameErr || imageErr || envErr || portsErr || !size) return;
     create.mutate(
       {
         name,
@@ -59,6 +64,7 @@ export function CreateContainerDialog({
         registry_credential_id: chosen,
         env: envMap(env),
         runtime,
+        ports: parsePorts(portsText) ?? [],
       },
       { onSuccess: () => onOpenChange(false) },
     );
@@ -93,6 +99,13 @@ export function CreateContainerDialog({
         <SizeField size={size} setSize={setSize} />
         <CredentialField id="ct-cred" image={image} chosen={chosen} setPicked={setPicked} />
         <RuntimeField id="ct-runtime" runtime={runtime} setRuntime={setRuntime} />
+        <PortsField
+          id="ct-ports"
+          value={portsText}
+          setValue={setPortsText}
+          error={portsErr}
+          touched={touched}
+        />
         <EnvEditor rows={env} setRows={setEnv} error={envErr} touched={touched} />
       </form>
       <footer>

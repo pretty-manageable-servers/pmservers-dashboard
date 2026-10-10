@@ -822,6 +822,10 @@ export interface components {
             /** @description Values are never returned. */
             env_names: string[];
             runtime: components["schemas"]["Runtime"];
+            /** @description Private TCP ports. At most 5. */
+            ports: number[];
+            /** @description The name that other containers in the same project use, as host:port. Null when the container has no ports. */
+            internal_host: string | null;
             status: components["schemas"]["Status"];
             status_message: string | null;
             /** Format: date-time */
@@ -843,6 +847,8 @@ export interface components {
                 [key: string]: string;
             };
             runtime?: components["schemas"]["Runtime"];
+            /** @description Private TCP ports. In an update, [] removes all ports. Omit to keep them. */
+            ports?: number[];
         };
         ContainerUpdate: {
             image?: string;
@@ -852,6 +858,8 @@ export interface components {
                 [key: string]: string;
             };
             runtime?: components["schemas"]["Runtime"];
+            /** @description Private TCP ports. In an update, [] removes all ports. Omit to keep them. */
+            ports?: number[];
         };
         /** @enum {string} */
         DatabaseStatus: "provisioning" | "running" | "read_only" | "suspended" | "failed" | "deleting" | "unknown";

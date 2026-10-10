@@ -87,7 +87,8 @@ paths:
       responses:
         '200':
           {
-            description: The owner first, then the members,
+            description: The owner first,
+            then the members,
             content: { application/json: { schema: { $ref: '#/components/schemas/MemberList' } } },
           }
         default: { $ref: '#/components/responses/Error' }
@@ -110,7 +111,11 @@ paths:
     delete:
       operationId: removeMember
       responses:
-        '204': { description: Removed. The owner removes a member, or a member removes themselves to leave. }
+        '204':
+          {
+            description: Removed. The owner removes a member,
+            or a member removes themselves to leave.,
+          }
         default: { $ref: '#/components/responses/Error' }
   /v1/projects/{project_id}/usage:
     parameters: [{ $ref: '#/components/parameters/ProjectId' }]
@@ -389,7 +394,9 @@ paths:
       requestBody:
         required: true
         content:
-          { application/json: { schema: { $ref: '#/components/schemas/RegistryCredentialCreate' } } }
+          {
+            application/json: { schema: { $ref: '#/components/schemas/RegistryCredentialCreate' } },
+          }
       responses:
         '201':
           {
@@ -559,7 +566,11 @@ paths:
     parameters:
       - { $ref: '#/components/parameters/ProjectId' }
       - { $ref: '#/components/parameters/ContainerId' }
-      - { name: tail, in: query, schema: { type: integer, minimum: 1, maximum: 2000, default: 200 } }
+      - {
+          name: tail,
+          in: query,
+          schema: { type: integer, minimum: 1, maximum: 2000, default: 200 },
+        }
       - {
           name: previous,
           in: query,
@@ -646,7 +657,11 @@ components:
         - type: object
           required: [invited]
           properties:
-            invited: { type: boolean, description: True if the user had no account and got an invite email. }
+            invited:
+              {
+                type: boolean,
+                description: True if the user had no account and got an invite email.,
+              }
     ProjectList:
       type: object
       required: [items]
@@ -931,6 +946,8 @@ components:
           registry_credential_id,
           env_names,
           runtime,
+          ports,
+          internal_host,
           status,
           status_message,
           created_at,
@@ -947,6 +964,12 @@ components:
         registry_credential_id: { type: [string, 'null'] }
         env_names: { type: array, items: { type: string }, description: Values are never returned. }
         runtime: { $ref: '#/components/schemas/Runtime' }
+        ports: { type: array, items: { type: integer }, description: Private TCP ports. At most 5. }
+        internal_host:
+          type: [string, 'null']
+          description: >-
+            The name that other containers in the same project use, as host:port.
+            Null when the container has no ports.
         status: { $ref: '#/components/schemas/Status' }
         status_message: { type: [string, 'null'] }
         created_at: { type: string, format: date-time }
@@ -967,6 +990,12 @@ components:
         registry_credential_id: { type: [string, 'null'] }
         env: { type: object, additionalProperties: { type: string } }
         runtime: { $ref: '#/components/schemas/Runtime' }
+        ports:
+          type: array
+          items: { type: integer, minimum: 1, maximum: 65535 }
+          maxItems: 5
+          uniqueItems: true
+          description: Private TCP ports. In an update, [] removes all ports. Omit to keep them.
     ContainerUpdate:
       type: object
       properties:
@@ -975,6 +1004,12 @@ components:
         registry_credential_id: { type: [string, 'null'] }
         env: { type: object, additionalProperties: { type: string } }
         runtime: { $ref: '#/components/schemas/Runtime' }
+        ports:
+          type: array
+          items: { type: integer, minimum: 1, maximum: 65535 }
+          maxItems: 5
+          uniqueItems: true
+          description: Private TCP ports. In an update, [] removes all ports. Omit to keep them.
     DatabaseStatus:
       type: string
       enum: [provisioning, running, read_only, suspended, failed, deleting, unknown]
