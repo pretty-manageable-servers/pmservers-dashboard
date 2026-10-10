@@ -19,7 +19,7 @@ export function CreateDatabaseDialog({
 }) {
   const { project } = useProject();
   const catalog = useCatalog();
-  const create = useCreateDatabase(project.id);
+  const create = useCreateDatabase(project.id, onCreated);
   const [name, setName] = useState('db-1');
   const [pickedSize, setSize] = useState<string | null>(null);
   const sizes = catalog.data?.database_sizes;
@@ -31,22 +31,14 @@ export function CreateDatabaseDialog({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (nameErr || !size) return;
-    create.mutate(
-      { name, size, vector },
-      {
-        onSuccess: (d) => {
-          onOpenChange(false);
-          onCreated(d);
-        },
-      },
-    );
+    if (create.isPending || nameErr || !size) return;
+    create.mutate({ name, size, vector }, { onSuccess: () => onOpenChange(false) });
   };
 
   return (
     <Modal
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(o) => !create.isPending && onOpenChange(o)}
       title="Create database"
       description="Postgres 18. It takes about one minute to start. There are no backups."
     >
@@ -92,8 +84,13 @@ export function CreateDatabaseDialog({
         </div>
       </form>
       <footer>
-        <span className="cost">Counts against project limits</span>
-        <button className="btn" type="button" onClick={() => onOpenChange(false)}>
+        <span className="cost">Counts against the limits of the project owner</span>
+        <button
+          className="btn"
+          type="button"
+          disabled={create.isPending}
+          onClick={() => onOpenChange(false)}
+        >
           Cancel
         </button>
         <button className="btn primary" form="db-form" type="submit" disabled={create.isPending}>

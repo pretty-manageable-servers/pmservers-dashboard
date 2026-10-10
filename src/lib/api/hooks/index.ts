@@ -6,6 +6,7 @@ import type {
   ContainerCreate,
   ContainerUpdate,
   DatabaseCreate,
+  DatabaseSecret,
   RegistryCredentialCreate,
   SshKeyCreate,
   VmCreate,
@@ -550,9 +551,15 @@ export const useDatabases = (project: string) =>
         : false,
   });
 
-export function useCreateDatabase(project: string) {
+/**
+ * `onSecret` is a hook option, not a `mutate` option: `mutate` callbacks do not run after the
+ * component unmounts, and the one-time password would be lost.
+ */
+export function useCreateDatabase(project: string, onSecret: (d: DatabaseSecret) => void) {
   const refresh = useInvalidating();
   return useMutation({
+    // Do not keep the password in the mutation cache.
+    gcTime: 0,
     mutationFn: async (body: DatabaseCreate) =>
       unwrap(
         await api.POST('/v1/projects/{project_id}/databases', {
@@ -563,6 +570,7 @@ export function useCreateDatabase(project: string) {
     onSuccess: (d) => {
       refresh(project, 'databases', 'events', 'usage');
       toast(`Creating ${d.name}`, { description: 'This page updates when it is ready.' });
+      onSecret(d);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -586,16 +594,20 @@ export function useSetDatabaseVector(project: string) {
   });
 }
 
-export function useResetDatabasePassword(project: string) {
+export function useResetDatabasePassword(project: string, onSecret: (d: DatabaseSecret) => void) {
   const refresh = useInvalidating();
   return useMutation({
+    gcTime: 0,
     mutationFn: async (id: string) =>
       unwrap(
         await api.POST('/v1/projects/{project_id}/databases/{database_id}/reset-password', {
           params: { path: { project_id: project, database_id: id } },
         }),
       ),
-    onSuccess: () => refresh(project, 'databases', 'events'),
+    onSuccess: (d) => {
+      refresh(project, 'databases', 'events');
+      onSecret(d);
+    },
     onError: (e) => toast.error(e.message),
   });
 }

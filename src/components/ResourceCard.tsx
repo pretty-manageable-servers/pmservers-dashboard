@@ -34,7 +34,10 @@ export function ResourceCard({ r, onOpen }: { r: Resource; onOpen: () => void })
   const failed =
     (r.kind === 'vm' && r.status === 'failed') ||
     ((r.kind === 'ct' || r.kind === 'db') &&
-      (r.status === 'failed' || r.status === 'unknown' || r.status === 'suspended'));
+      (r.status === 'failed' ||
+        r.status === 'unknown' ||
+        r.status === 'suspended' ||
+        r.status === 'read_only'));
   return (
     <button className="card" type="button" onClick={onOpen}>
       <div className="top">

@@ -39,7 +39,13 @@ function Overview() {
   ];
   const shown = all.filter((r) => filter === 'all' || r.kind === filter);
   const running = all.filter((r) => r.status === 'running').length;
-  const issues = all.filter((r) => r.status === 'failed' || r.status === 'unknown').length;
+  const issues = all.filter(
+    (r) =>
+      r.status === 'failed' ||
+      r.status === 'unknown' ||
+      r.status === 'suspended' ||
+      r.status === 'read_only',
+  ).length;
   const u = usage.data;
 
   return (

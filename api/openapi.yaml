@@ -87,8 +87,7 @@ paths:
       responses:
         '200':
           {
-            description: The owner first,
-            then the members,
+            description: The owner first, then the members,
             content: { application/json: { schema: { $ref: '#/components/schemas/MemberList' } } },
           }
         default: { $ref: '#/components/responses/Error' }
@@ -111,11 +110,7 @@ paths:
     delete:
       operationId: removeMember
       responses:
-        '204':
-          {
-            description: Removed. The owner removes a member,
-            or a member removes themselves to leave.,
-          }
+        '204': { description: Removed. The owner removes a member, or a member removes themselves to leave. }
         default: { $ref: '#/components/responses/Error' }
   /v1/projects/{project_id}/usage:
     parameters: [{ $ref: '#/components/parameters/ProjectId' }]
@@ -394,9 +389,7 @@ paths:
       requestBody:
         required: true
         content:
-          {
-            application/json: { schema: { $ref: '#/components/schemas/RegistryCredentialCreate' } },
-          }
+          { application/json: { schema: { $ref: '#/components/schemas/RegistryCredentialCreate' } } }
       responses:
         '201':
           {
@@ -507,7 +500,7 @@ paths:
       responses:
         '202':
           {
-            description: Creating. The response has the password one time.,
+            description: 'Creating. The response has the password one time.',
             content:
               { application/json: { schema: { $ref: '#/components/schemas/DatabaseSecret' } } },
           }
@@ -557,8 +550,7 @@ paths:
       responses:
         '200':
           {
-            description: A new password,
-            one time.,
+            description: 'A new password, one time.',
             content:
               { application/json: { schema: { $ref: '#/components/schemas/DatabaseSecret' } } },
           }
@@ -567,11 +559,7 @@ paths:
     parameters:
       - { $ref: '#/components/parameters/ProjectId' }
       - { $ref: '#/components/parameters/ContainerId' }
-      - {
-          name: tail,
-          in: query,
-          schema: { type: integer, minimum: 1, maximum: 2000, default: 200 },
-        }
+      - { name: tail, in: query, schema: { type: integer, minimum: 1, maximum: 2000, default: 200 } }
       - {
           name: previous,
           in: query,
@@ -658,11 +646,7 @@ components:
         - type: object
           required: [invited]
           properties:
-            invited:
-              {
-                type: boolean,
-                description: True if the user had no account and got an invite email.,
-              }
+            invited: { type: boolean, description: True if the user had no account and got an invite email. }
     ProjectList:
       type: object
       required: [items]

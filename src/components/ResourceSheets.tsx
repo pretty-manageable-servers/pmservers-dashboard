@@ -512,7 +512,7 @@ export function DatabaseSheet({
 }) {
   const { project } = useProject();
   const vector = useSetDatabaseVector(project.id);
-  const reset = useResetDatabasePassword(project.id);
+  const reset = useResetDatabasePassword(project.id, onSecret);
   const del = useDeleteDatabase(project.id);
   const [confirm, setConfirm] = useState<'reset' | 'delete' | null>(null);
   const deleting = d.status === 'deleting';
@@ -532,7 +532,7 @@ export function DatabaseSheet({
         <button
           className="btn sm"
           type="button"
-          disabled={deleting || vector.isPending}
+          disabled={d.status !== 'running' || vector.isPending}
           onClick={() => vector.mutate({ id: d.id, vector: !d.vector })}
         >
           {d.vector ? 'Turn off vector' : 'Turn on vector'}
@@ -589,7 +589,9 @@ export function DatabaseSheet({
       </div>
       <Kv
         rows={[
-          ...(d.status_message ? [['Status', d.status_message] as [string, string]] : []),
+          ...(d.status_message && !['failed', 'unknown', 'suspended'].includes(d.status)
+            ? [['Status', d.status_message] as [string, string]]
+            : []),
           [
             'Host',
             <span className="mono" key="h">
@@ -636,14 +638,7 @@ export function DatabaseSheet({
         description="The old password stops working in a few seconds. Apps that use it will lose access."
         confirmLabel="Reset password"
         pending={reset.isPending}
-        onConfirm={() =>
-          reset.mutate(d.id, {
-            onSuccess: (s) => {
-              setConfirm(null);
-              onSecret(s);
-            },
-          })
-        }
+        onConfirm={() => reset.mutate(d.id, { onSuccess: () => setConfirm(null) })}
       />
       <ConfirmDialog
         open={confirm === 'delete'}

@@ -2036,7 +2036,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description A new password */
+            /** @description A new password, one time. */
             200: {
                 headers: {
                     [name: string]: unknown;
