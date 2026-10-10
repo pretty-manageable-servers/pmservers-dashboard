@@ -9,7 +9,7 @@ import {
 } from '@/lib/api/hooks';
 import type { RegistryCredential } from '@/lib/api/types';
 import { normalizeHost } from '@/lib/containers';
-import { timeAgo } from '@/lib/utils';
+import { timeAgoLong } from '@/lib/utils';
 
 const HOST = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:[0-9]{1,5})?$/;
 
@@ -72,7 +72,7 @@ export function RegistryCredentialsCard() {
             >
               <b>{c.name}</b>
               <span className="mono muted" style={{ flex: '1 1 240px', wordBreak: 'break-all' }}>
-                {c.username}@{c.host} · {timeAgo(c.created_at)} ago
+                {c.username}@{c.host} · {timeAgoLong(c.created_at)}
               </span>
               <button className="btn sm danger" type="button" onClick={() => setRemoving(c)}>
                 Delete

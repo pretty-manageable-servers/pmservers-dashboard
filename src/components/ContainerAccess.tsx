@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { PageHead } from './PageHead';
 import { useRequestAccess } from '@/lib/api/hooks';
 import type { Access } from '@/lib/api/types';
-import { timeAgo } from '@/lib/utils';
+import { timeAgoLong } from '@/lib/utils';
 
 const DESCRIPTION = 'Workers that run your image all the time, for example a Discord bot.';
 
@@ -85,8 +85,8 @@ export function AccessState({ access, member }: { access?: Access; member?: bool
           <>
             <b>Your request is waiting for review.</b>
             <span className="muted">
-              Sent {access.requested_at ? `${timeAgo(access.requested_at)} ago` : ''}. This page
-              updates when we decide.
+              Sent {access.requested_at ? timeAgoLong(access.requested_at).toLowerCase() : ''}. This
+              page updates when we decide.
             </span>
             {access.reason && (
               <blockquote className="hint" style={{ margin: 0 }}>

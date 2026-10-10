@@ -23,7 +23,7 @@ import {
 } from '@/lib/api/hooks';
 import { projectHref, useProject } from '@/lib/project';
 import { isBusy } from '@/lib/status';
-import { timeAgo } from '@/lib/utils';
+import { timeAgo, timeAgoLong } from '@/lib/utils';
 import { runtimeLabel, sizeLabel } from '@/lib/containers';
 import type { AiKey, Container, Vm } from '@/lib/api/types';
 
@@ -430,7 +430,7 @@ export function ContainerSheet({ c, onClose }: { c: Container; onClose: () => vo
       <ContainerLogs c={c} />
       <Kv
         rows={[
-          ['Status', c.status_message ?? '—'],
+          ...(c.status_message ? [['Status', c.status_message] as [string, string]] : []),
           [
             'Image',
             <span className="mono" key="i" style={{ wordBreak: 'break-all' }}>
@@ -461,8 +461,8 @@ export function ContainerSheet({ c, onClose }: { c: Container; onClose: () => vo
               </span>
             ),
           ],
-          ['Created', `${timeAgo(c.created_at)} ago`],
-          ['Updated', `${timeAgo(c.updated_at)} ago`],
+          ['Created', timeAgoLong(c.created_at)],
+          ['Updated', timeAgoLong(c.updated_at)],
         ]}
       />
       {editing && (
