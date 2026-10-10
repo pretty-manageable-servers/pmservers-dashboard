@@ -854,9 +854,16 @@ export interface components {
             image?: string;
             size?: string;
             registry_credential_id?: string | null;
+            /** @description Replaces all variables. Do not send it with env_set or env_unset. */
             env?: {
                 [key: string]: string;
             };
+            /** @description Adds or changes only these variables. */
+            env_set?: {
+                [key: string]: string;
+            };
+            /** @description Removes only these variables. */
+            env_unset?: string[];
             runtime?: components["schemas"]["Runtime"];
             /** @description Private TCP ports. In an update, [] removes all ports. Omit to keep them. */
             ports?: number[];

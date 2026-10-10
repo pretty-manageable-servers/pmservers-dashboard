@@ -1767,7 +1767,30 @@ svg.spark {
 }
 .env-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  /* A fixed last column, so "Remove", "Undo" and the X button do not move the value boxes. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 72px;
   gap: 8px;
   align-items: center;
+}
+.env-row > .btn {
+  justify-content: center;
+}
+.env-row > .iconbtn {
+  justify-self: center;
+}
+@media (max-width: 560px) {
+  /* The name on its own line, then the value and the button. */
+  .env-row {
+    grid-template-columns: minmax(0, 1fr) 72px;
+    row-gap: 4px;
+  }
+  .env-row > :first-child {
+    grid-column: 1 / -1;
+  }
+  .dialog footer {
+    flex-wrap: wrap;
+  }
+  .dialog footer .cost {
+    flex-basis: 100%;
+  }
 }

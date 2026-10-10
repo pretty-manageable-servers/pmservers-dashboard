@@ -724,7 +724,15 @@ export const handlers = [
     if (body.image !== undefined) c.image = body.image;
     if (body.registry_credential_id !== undefined)
       c.registry_credential_id = body.registry_credential_id;
+    if (body.env !== undefined && (body.env_set || body.env_unset))
+      return err(422, 'validation_error', 'Send env, or env_set and env_unset. Not both.');
     if (body.env !== undefined) c.env_names = Object.keys(body.env).sort();
+    if (body.env_set || body.env_unset) {
+      const names = new Set(c.env_names);
+      for (const n of body.env_unset ?? []) names.delete(n);
+      for (const n of Object.keys(body.env_set ?? {})) names.add(n);
+      c.env_names = [...names].sort();
+    }
     if (body.runtime !== undefined) c.runtime = body.runtime;
     if (body.ports !== undefined) {
       c.ports = body.ports;
