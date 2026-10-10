@@ -362,6 +362,153 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/account/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The container access state of the signed-in user's account. */
+        get: operations["getAccess"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/account/access/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["requestAccess"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/registry-credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listRegistryCredentials"];
+        put?: never;
+        post: operations["createRegistryCredential"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/registry-credentials/{credential_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                credential_id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteRegistryCredential"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/containers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        get: operations["listContainers"];
+        put?: never;
+        post: operations["createContainer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/containers/{container_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                container_id: components["parameters"]["ContainerId"];
+            };
+            cookie?: never;
+        };
+        get: operations["getContainer"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteContainer"];
+        options?: never;
+        head?: never;
+        /** @description Redeploy. `env` replaces all variables. `registry_credential_id` null removes it. */
+        patch: operations["updateContainer"];
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/containers/{container_id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                container_id: components["parameters"]["ContainerId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["containerAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/containers/{container_id}/logs": {
+        parameters: {
+            query?: {
+                tail?: number;
+                /** @description The run before the last restart (for a crash). */
+                previous?: boolean;
+            };
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                container_id: components["parameters"]["ContainerId"];
+            };
+            cookie?: never;
+        };
+        get: operations["getContainerLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -374,7 +521,7 @@ export interface components {
             };
         };
         /** @enum {string} */
-        Status: "pending" | "provisioning" | "running" | "stopped" | "sleeping" | "failed" | "deleting";
+        Status: "pending" | "provisioning" | "running" | "stopped" | "sleeping" | "failed" | "deleting" | "unknown";
         Me: {
             id: string;
             email: string;
@@ -543,6 +690,12 @@ export interface components {
                 name: string;
                 version: string;
             }[];
+            container_sizes: {
+                /** @example pms-c-250m-512 */
+                id: string;
+                vcpu: number;
+                memory_mib: number;
+            }[];
             ai_models: {
                 id: string;
                 /** @enum {string} */
@@ -550,6 +703,96 @@ export interface components {
                 description: string;
                 /** @description Context size, vector dims or latency. */
                 detail: string;
+            }[];
+        };
+        /** @enum {string} */
+        Runtime: "gvisor" | "native";
+        Access: {
+            /** @enum {string} */
+            access: "none" | "pending" | "approved" | "rejected";
+            runtime: components["schemas"]["Runtime"];
+            /** @enum {string} */
+            vcluster: "none" | "creating" | "ready" | "failed" | "deleting";
+            reason: string | null;
+            /** @description The admin's message to the customer. */
+            note: string | null;
+            /** Format: date-time */
+            requested_at: string | null;
+            /** Format: date-time */
+            decided_at: string | null;
+        };
+        AccessRequest: {
+            reason: string;
+        };
+        RegistryCredential: {
+            /** @example reg_01 */
+            id: string;
+            name: string;
+            /** @example ghcr.io */
+            host: string;
+            username: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        RegistryCredentialList: {
+            items: components["schemas"]["RegistryCredential"][];
+        };
+        RegistryCredentialCreate: {
+            name: string;
+            host: string;
+            username: string;
+            /** @description Write-only. */
+            token: string;
+        };
+        Container: {
+            /** @example ctr_01 */
+            id: string;
+            name: string;
+            /** @enum {string} */
+            type: "worker";
+            image: string;
+            size: string;
+            vcpu: number | null;
+            memory_mib: number | null;
+            registry_credential_id: string | null;
+            /** @description Values are never returned. */
+            env_names: string[];
+            runtime: components["schemas"]["Runtime"];
+            status: components["schemas"]["Status"];
+            status_message: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        ContainerList: {
+            items: components["schemas"]["Container"][];
+        };
+        ContainerCreate: {
+            name: string;
+            /** @enum {string} */
+            type: "worker";
+            image: string;
+            size: string;
+            registry_credential_id?: string | null;
+            env?: {
+                [key: string]: string;
+            };
+            runtime?: components["schemas"]["Runtime"];
+        };
+        ContainerUpdate: {
+            image?: string;
+            size?: string;
+            registry_credential_id?: string | null;
+            env?: {
+                [key: string]: string;
+            };
+            runtime?: components["schemas"]["Runtime"];
+        };
+        ContainerLogs: {
+            lines: {
+                time: string;
+                message: string;
             }[];
         };
     };
@@ -568,6 +811,7 @@ export interface components {
         ProjectId: string;
         VmId: string;
         KeyId: string;
+        ContainerId: string;
     };
     requestBodies: never;
     headers: never;
@@ -1279,6 +1523,299 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Access */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Access"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    requestAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessRequest"];
+            };
+        };
+        responses: {
+            /** @description Access. 409 if the state is pending or approved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Access"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listRegistryCredentials: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Registry credentials. Newest first. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistryCredentialList"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    createRegistryCredential: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistryCredentialCreate"];
+            };
+        };
+        responses: {
+            /** @description Saved. 10 at most. 409 if the name exists. The token is never returned. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistryCredential"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    deleteRegistryCredential: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                credential_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. 409 if a container uses it. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listContainers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Containers. 403 not_allowed if the owner's account is not approved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContainerList"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    createContainer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContainerCreate"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Container"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getContainer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                container_id: components["parameters"]["ContainerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Container */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Container"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    deleteContainer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                container_id: components["parameters"]["ContainerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    updateContainer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                container_id: components["parameters"]["ContainerId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContainerUpdate"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Container"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    containerAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                container_id: components["parameters"]["ContainerId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VmAction"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Container"];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getContainerLogs: {
+        parameters: {
+            query?: {
+                tail?: number;
+                /** @description The run before the last restart (for a crash). */
+                previous?: boolean;
+            };
+            header?: never;
+            path: {
+                project_id: components["parameters"]["ProjectId"];
+                container_id: components["parameters"]["ContainerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The last log lines of the newest run */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContainerLogs"];
+                };
             };
             default: components["responses"]["Error"];
         };

@@ -1,4 +1,13 @@
-import type { AiKey, ApiEvent, Catalog, Project, Usage, Vm } from '@/lib/api/types';
+import type {
+  AiKey,
+  ApiEvent,
+  Catalog,
+  Container,
+  Project,
+  RegistryCredential,
+  Usage,
+  Vm,
+} from '@/lib/api/types';
 
 const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
 const MIN = 60_000;
@@ -29,6 +38,10 @@ export const catalog: Catalog = {
     { id: 'alpine-3.22', name: 'Alpine', version: '3.22' },
     { id: 'fedora-43', name: 'Fedora', version: '43' },
   ],
+  container_sizes: [
+    { id: 'pms-c-250m-512', vcpu: 0.25, memory_mib: 512 },
+    { id: 'pms-c-500m-1g', vcpu: 0.5, memory_mib: 1024 },
+  ],
   ai_models: [
     {
       id: 'gemma4-e4b',
@@ -58,6 +71,46 @@ export const catalog: Catalog = {
 };
 
 export const sizeSpec = (id: string) => catalog.vm_sizes.find((s) => s.id === id);
+export const containerSizeSpec = (id: string) => catalog.container_sizes.find((s) => s.id === id);
+
+export const seedCredentials = (): RegistryCredential[] => [
+  {
+    id: 'reg_ghcr',
+    name: 'ghcr-bots',
+    host: 'ghcr.io',
+    username: 'robert',
+    created_at: ago(9 * DAY),
+  },
+];
+
+const container = (
+  id: string,
+  name: string,
+  status: Container['status'],
+  image: string,
+  size: string,
+  age: number,
+  extra: Partial<Container> = {},
+): Container => {
+  const spec = containerSizeSpec(size);
+  return {
+    id,
+    name,
+    type: 'worker',
+    image,
+    size,
+    vcpu: spec?.vcpu ?? null,
+    memory_mib: spec?.memory_mib ?? null,
+    registry_credential_id: null,
+    env_names: [],
+    runtime: 'gvisor',
+    status,
+    status_message: null,
+    created_at: ago(age),
+    updated_at: ago(age),
+    ...extra,
+  };
+};
 
 export const projects: Project[] = [
   {
@@ -78,6 +131,7 @@ export const projects: Project[] = [
 
 export interface ProjectState {
   vms: Vm[];
+  containers: Container[];
   aiKeys: AiKey[];
   events: ApiEvent[];
   metrics: Record<string, number[]>;
@@ -179,6 +233,28 @@ export function seedState(): Record<string, ProjectState> {
           'discord-bots',
         ),
       ],
+      containers: [
+        container(
+          'ctr_relay-bot',
+          'relay-bot',
+          'running',
+          'ghcr.io/robert/relay-bot:1.4',
+          'pms-c-250m-512',
+          5 * DAY,
+          { registry_credential_id: 'reg_ghcr', env_names: ['DISCORD_TOKEN', 'LOG_LEVEL'] },
+        ),
+        container(
+          'ctr_cron-worker',
+          'cron-worker',
+          'failed',
+          'python:3.13-slim',
+          'pms-c-250m-512',
+          2 * HOUR,
+          {
+            status_message: 'The container stopped with exit code 1. It restarted 5 times.',
+          },
+        ),
+      ],
       aiKeys: [
         key(
           'key_triage-bot',
@@ -226,6 +302,7 @@ export function seedState(): Record<string, ProjectState> {
           'personal-site',
         ),
       ],
+      containers: [],
       aiKeys: [],
       events: [ev('ev_p1', 30 * DAY, 'success', 'vm_blog', 'blog', 'started')],
       metrics: { vm_blog: series(60, 0.2, 0.1) },
@@ -245,14 +322,18 @@ export function computeUsage(s: ProjectState): Usage {
   const live = s.vms.filter((v) => v.status !== 'deleting');
   const on = live.filter((v) => v.status !== 'stopped');
   const sum = (f: (v: Vm) => number, list: Vm[]) => list.reduce((a, v) => a + f(v), 0);
+  // Containers count their full size all the time, the same as the API.
+  const cts = s.containers.filter((c) => c.status !== 'deleting');
+  const ctVcpu = cts.reduce((a, c) => a + (c.vcpu ?? 0), 0);
+  const ctMem = cts.reduce((a, c) => a + (c.memory_mib ?? 0) / 1024, 0);
   return {
     vcpu: {
-      used: sum((v) => sizeSpec(v.size)?.vcpu ?? 0, on),
+      used: sum((v) => sizeSpec(v.size)?.vcpu ?? 0, on) + ctVcpu,
       limit: LIMITS.vcpu,
       series: s.usageSeries.vcpu ?? [],
     },
     memory_gib: {
-      used: sum((v) => sizeSpec(v.size)?.memory_gib ?? 0, on),
+      used: sum((v) => sizeSpec(v.size)?.memory_gib ?? 0, on) + ctMem,
       limit: LIMITS.memory_gib,
       series: s.usageSeries.memory ?? [],
     },

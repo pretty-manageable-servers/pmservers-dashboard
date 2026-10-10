@@ -19,7 +19,14 @@ export const toastText = (e: Pick<StreamEvent, 'resource_name' | 'message'>) =>
 /** Refresh the data that one event can change. */
 export function applyEvent(qc: QueryClient, e: StreamEvent) {
   const p = e.project_id;
-  for (const key of [keys.vms(p), keys.aiKeys(p), keys.events(p), keys.usage(p)]) {
+  for (const key of [
+    keys.vms(p),
+    keys.containers(p),
+    keys.aiKeys(p),
+    keys.events(p),
+    keys.usage(p),
+    keys.access,
+  ]) {
     qc.invalidateQueries({ queryKey: key });
   }
   const text = toastText(e);

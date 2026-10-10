@@ -1,10 +1,16 @@
 import { delay, http, HttpResponse, sse, ws } from 'msw';
 import type {
+  Access,
   AiKey,
   AiKeyCreate,
   ApiEvent,
+  Container,
+  ContainerCreate,
+  ContainerUpdate,
   Member,
   Project,
+  RegistryCredential,
+  RegistryCredentialCreate,
   SshKey,
   SshKeyCreate,
   StreamEvent,
@@ -12,10 +18,19 @@ import type {
   VmCreate,
 } from '@/lib/api/types';
 import {
+  credentialsFor,
+  imageHost,
+  normalizeHost,
+  validateContainerName,
+  validateEnv,
+} from '@/lib/containers';
+import {
   catalog,
   computeUsage,
+  containerSizeSpec,
   LIMITS,
   projects as seedProjects,
+  seedCredentials,
   seedState,
   series,
   sizeSpec,
@@ -27,6 +42,7 @@ let projects: Project[] = structuredClone(seedProjects);
 let state = seedState();
 let sshKeys: SshKey[] = [];
 let members: Record<string, Member[]> = {};
+let credentials: RegistryCredential[] = seedCredentials();
 let counter = 100;
 const id = (p: string) => `${p}_${(counter++).toString(36)}`;
 
@@ -35,6 +51,118 @@ export function resetMockState() {
   state = seedState();
   sshKeys = [];
   members = {};
+  credentials = seedCredentials();
+  access = approvedAccess();
+  mockAccessParam = null;
+}
+
+// Container access of the mock account. Approved and ready by default.
+const approvedAccess = (): Access => ({
+  access: 'approved',
+  runtime: 'gvisor',
+  vcluster: 'ready',
+  reason: 'Discord bots for my server.',
+  note: null,
+  requested_at: new Date(Date.now() - 20 * 86_400_000).toISOString(),
+  decided_at: new Date(Date.now() - 19 * 86_400_000).toISOString(),
+});
+let access: Access = approvedAccess();
+let mockAccessParam: string | null = null;
+
+/**
+ * Mock mode only: `?mockAccess=none|pending|rejected|creating|failed|ready|native` in the page URL
+ * sets the access state, so each state of the Containers page can be seen.
+ */
+function readMockAccess() {
+  const param =
+    typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('mockAccess');
+  if (!param || param === mockAccessParam) return;
+  mockAccessParam = param;
+  const now = new Date().toISOString();
+  const base = approvedAccess();
+  access = {
+    none: {
+      ...base,
+      access: 'none',
+      vcluster: 'none',
+      reason: null,
+      requested_at: null,
+      decided_at: null,
+    },
+    pending: { ...base, access: 'pending', vcluster: 'none', requested_at: now, decided_at: null },
+    rejected: {
+      ...base,
+      access: 'rejected',
+      vcluster: 'none',
+      note: 'We cannot run crypto miners. Tell us more about your project and ask again.',
+      decided_at: now,
+    },
+    creating: { ...base, vcluster: 'creating' },
+    failed: { ...base, vcluster: 'failed' },
+    ready: base,
+    native: { ...base, runtime: 'native' },
+  }[param] as Access;
+  if (!access) access = base;
+}
+
+/** The same 403 and 409 as the API when the account cannot run containers. */
+function accessError() {
+  readMockAccess();
+  if (access.access !== 'approved')
+    return err(403, 'not_allowed', 'Containers need approval. Request access on the Account page.');
+  if (access.vcluster !== 'ready')
+    return err(409, 'conflict', 'Your container space is being set up. Try again in a minute.');
+  return null;
+}
+
+const MAX_CONTAINERS = 2;
+
+/** Log lines that grow over time, one each 2 s since the container started. */
+function mockLogs(c: Container, previous: boolean) {
+  if (c.status === 'provisioning' || c.status === 'stopped') return [];
+  const start = new Date(c.updated_at).getTime();
+  if (c.status === 'failed') {
+    const t = new Date(start).toISOString();
+    return previous
+      ? [
+          { time: t, message: 'Starting worker' },
+          { time: t, message: 'Traceback (most recent call last):' },
+          { time: t, message: '  File "/app/main.py", line 3, in <module>' },
+          { time: t, message: "KeyError: 'API_TOKEN'" },
+        ]
+      : [{ time: t, message: 'Starting worker' }];
+  }
+  const n = Math.min(200, 3 + Math.floor((Date.now() - start) / 2000));
+  return Array.from({ length: n }, (_, i) => ({
+    time: new Date(start + i * 2000).toISOString(),
+    message:
+      i === 0 ? `Starting ${c.name}` : i === 1 ? 'Connected to gateway' : `Heartbeat ${i - 1} ok`,
+  }));
+}
+
+function ctStatus(
+  c: Container,
+  s: ProjectState,
+  status: Container['status'],
+  message: string,
+  level: ApiEvent['level'] = 'info',
+) {
+  c.status = status;
+  c.updated_at = new Date().toISOString();
+  pushEvent(s, level, c.id, c.name, message);
+}
+
+/** Start the container: running after 2.5 s, or failed for busybox (it exits at once). */
+function startContainer(c: Container, s: ProjectState) {
+  c.status = 'provisioning';
+  c.status_message = null;
+  setTimeout(() => {
+    if (c.status !== 'provisioning') return;
+    if (c.image.includes('busybox')) {
+      c.status_message = 'The container stopped with exit code 0. A worker must keep running.';
+      ctStatus(c, s, 'failed', `Container failed: ${c.status_message}`, 'error');
+    } else ctStatus(c, s, 'running', 'Container is running', 'success');
+  }, 2500);
 }
 
 // The same user as the mock sign-in in lib/auth.tsx.
@@ -171,6 +299,7 @@ export const handlers = [
     projects.push(p);
     state[p.id] = {
       vms: [],
+      containers: [],
       aiKeys: [],
       events: [],
       metrics: {},
@@ -359,6 +488,237 @@ export const handlers = [
     await delay(LATENCY);
     const s = state[params.pid as string];
     return s ? HttpResponse.json({ cpu: s.metrics[params.vid as string] ?? [] }) : notFound();
+  }),
+
+  // Container access (account level)
+  http.get(`${base}/account/access`, async () => {
+    await delay(LATENCY);
+    readMockAccess();
+    return HttpResponse.json(access);
+  }),
+  http.post(`${base}/account/access/request`, async ({ request }) => {
+    await delay(LATENCY);
+    readMockAccess();
+    const { reason } = (await request.json()) as { reason: string };
+    if (!reason?.trim() || reason.length > 1000)
+      return err(422, 'validation_error', 'The reason must be 1 to 1000 characters.');
+    if (access.access === 'pending')
+      return err(409, 'conflict', 'Your request is waiting for review.');
+    if (access.access === 'approved')
+      return err(409, 'conflict', 'Your account is already approved.');
+    access = {
+      ...access,
+      access: 'pending',
+      reason,
+      note: null,
+      requested_at: new Date().toISOString(),
+      decided_at: null,
+    };
+    // The mock admin approves after 2 s. The container space is ready 3 s later.
+    setTimeout(() => {
+      access = {
+        ...access,
+        access: 'approved',
+        vcluster: 'creating',
+        decided_at: new Date().toISOString(),
+      };
+    }, 2000);
+    setTimeout(() => {
+      access = { ...access, vcluster: 'ready' };
+    }, 5000);
+    return HttpResponse.json(access);
+  }),
+
+  // Registry credentials (account level)
+  http.get(`${base}/registry-credentials`, async () => {
+    await delay(LATENCY);
+    return HttpResponse.json({ items: credentials });
+  }),
+  http.post(`${base}/registry-credentials`, async ({ request }) => {
+    await delay(LATENCY);
+    const body = (await request.json()) as RegistryCredentialCreate;
+    const host = normalizeHost(body.host);
+    if (!/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:[0-9]{1,5})?$/.test(host))
+      return err(422, 'validation_error', 'Registry host is not valid. Example: ghcr.io');
+    if (credentials.some((c) => c.name === body.name.trim()))
+      return err(409, 'conflict', 'A registry credential with this name exists.');
+    if (credentials.length >= 10)
+      return err(409, 'quota_exceeded', 'You can save 10 registry credentials.');
+    const c: RegistryCredential = {
+      id: id('reg'),
+      name: body.name.trim(),
+      host,
+      username: body.username.trim(),
+      created_at: new Date().toISOString(),
+    };
+    credentials.unshift(c);
+    return HttpResponse.json(c, { status: 201 });
+  }),
+  http.delete(`${base}/registry-credentials/:cid`, async ({ params }) => {
+    await delay(LATENCY);
+    const inUse = Object.values(state).some((s) =>
+      s.containers.some((c) => c.registry_credential_id === params.cid),
+    );
+    if (inUse)
+      return err(
+        409,
+        'conflict',
+        'A container uses this credential. Change or delete the container first.',
+      );
+    if (!credentials.some((c) => c.id === params.cid)) return notFound();
+    credentials = credentials.filter((c) => c.id !== params.cid);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Containers
+  http.get(`${base}/projects/:pid/containers`, async ({ params }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    if (!s) return notFound();
+    readMockAccess();
+    if (access.access !== 'approved')
+      return err(
+        403,
+        'not_allowed',
+        'Containers need approval. Request access on the Account page.',
+      );
+    return HttpResponse.json({ items: s.containers });
+  }),
+  http.post(`${base}/projects/:pid/containers`, async ({ params, request }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    if (!s) return notFound();
+    const denied = accessError();
+    if (denied) return denied;
+    const body = (await request.json()) as ContainerCreate;
+    const nameErr = validateContainerName(body.name);
+    if (nameErr) return err(422, 'validation_error', nameErr);
+    if (!imageHost(body.image))
+      return err(
+        422,
+        'validation_error',
+        'The image reference is not valid. Example: ghcr.io/owner/app:1.0',
+      );
+    const spec = containerSizeSpec(body.size);
+    if (!spec) return err(422, 'validation_error', 'Unknown size.');
+    const envErr = validateEnv(
+      Object.entries(body.env ?? {}).map(([name, value]) => ({ name, value })),
+    );
+    if (envErr) return err(422, 'validation_error', envErr);
+    if (body.runtime === 'native' && access.runtime !== 'native')
+      return err(
+        403,
+        'native_not_allowed',
+        'Your account cannot use the native runtime. Ask the PMServers team.',
+      );
+    if (body.registry_credential_id) {
+      const cred = credentials.find((c) => c.id === body.registry_credential_id);
+      if (!cred) return err(422, 'validation_error', 'Registry credential not found.');
+      if (credentialsFor(body.image, [cred]).length === 0)
+        return err(
+          422,
+          'validation_error',
+          `The registry credential is for ${cred.host}, not for this image.`,
+        );
+    }
+    const count = Object.values(state).reduce((a, x) => a + x.containers.length, 0);
+    if (count >= MAX_CONTAINERS)
+      return err(
+        409,
+        'quota_exceeded',
+        `You can have ${MAX_CONTAINERS} containers. Delete one first.`,
+      );
+    if (s.containers.some((c) => c.name === body.name))
+      return err(409, 'conflict', 'A container with this name exists in this project.');
+    const now = new Date().toISOString();
+    const c: Container = {
+      id: id('ctr'),
+      name: body.name,
+      type: 'worker',
+      image: body.image,
+      size: spec.id,
+      vcpu: spec.vcpu,
+      memory_mib: spec.memory_mib,
+      registry_credential_id: body.registry_credential_id ?? null,
+      env_names: Object.keys(body.env ?? {}).sort(),
+      runtime: body.runtime ?? 'gvisor',
+      status: 'provisioning',
+      status_message: 'Creating',
+      created_at: now,
+      updated_at: now,
+    };
+    s.containers.push(c);
+    pushEvent(s, 'info', c.id, c.name, 'Creating container');
+    startContainer(c, s);
+    return HttpResponse.json(c, { status: 202 });
+  }),
+  http.get(`${base}/projects/:pid/containers/:cid`, async ({ params }) => {
+    await delay(LATENCY);
+    const c = state[params.pid as string]?.containers.find((x) => x.id === params.cid);
+    return c ? HttpResponse.json(c) : notFound();
+  }),
+  http.patch(`${base}/projects/:pid/containers/:cid`, async ({ params, request }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    const c = s?.containers.find((x) => x.id === params.cid);
+    if (!s || !c) return notFound();
+    const denied = accessError();
+    if (denied) return denied;
+    const body = (await request.json()) as ContainerUpdate;
+    if (body.image !== undefined && !imageHost(body.image))
+      return err(
+        422,
+        'validation_error',
+        'The image reference is not valid. Example: ghcr.io/owner/app:1.0',
+      );
+    if (body.size !== undefined) {
+      const spec = containerSizeSpec(body.size);
+      if (!spec) return err(422, 'validation_error', 'Unknown size.');
+      Object.assign(c, { size: spec.id, vcpu: spec.vcpu, memory_mib: spec.memory_mib });
+    }
+    if (body.image !== undefined) c.image = body.image;
+    if (body.registry_credential_id !== undefined)
+      c.registry_credential_id = body.registry_credential_id;
+    if (body.env !== undefined) c.env_names = Object.keys(body.env).sort();
+    if (body.runtime !== undefined) c.runtime = body.runtime;
+    c.updated_at = new Date().toISOString();
+    pushEvent(s, 'info', c.id, c.name, 'Redeploying container');
+    startContainer(c, s);
+    return HttpResponse.json(c, { status: 202 });
+  }),
+  http.delete(`${base}/projects/:pid/containers/:cid`, async ({ params }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    const c = s?.containers.find((x) => x.id === params.cid);
+    if (!s || !c) return notFound();
+    c.status = 'deleting';
+    pushEvent(s, 'info', c.id, c.name, 'Deleting container');
+    setTimeout(() => {
+      s.containers = s.containers.filter((x) => x.id !== c.id);
+      pushEvent(s, 'info', c.id, c.name, 'Container deleted');
+    }, 2000);
+    return new HttpResponse(null, { status: 202 });
+  }),
+  http.post(`${base}/projects/:pid/containers/:cid/actions`, async ({ params, request }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    const c = s?.containers.find((x) => x.id === params.cid);
+    if (!s || !c) return notFound();
+    const denied = accessError();
+    if (denied) return denied;
+    const { action } = (await request.json()) as { action: 'start' | 'stop' | 'restart' };
+    if (action === 'stop') {
+      c.status_message = null;
+      ctStatus(c, s, 'stopped', 'Container stopped');
+    } else startContainer(c, s);
+    return HttpResponse.json(c, { status: 202 });
+  }),
+  http.get(`${base}/projects/:pid/containers/:cid/logs`, async ({ params, request }) => {
+    await delay(LATENCY);
+    const c = state[params.pid as string]?.containers.find((x) => x.id === params.cid);
+    if (!c) return notFound();
+    const previous = new URL(request.url).searchParams.get('previous') === 'true';
+    return HttpResponse.json({ lines: mockLogs(c, previous) });
   }),
 
   // AI keys

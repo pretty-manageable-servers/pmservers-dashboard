@@ -346,6 +346,161 @@ paths:
       responses:
         '204': { description: Deleted. VMs that already have the key keep it. }
         default: { $ref: '#/components/responses/Error' }
+  /v1/account/access:
+    get:
+      operationId: getAccess
+      description: The container access state of the signed-in user's account.
+      responses:
+        '200':
+          {
+            description: Access,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Access' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/account/access/request:
+    post:
+      operationId: requestAccess
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/AccessRequest' } } }
+      responses:
+        '200':
+          {
+            description: Access. 409 if the state is pending or approved.,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Access' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/registry-credentials:
+    get:
+      operationId: listRegistryCredentials
+      responses:
+        '200':
+          {
+            description: Registry credentials. Newest first.,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: '#/components/schemas/RegistryCredentialList' } },
+              },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createRegistryCredential
+      requestBody:
+        required: true
+        content:
+          { application/json: { schema: { $ref: '#/components/schemas/RegistryCredentialCreate' } } }
+      responses:
+        '201':
+          {
+            description: Saved. 10 at most. 409 if the name exists. The token is never returned.,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/RegistryCredential' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/registry-credentials/{credential_id}:
+    parameters: [{ name: credential_id, in: path, required: true, schema: { type: string } }]
+    delete:
+      operationId: deleteRegistryCredential
+      responses:
+        '204': { description: Deleted. 409 if a container uses it. }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/containers:
+    parameters: [{ $ref: '#/components/parameters/ProjectId' }]
+    get:
+      operationId: listContainers
+      responses:
+        '200':
+          {
+            description: Containers. 403 not_allowed if the owner's account is not approved.,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/ContainerList' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createContainer
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/ContainerCreate' } } }
+      responses:
+        '202':
+          {
+            description: Accepted,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Container' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/containers/{container_id}:
+    parameters:
+      [
+        { $ref: '#/components/parameters/ProjectId' },
+        { $ref: '#/components/parameters/ContainerId' },
+      ]
+    get:
+      operationId: getContainer
+      responses:
+        '200':
+          {
+            description: Container,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Container' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      operationId: updateContainer
+      description: Redeploy. `env` replaces all variables. `registry_credential_id` null removes it.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/ContainerUpdate' } } }
+      responses:
+        '202':
+          {
+            description: Accepted,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Container' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: deleteContainer
+      responses:
+        '202': { description: Accepted }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/containers/{container_id}/actions:
+    parameters:
+      [
+        { $ref: '#/components/parameters/ProjectId' },
+        { $ref: '#/components/parameters/ContainerId' },
+      ]
+    post:
+      operationId: containerAction
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/VmAction' } } }
+      responses:
+        '202':
+          {
+            description: Accepted,
+            content: { application/json: { schema: { $ref: '#/components/schemas/Container' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
+  /v1/projects/{project_id}/containers/{container_id}/logs:
+    parameters:
+      - { $ref: '#/components/parameters/ProjectId' }
+      - { $ref: '#/components/parameters/ContainerId' }
+      - { name: tail, in: query, schema: { type: integer, minimum: 1, maximum: 2000, default: 200 } }
+      - {
+          name: previous,
+          in: query,
+          description: The run before the last restart (for a crash).,
+          schema: { type: boolean, default: false },
+        }
+    get:
+      operationId: getContainerLogs
+      responses:
+        '200':
+          {
+            description: The last log lines of the newest run,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/ContainerLogs' } } },
+          }
+        default: { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     bearer: { type: http, scheme: bearer, bearerFormat: JWT }
@@ -353,6 +508,7 @@ components:
     ProjectId: { name: project_id, in: path, required: true, schema: { type: string } }
     VmId: { name: vm_id, in: path, required: true, schema: { type: string } }
     KeyId: { name: key_id, in: path, required: true, schema: { type: string } }
+    ContainerId: { name: container_id, in: path, required: true, schema: { type: string } }
   responses:
     Error:
       description: Error
@@ -370,7 +526,7 @@ components:
             message: { type: string }
     Status:
       type: string
-      enum: [pending, provisioning, running, stopped, sleeping, failed, deleting]
+      enum: [pending, provisioning, running, stopped, sleeping, failed, deleting, unknown]
     Me:
       type: object
       required: [id, email, plan]
@@ -595,7 +751,7 @@ components:
             secret: { type: string }
     Catalog:
       type: object
-      required: [vm_sizes, vm_images, ai_models, regions]
+      required: [vm_sizes, vm_images, container_sizes, ai_models, regions]
       properties:
         regions: { type: array, items: { type: string } }
         vm_sizes:
@@ -616,6 +772,15 @@ components:
               id: { type: string }
               name: { type: string }
               version: { type: string }
+        container_sizes:
+          type: array
+          items:
+            type: object
+            required: [id, vcpu, memory_mib]
+            properties:
+              id: { type: string, examples: [pms-c-250m-512] }
+              vcpu: { type: number }
+              memory_mib: { type: integer }
         ai_models:
           type: array
           items:
@@ -626,3 +791,114 @@ components:
               type: { type: string, enum: [llm, embedding, decision] }
               description: { type: string }
               detail: { type: string, description: 'Context size, vector dims or latency.' }
+    Runtime:
+      type: string
+      enum: [gvisor, native]
+    Access:
+      type: object
+      required: [access, runtime, vcluster, reason, note, requested_at, decided_at]
+      properties:
+        access: { type: string, enum: [none, pending, approved, rejected] }
+        runtime: { $ref: '#/components/schemas/Runtime' }
+        vcluster: { type: string, enum: [none, creating, ready, failed, deleting] }
+        reason: { type: [string, 'null'] }
+        note: { type: [string, 'null'], description: The admin's message to the customer. }
+        requested_at: { type: [string, 'null'], format: date-time }
+        decided_at: { type: [string, 'null'], format: date-time }
+    AccessRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 1000 }
+    RegistryCredential:
+      type: object
+      required: [id, name, host, username, created_at]
+      properties:
+        id: { type: string, examples: [reg_01] }
+        name: { type: string }
+        host: { type: string, examples: [ghcr.io] }
+        username: { type: string }
+        created_at: { type: string, format: date-time }
+    RegistryCredentialList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/RegistryCredential' } }
+    RegistryCredentialCreate:
+      type: object
+      required: [name, host, username, token]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+        host: { type: string }
+        username: { type: string }
+        token: { type: string, description: Write-only. }
+    Container:
+      type: object
+      required:
+        [
+          id,
+          name,
+          type,
+          image,
+          size,
+          vcpu,
+          memory_mib,
+          registry_credential_id,
+          env_names,
+          runtime,
+          status,
+          status_message,
+          created_at,
+          updated_at,
+        ]
+      properties:
+        id: { type: string, examples: [ctr_01] }
+        name: { type: string }
+        type: { type: string, enum: [worker] }
+        image: { type: string }
+        size: { type: string }
+        vcpu: { type: [number, 'null'] }
+        memory_mib: { type: [integer, 'null'] }
+        registry_credential_id: { type: [string, 'null'] }
+        env_names: { type: array, items: { type: string }, description: Values are never returned. }
+        runtime: { $ref: '#/components/schemas/Runtime' }
+        status: { $ref: '#/components/schemas/Status' }
+        status_message: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ContainerList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Container' } }
+    ContainerCreate:
+      type: object
+      required: [name, type, image, size]
+      properties:
+        name: { type: string }
+        type: { type: string, enum: [worker] }
+        image: { type: string }
+        size: { type: string }
+        registry_credential_id: { type: [string, 'null'] }
+        env: { type: object, additionalProperties: { type: string } }
+        runtime: { $ref: '#/components/schemas/Runtime' }
+    ContainerUpdate:
+      type: object
+      properties:
+        image: { type: string }
+        size: { type: string }
+        registry_credential_id: { type: [string, 'null'] }
+        env: { type: object, additionalProperties: { type: string } }
+        runtime: { $ref: '#/components/schemas/Runtime' }
+    ContainerLogs:
+      type: object
+      required: [lines]
+      properties:
+        lines:
+          type: array
+          items:
+            type: object
+            required: [time, message]
+            properties:
+              time: { type: string }
+              message: { type: string }
