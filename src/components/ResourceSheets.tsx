@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { SideSheet } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -10,8 +11,12 @@ import { StatusDot } from './StatusDot';
 import { TYPE_ICON } from './icons';
 import {
   useCatalog,
+  useContainerAction,
+  useContainerLogs,
   useDeleteAiKey,
+  useDeleteContainer,
   useDeleteVm,
+  useRegistryCredentials,
   useRotateAiKey,
   useVmAction,
   useVmMetrics,
@@ -19,7 +24,12 @@ import {
 import { projectHref, useProject } from '@/lib/project';
 import { isBusy } from '@/lib/status';
 import { timeAgo } from '@/lib/utils';
-import type { AiKey, Vm } from '@/lib/api/types';
+import { runtimeLabel, sizeLabel } from '@/lib/containers';
+import type { AiKey, Container, Vm } from '@/lib/api/types';
+
+const EditContainerDialog = dynamic(() =>
+  import('./EditContainerDialog').then((m) => m.EditContainerDialog),
+);
 
 const Kv = ({ rows }: { rows: [string, React.ReactNode][] }) => (
   <dl className="kv">
@@ -280,6 +290,197 @@ export function AiKeySheet({
             {
               onSuccess: () => {
                 setConfirm(null);
+                onClose();
+              },
+            },
+          )
+        }
+      />
+    </SideSheet>
+  );
+}
+
+/** The last log lines. Stay at the bottom unless the user scrolled up. */
+function ContainerLogs({ c }: { c: Container }) {
+  const { project } = useProject();
+  const [previous, setPrevious] = useState(false);
+  const live = c.status === 'running' || c.status === 'provisioning';
+  const logs = useContainerLogs(project.id, c.id, {
+    previous: c.status === 'failed' && previous,
+    enabled: c.status !== 'deleting',
+    live: live && !previous,
+  });
+  const box = useRef<HTMLPreElement>(null);
+  const atBottom = useRef(true);
+  useEffect(() => {
+    if (c.status !== 'failed') setPrevious(false);
+  }, [c.status]);
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (el && atBottom.current) el.scrollTop = el.scrollHeight;
+  }, [logs.data]);
+  const lines = logs.data ?? [];
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <div className="lbl">Logs</div>
+        {c.status === 'failed' && (
+          <label
+            className="hint"
+            style={{ display: 'flex', gap: 6, alignItems: 'center', marginLeft: 'auto' }}
+          >
+            <input
+              type="checkbox"
+              checked={previous}
+              onChange={(e) => setPrevious(e.target.checked)}
+            />
+            Previous run
+          </label>
+        )}
+      </div>
+      {logs.isError ? (
+        <span className="err-t">{logs.error.message}</span>
+      ) : logs.isLoading ? (
+        <span className="hint">Loading logs…</span>
+      ) : lines.length === 0 ? (
+        <span className="hint">No logs yet.</span>
+      ) : (
+        <pre
+          className="logs"
+          ref={box}
+          aria-label="Logs"
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+          }}
+        >
+          {lines.map((l, i) => (
+            <div key={i}>
+              <span className="t">{l.time.slice(11, 19)}</span> {l.message}
+            </div>
+          ))}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+export function ContainerSheet({ c, onClose }: { c: Container; onClose: () => void }) {
+  const { project } = useProject();
+  const action = useContainerAction(project.id);
+  const del = useDeleteContainer(project.id);
+  const credentials = useRegistryCredentials();
+  const [confirm, setConfirm] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const busy = isBusy(c.status) || action.isPending;
+  const act = (a: 'start' | 'stop' | 'restart') =>
+    action.mutate({ id: c.id, name: c.name, action: a });
+  const credential = c.registry_credential_id
+    ? (credentials.data?.find((r) => r.id === c.registry_credential_id)?.name ??
+      'A credential of another user')
+    : 'None (public image)';
+
+  return (
+    <SideSheet
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={c.name}
+      icon={TYPE_ICON.ct}
+      subtitle={`Container · ${project.name}`}
+      status={<StatusDot status={c.status} />}
+    >
+      <div className="acts">
+        {c.status === 'running' && (
+          <button className="btn sm" type="button" disabled={busy} onClick={() => act('stop')}>
+            Stop
+          </button>
+        )}
+        {c.status === 'stopped' && (
+          <button className="btn sm" type="button" disabled={busy} onClick={() => act('start')}>
+            Start
+          </button>
+        )}
+        {c.status !== 'stopped' && (
+          <button className="btn sm" type="button" disabled={busy} onClick={() => act('restart')}>
+            Restart
+          </button>
+        )}
+        <button
+          className="btn sm"
+          type="button"
+          disabled={c.status === 'deleting'}
+          onClick={() => setEditing(true)}
+        >
+          Edit
+        </button>
+        <button
+          className="btn sm danger"
+          type="button"
+          disabled={c.status === 'deleting'}
+          onClick={() => setConfirm(true)}
+        >
+          Delete
+        </button>
+      </div>
+      {(c.status === 'failed' || c.status === 'unknown') && c.status_message && (
+        <div className="card err" style={{ padding: '12px 14px' }}>
+          {c.status_message}
+        </div>
+      )}
+      <ContainerLogs c={c} />
+      <Kv
+        rows={[
+          ['Status', c.status_message ?? '—'],
+          [
+            'Image',
+            <span className="mono" key="i" style={{ wordBreak: 'break-all' }}>
+              {c.image}
+            </span>,
+          ],
+          [
+            'Size',
+            <>
+              <span className="mono">{c.size}</span>
+              {sizeLabel(c) ? ` · ${sizeLabel(c)}` : ''}
+            </>,
+          ],
+          ['Runtime', runtimeLabel(c.runtime)],
+          ['Registry credential', credential],
+          [
+            'Variables',
+            c.env_names.length === 0 ? (
+              'None'
+            ) : (
+              <span key="e" style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap' }}>
+                {c.env_names.map((n) => (
+                  <span key={n} className="badge mono">
+                    {n}
+                  </span>
+                ))}
+                <span className="hint">Values are hidden.</span>
+              </span>
+            ),
+          ],
+          ['Created', `${timeAgo(c.created_at)} ago`],
+          ['Updated', `${timeAgo(c.updated_at)} ago`],
+        ]}
+      />
+      {editing && (
+        <EditContainerDialog container={c} onOpenChange={(o) => !o && setEditing(false)} />
+      )}
+      <ConfirmDialog
+        open={confirm}
+        onOpenChange={setConfirm}
+        title={`Delete ${c.name}?`}
+        description="This stops the container and deletes it. You cannot undo this."
+        confirmLabel="Delete container"
+        pending={del.isPending}
+        onConfirm={() =>
+          del.mutate(
+            { id: c.id, name: c.name },
+            {
+              onSuccess: () => {
+                setConfirm(false);
                 onClose();
               },
             },

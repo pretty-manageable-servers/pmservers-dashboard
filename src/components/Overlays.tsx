@@ -3,12 +3,16 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useQueryParam, useProject } from '@/lib/project';
-import { useAiKeys, useVms } from '@/lib/api/hooks';
+import { useAiKeys, useContainers, useVms } from '@/lib/api/hooks';
 
 // Loaded only when opened, to keep the first page load small.
 const VmSheet = dynamic(() => import('./ResourceSheets').then((m) => m.VmSheet));
+const ContainerSheet = dynamic(() => import('./ResourceSheets').then((m) => m.ContainerSheet));
 const AiKeySheet = dynamic(() => import('./ResourceSheets').then((m) => m.AiKeySheet));
 const CreateVmDialog = dynamic(() => import('./CreateVmDialog').then((m) => m.CreateVmDialog));
+const CreateContainerDialog = dynamic(() =>
+  import('./CreateContainerDialog').then((m) => m.CreateContainerDialog),
+);
 const CreateKeyDialog = dynamic(() => import('./CreateKeyDialog').then((m) => m.CreateKeyDialog));
 const SecretDialog = dynamic(() => import('./SecretDialog').then((m) => m.SecretDialog));
 
@@ -20,13 +24,16 @@ export function Overlays() {
   const [secret, setSecret] = useState<{ title: string; value: string } | null>(null);
   const vms = useVms(project.id);
   const keys = useAiKeys(project.id);
+  const containers = useContainers(project.id);
 
   const vm = r ? vms.data?.find((v) => v.id === r) : undefined;
+  const ct = r ? containers.data?.find((c) => c.id === r) : undefined;
   const key = r ? keys.data?.find((k) => k.id === r) : undefined;
 
   return (
     <>
       {vm && <VmSheet vm={vm} onClose={() => setR(null)} />}
+      {ct && <ContainerSheet c={ct} onClose={() => setR(null)} />}
       {key && (
         <AiKeySheet
           k={key}
@@ -35,6 +42,9 @@ export function Overlays() {
         />
       )}
       {creating === 'vm' && <CreateVmDialog open onOpenChange={(o) => !o && setCreating(null)} />}
+      {creating === 'ct' && (
+        <CreateContainerDialog open onOpenChange={(o) => !o && setCreating(null)} />
+      )}
       {creating === 'ai' && (
         <CreateKeyDialog
           open
