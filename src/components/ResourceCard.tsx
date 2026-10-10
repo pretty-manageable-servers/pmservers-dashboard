@@ -4,17 +4,23 @@ import { StatusDot } from './StatusDot';
 import { timeAgo } from '@/lib/utils';
 import { useVmMetrics } from '@/lib/api/hooks';
 import { useProject } from '@/lib/project';
-import type { AiKey, Container, Vm } from '@/lib/api/types';
+import type { AiKey, Container, Database, Vm } from '@/lib/api/types';
 import { runtimeLabel, sizeLabel } from '@/lib/containers';
+import { sizeLabel as dbSizeLabel, storageLine } from '@/lib/databases';
 
 export type Resource =
-  ({ kind: 'vm' } & Vm) | ({ kind: 'ct' } & Container) | ({ kind: 'ai' } & AiKey);
+  | ({ kind: 'vm' } & Vm)
+  | ({ kind: 'ct' } & Container)
+  | ({ kind: 'db' } & Database)
+  | ({ kind: 'ai' } & AiKey);
 
-const LABEL = { vm: 'Virtual machine', ct: 'Container', ai: 'API key' };
+const LABEL = { vm: 'Virtual machine', ct: 'Container', db: 'Database', ai: 'API key' };
 
 export function infoLine(r: Resource): string {
   if (r.kind === 'vm') return `${r.size} · ${r.image}${r.private_ip ? ` · ${r.private_ip}` : ''}`;
   if (r.kind === 'ct') return `${sizeLabel(r)} · ${runtimeLabel(r.runtime)} · ${r.image}`;
+  if (r.kind === 'db')
+    return `Postgres${r.vector ? ' + vector' : ''} · ${dbSizeLabel(r)} · ${storageLine(r)}`;
   return `${r.prefix}… · $${r.spend_usd.toFixed(2)} of $${r.budget_usd}`;
 }
 
@@ -27,7 +33,11 @@ function VmSpark({ id }: { id: string }) {
 export function ResourceCard({ r, onOpen }: { r: Resource; onOpen: () => void }) {
   const failed =
     (r.kind === 'vm' && r.status === 'failed') ||
-    (r.kind === 'ct' && (r.status === 'failed' || r.status === 'unknown'));
+    ((r.kind === 'ct' || r.kind === 'db') &&
+      (r.status === 'failed' ||
+        r.status === 'unknown' ||
+        r.status === 'suspended' ||
+        r.status === 'read_only'));
   return (
     <button className="card" type="button" onClick={onOpen}>
       <div className="top">

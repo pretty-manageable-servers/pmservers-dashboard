@@ -15,6 +15,9 @@ import {
   useContainerLogs,
   useDeleteAiKey,
   useDeleteContainer,
+  useDeleteDatabase,
+  useResetDatabasePassword,
+  useSetDatabaseVector,
   useDeleteVm,
   useRegistryCredentials,
   useRotateAiKey,
@@ -25,7 +28,14 @@ import { projectHref, useProject } from '@/lib/project';
 import { isBusy } from '@/lib/status';
 import { timeAgo, timeAgoLong } from '@/lib/utils';
 import { runtimeLabel, sizeLabel } from '@/lib/containers';
-import type { AiKey, Container, Vm } from '@/lib/api/types';
+import {
+  DATABASE_STATUS_HELP,
+  formatBytes,
+  sizeLabel as dbSizeLabel,
+  storageLine,
+  storagePercent,
+} from '@/lib/databases';
+import type { AiKey, Container, Database, DatabaseSecret, Vm } from '@/lib/api/types';
 
 const EditContainerDialog = dynamic(() =>
   import('./EditContainerDialog').then((m) => m.EditContainerDialog),
@@ -481,6 +491,168 @@ export function ContainerSheet({ c, onClose }: { c: Container; onClose: () => vo
             {
               onSuccess: () => {
                 setConfirm(false);
+                onClose();
+              },
+            },
+          )
+        }
+      />
+    </SideSheet>
+  );
+}
+
+export function DatabaseSheet({
+  d,
+  onClose,
+  onSecret,
+}: {
+  d: Database;
+  onClose: () => void;
+  onSecret: (s: DatabaseSecret) => void;
+}) {
+  const { project } = useProject();
+  const vector = useSetDatabaseVector(project.id);
+  const reset = useResetDatabasePassword(project.id, onSecret);
+  const del = useDeleteDatabase(project.id);
+  const [confirm, setConfirm] = useState<'reset' | 'delete' | null>(null);
+  const deleting = d.status === 'deleting';
+  const pct = storagePercent(d);
+  const help = DATABASE_STATUS_HELP[d.status];
+
+  return (
+    <SideSheet
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={d.name}
+      icon={TYPE_ICON.db}
+      subtitle={`Database · ${project.name}`}
+      status={<StatusDot status={d.status} />}
+    >
+      <div className="acts">
+        <button
+          className="btn sm"
+          type="button"
+          disabled={d.status !== 'running' || vector.isPending}
+          onClick={() => vector.mutate({ id: d.id, vector: !d.vector })}
+        >
+          {d.vector ? 'Turn off vector' : 'Turn on vector'}
+        </button>
+        <button
+          className="btn sm"
+          type="button"
+          disabled={deleting}
+          onClick={() => setConfirm('reset')}
+        >
+          Reset password
+        </button>
+        <button
+          className="btn sm danger"
+          type="button"
+          disabled={deleting}
+          onClick={() => setConfirm('delete')}
+        >
+          Delete
+        </button>
+      </div>
+      {d.status === 'failed' || d.status === 'unknown' || d.status === 'suspended' ? (
+        <div className="card err" style={{ padding: '12px 14px' }}>
+          {help ?? d.status_message}
+        </div>
+      ) : help ? (
+        <div className="card" style={{ padding: '12px 14px' }}>
+          {help}
+        </div>
+      ) : null}
+      <div>
+        <div className="lbl" style={{ marginBottom: 8 }}>
+          Storage of the account
+        </div>
+        <div style={{ fontSize: 22, fontWeight: 600 }} className="num">
+          {formatBytes(d.used_bytes)}{' '}
+          <span className="muted" style={{ fontSize: 13, fontWeight: 400 }}>
+            of {formatBytes(d.storage_limit_bytes)}
+          </span>
+        </div>
+        <div
+          className="bar-mini"
+          role="progressbar"
+          aria-label="Storage"
+          aria-valuenow={Math.round(Math.min(100, pct))}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <i className={pct > 75 ? 'hi' : ''} style={{ width: `${Math.min(100, pct)}%` }} />
+        </div>
+        <span className="hint">
+          The limit is for all databases of your account. This database uses {storageLine(d)}.
+        </span>
+      </div>
+      <Kv
+        rows={[
+          ...(d.status_message && !['failed', 'unknown', 'suspended'].includes(d.status)
+            ? [['Status', d.status_message] as [string, string]]
+            : []),
+          [
+            'Host',
+            <span className="mono" key="h">
+              {d.host}
+            </span>,
+          ],
+          [
+            'Port',
+            <span className="mono" key="p">
+              {d.port}
+            </span>,
+          ],
+          [
+            'Database',
+            <span className="mono" key="d">
+              {d.database}
+            </span>,
+          ],
+          [
+            'User',
+            <span className="mono" key="u">
+              {d.user}
+            </span>,
+          ],
+          ['Engine', `Postgres${d.vector ? ' with pgvector' : ''}`],
+          [
+            'Size',
+            <>
+              <span className="mono">{d.size}</span>
+              {dbSizeLabel(d) ? ` · ${dbSizeLabel(d)}` : ''}
+            </>,
+          ],
+          ['Created', timeAgoLong(d.created_at)],
+          ['Updated', timeAgoLong(d.updated_at)],
+        ]}
+      />
+      <p className="hint" style={{ margin: 0 }}>
+        Reachable only from your containers in this account. There are no backups.
+      </p>
+      <ConfirmDialog
+        open={confirm === 'reset'}
+        onOpenChange={(o) => !o && setConfirm(null)}
+        title={`Reset the password of ${d.name}?`}
+        description="The old password stops working in a few seconds. Apps that use it will lose access."
+        confirmLabel="Reset password"
+        pending={reset.isPending}
+        onConfirm={() => reset.mutate(d.id, { onSuccess: () => setConfirm(null) })}
+      />
+      <ConfirmDialog
+        open={confirm === 'delete'}
+        onOpenChange={(o) => !o && setConfirm(null)}
+        title={`Delete ${d.name}?`}
+        description="There are no backups. All data in this database is lost. You cannot undo this."
+        confirmLabel="Delete database"
+        pending={del.isPending}
+        onConfirm={() =>
+          del.mutate(
+            { id: d.id, name: d.name },
+            {
+              onSuccess: () => {
+                setConfirm(null);
                 onClose();
               },
             },

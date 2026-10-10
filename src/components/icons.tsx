@@ -1,4 +1,4 @@
-import { Box, Database, Monitor, Sparkles } from 'lucide-react';
+import { Box, Database, DatabaseZap, Monitor, Sparkles } from 'lucide-react';
 
 export function Logo() {
   return (
@@ -16,6 +16,7 @@ export function Logo() {
 export const TYPE_ICON = {
   vm: <Monitor size={16} aria-hidden="true" />,
   ct: <Box size={16} aria-hidden="true" />,
+  db: <DatabaseZap size={16} aria-hidden="true" />,
   s3: <Database size={16} aria-hidden="true" />,
   ai: <Sparkles size={16} aria-hidden="true" />,
 };

@@ -29,6 +29,9 @@ export function NewMenu() {
         <DropMenuItem onSelect={() => create('/containers', 'ct')}>
           {TYPE_ICON.ct}Container
         </DropMenuItem>
+        <DropMenuItem onSelect={() => create('/databases', 'db')}>
+          {TYPE_ICON.db}Database
+        </DropMenuItem>
         <DropMenuItem disabled hint="Coming soon">
           {TYPE_ICON.s3}Bucket
         </DropMenuItem>

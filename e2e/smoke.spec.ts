@@ -124,3 +124,35 @@ test('request container access, create a container, stop it, delete it', async (
     timeout: 20_000,
   });
 });
+
+test('create a database, see the password once, reset it, delete it', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByLabel('Email').fill('robert@example.com');
+  await page.getByLabel('Password').fill('correct-horse');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'discord-bots' })).toBeVisible();
+
+  await page.getByRole('link', { name: /Databases/ }).click();
+  // The mock account allows one database. Delete the seeded one first.
+  await page.getByRole('button', { name: /main/ }).click();
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete database' }).click();
+  await expect(page.getByText('No databases yet')).toBeVisible({ timeout: 20_000 });
+
+  await page.getByRole('button', { name: 'Create database' }).first().click();
+  await page.getByLabel('Name').fill('shop');
+  await page.getByLabel(/Enable vector/).check();
+  await page.getByRole('dialog').getByRole('button', { name: 'Create database' }).click();
+
+  const secret = page.getByRole('dialog', { name: 'Database created' });
+  await expect(secret).toContainText('postgresql://app:');
+  await expect(secret).toContainText('only once');
+  await secret.getByRole('button', { name: 'Done' }).click();
+
+  const card = page.getByRole('button', { name: /shop/ });
+  await expect(card).toContainText('Running', { timeout: 20_000 });
+  await card.click();
+  await page.getByRole('button', { name: 'Reset password' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Reset password' }).click();
+  await expect(page.getByRole('dialog', { name: 'Password reset' })).toContainText('postgresql://');
+});

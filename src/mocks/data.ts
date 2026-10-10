@@ -3,6 +3,7 @@ import type {
   ApiEvent,
   Catalog,
   Container,
+  Database,
   Project,
   RegistryCredential,
   Usage,
@@ -42,6 +43,7 @@ export const catalog: Catalog = {
     { id: 'pms-c-250m-512', vcpu: 0.25, memory_mib: 512 },
     { id: 'pms-c-500m-1g', vcpu: 0.5, memory_mib: 1024 },
   ],
+  database_sizes: [{ id: 'pms-db-250m-512', vcpu: 0.25, memory_mib: 512 }],
   ai_models: [
     {
       id: 'gemma4-e4b',
@@ -71,7 +73,37 @@ export const catalog: Catalog = {
 };
 
 export const sizeSpec = (id: string) => catalog.vm_sizes.find((s) => s.id === id);
+export const DB_STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024;
+
+export const databaseSizeSpec = (id: string) => catalog.database_sizes.find((s) => s.id === id);
 export const containerSizeSpec = (id: string) => catalog.container_sizes.find((s) => s.id === id);
+
+export const mockDatabase = (
+  id: string,
+  name: string,
+  status: Database['status'],
+  age: number,
+  extra: Partial<Database> = {},
+): Database => ({
+  id,
+  name,
+  engine: 'postgres',
+  size: 'pms-db-250m-512',
+  vcpu: 0.25,
+  memory_mib: 512,
+  vector: false,
+  status,
+  status_message: null,
+  host: `${name}.${id}.svc`,
+  port: 5432,
+  database: 'app',
+  user: 'app',
+  used_bytes: 0,
+  storage_limit_bytes: DB_STORAGE_LIMIT_BYTES,
+  created_at: ago(age),
+  updated_at: ago(age),
+  ...extra,
+});
 
 export const seedCredentials = (): RegistryCredential[] => [
   {
@@ -132,6 +164,7 @@ export const projects: Project[] = [
 export interface ProjectState {
   vms: Vm[];
   containers: Container[];
+  databases: Database[];
   aiKeys: AiKey[];
   events: ApiEvent[];
   metrics: Record<string, number[]>;
@@ -255,6 +288,12 @@ export function seedState(): Record<string, ProjectState> {
           },
         ),
       ],
+      databases: [
+        mockDatabase('db_main', 'main', 'running', 3 * DAY, {
+          vector: true,
+          used_bytes: 48 * 1024 * 1024,
+        }),
+      ],
       aiKeys: [
         key(
           'key_triage-bot',
@@ -303,6 +342,7 @@ export function seedState(): Record<string, ProjectState> {
         ),
       ],
       containers: [],
+      databases: [],
       aiKeys: [],
       events: [ev('ev_p1', 30 * DAY, 'success', 'vm_blog', 'blog', 'started')],
       metrics: { vm_blog: series(60, 0.2, 0.1) },
@@ -326,14 +366,17 @@ export function computeUsage(s: ProjectState): Usage {
   const cts = s.containers.filter((c) => c.status !== 'deleting');
   const ctVcpu = cts.reduce((a, c) => a + (c.vcpu ?? 0), 0);
   const ctMem = cts.reduce((a, c) => a + (c.memory_mib ?? 0) / 1024, 0);
+  const dbs = s.databases.filter((x) => x.status !== 'deleting');
+  const dbVcpu = dbs.reduce((a, x) => a + (x.vcpu ?? 0), 0);
+  const dbMem = dbs.reduce((a, x) => a + (x.memory_mib ?? 0) / 1024, 0);
   return {
     vcpu: {
-      used: sum((v) => sizeSpec(v.size)?.vcpu ?? 0, on) + ctVcpu,
+      used: sum((v) => sizeSpec(v.size)?.vcpu ?? 0, on) + ctVcpu + dbVcpu,
       limit: LIMITS.vcpu,
       series: s.usageSeries.vcpu ?? [],
     },
     memory_gib: {
-      used: sum((v) => sizeSpec(v.size)?.memory_gib ?? 0, on) + ctMem,
+      used: sum((v) => sizeSpec(v.size)?.memory_gib ?? 0, on) + ctMem + dbMem,
       limit: LIMITS.memory_gib,
       series: s.usageSeries.memory ?? [],
     },
