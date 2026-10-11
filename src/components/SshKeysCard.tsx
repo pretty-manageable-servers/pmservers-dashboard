@@ -64,8 +64,7 @@ export function SshKeysCard() {
       <div>
         <b>SSH keys</b>
         <div className="muted" style={{ fontSize: 13 }}>
-          We keep public keys only. Pick one when you create a VM. A deleted key stays on VMs that
-          already have it.
+          We keep public keys only. The database jump host accepts these keys for `pms db connect`.
         </div>
       </div>
       {keys.isError ? (
@@ -131,7 +130,7 @@ export function SshKeysCard() {
         open={removing !== null}
         onOpenChange={(o) => !o && setRemoving(null)}
         title={`Delete ${removing?.name ?? 'key'}?`}
-        description="VMs that already have this key keep it. You cannot pick it for new VMs."
+        description="You cannot use this key to connect after you delete it."
         confirmLabel="Delete key"
         pending={del.isPending}
         onConfirm={() =>

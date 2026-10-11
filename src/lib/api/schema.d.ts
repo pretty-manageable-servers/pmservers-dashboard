@@ -485,93 +485,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/projects/{project_id}/vms": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Vms */
-        get: operations["listVms"];
-        put?: never;
-        /** Create Vm */
-        post: operations["createVm"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/vms/{vm_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Vm */
-        get: operations["getVm"];
-        put?: never;
-        post?: never;
-        /** Delete Vm */
-        delete: operations["deleteVm"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/vms/{vm_id}/actions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Vm Action */
-        post: operations["runVmAction"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/vms/{vm_id}/console/ticket": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Console Ticket */
-        post: operations["createConsoleTicket"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/vms/{vm_id}/metrics": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Vm Metrics */
-        get: operations["getVmMetrics"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v1/registry-credentials": {
         parameters: {
             query?: never;
@@ -791,19 +704,6 @@ export interface components {
             database_sizes: components["schemas"]["DatabaseSize"][];
             /** Regions */
             regions: string[];
-            /** Vm Images */
-            vm_images: components["schemas"]["CatalogImage"][];
-            /** Vm Sizes */
-            vm_sizes: components["schemas"]["VmSize"][];
-        };
-        /** CatalogImage */
-        CatalogImage: {
-            /** Id */
-            id: string;
-            /** Name */
-            name: string;
-            /** Version */
-            version: string;
         };
         /**
          * CatalogModel
@@ -830,13 +730,6 @@ export interface components {
             /** Price Per Minute */
             price_per_minute: number | null;
             type: components["schemas"]["AiModelType"];
-        };
-        /** ConsoleTicket */
-        ConsoleTicket: {
-            /** Ticket */
-            ticket: string;
-            /** Url */
-            url: string;
         };
         /** Container */
         Container: {
@@ -1222,11 +1115,6 @@ export interface components {
             /** Items */
             items: components["schemas"]["SshKey"][];
         };
-        /** ItemList[Vm] */
-        ItemList_Vm_: {
-            /** Items */
-            items: components["schemas"]["Vm"][];
-        };
         /** KeyCreate */
         KeyCreate: {
             /** Budget Usd */
@@ -1425,7 +1313,6 @@ export interface components {
         Usage: {
             ai_spend_usd: components["schemas"]["UsageMetric"];
             memory_gib: components["schemas"]["UsageMetric"];
-            storage_gb: components["schemas"]["UsageMetric"];
             vcpu: components["schemas"]["UsageMetric"];
         };
         /** UsageMetric */
@@ -1442,69 +1329,6 @@ export interface components {
          * @enum {string}
          */
         VclusterState: "none" | "creating" | "ready" | "failed" | "deleting";
-        /** Vm */
-        Vm: {
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Disk Gb */
-            disk_gb: number;
-            /** Id */
-            id: string;
-            /** Image */
-            image: string;
-            /** Name */
-            name: string;
-            /** Private Ip */
-            private_ip: string | null;
-            /** Size */
-            size: string;
-            /** Ssh Host */
-            ssh_host: string;
-            /** Ssh User */
-            ssh_user: string;
-            status: components["schemas"]["VmStatus"];
-            /** Status Message */
-            status_message: string | null;
-        };
-        /** VmActionBody */
-        VmActionBody: {
-            action: components["schemas"]["Action"];
-        };
-        /** VmCreate */
-        VmCreate: {
-            /** Disk Gb */
-            disk_gb: number;
-            /** Image */
-            image: string;
-            /** Name */
-            name: string;
-            /** Size */
-            size: string;
-            /** Ssh Public Key */
-            ssh_public_key: string;
-        };
-        /** VmMetrics */
-        VmMetrics: {
-            /** Cpu */
-            cpu: number[];
-        };
-        /** VmSize */
-        VmSize: {
-            /** Id */
-            id: string;
-            /** Memory Gib */
-            memory_gib: number;
-            /** Vcpu */
-            vcpu: number;
-        };
-        /**
-         * VmStatus
-         * @enum {string}
-         */
-        VmStatus: "pending" | "provisioning" | "running" | "stopped" | "failed" | "deleting";
     };
     responses: never;
     parameters: never;
@@ -2787,236 +2611,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Usage"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    listVms: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ItemList_Vm_"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    createVm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VmCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Vm"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    getVm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: string;
-                vm_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Vm"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    deleteVm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: string;
-                vm_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    runVmAction: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: string;
-                vm_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VmActionBody"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Vm"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    createConsoleTicket: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: string;
-                vm_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ConsoleTicket"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    getVmMetrics: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: string;
-                vm_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VmMetrics"];
                 };
             };
             /** @description Error */

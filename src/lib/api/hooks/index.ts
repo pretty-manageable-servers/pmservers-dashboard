@@ -11,7 +11,6 @@ import type {
   DatabaseSecret,
   RegistryCredentialCreate,
   SshKeyCreate,
-  VmCreate,
 } from '../types';
 
 export const keys = {
@@ -21,8 +20,6 @@ export const keys = {
   projects: ['projects'] as const,
   usage: (p: string) => ['usage', p] as const,
   events: (p: string) => ['events', p] as const,
-  vms: (p: string) => ['vms', p] as const,
-  vmMetrics: (p: string, id: string) => ['vm-metrics', p, id] as const,
   aiKeys: (p: string) => ['ai-keys', p] as const,
   members: (p: string) => ['members', p] as const,
   access: ['access'] as const,
@@ -63,7 +60,7 @@ export function useDeleteSshKey() {
       unwrap(await api.DELETE('/v1/ssh-keys/{key_id}', { params: { path: { key_id: id } } })),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.sshKeys });
-      toast.success('Deleted SSH key. VMs that have it keep it.');
+      toast.success('Deleted SSH key.');
     },
     onError: (e) => toast.error(e.message),
   });
@@ -200,43 +197,13 @@ export const useEvents = (project: string) =>
     refetchInterval: 15_000,
   });
 
-export function useVms(project: string) {
-  const q = useQuery({
-    queryKey: keys.vms(project),
-    queryFn: async () =>
-      unwrap(
-        await api.GET('/v1/projects/{project_id}/vms', {
-          params: { path: { project_id: project } },
-        }),
-      ).items,
-    enabled: !!project,
-    // The private IP comes about 1 minute after `running`, with no status event. Poll until it is there.
-    refetchInterval: (query) =>
-      query.state.data?.some((vm) => vm.status === 'running' && !vm.private_ip) ? 5000 : false,
-  });
-  return q;
-}
-
-export const useVmMetrics = (project: string, id: string | undefined, enabled: boolean) =>
-  useQuery({
-    queryKey: keys.vmMetrics(project, id ?? ''),
-    queryFn: async () =>
-      unwrap(
-        await api.GET('/v1/projects/{project_id}/vms/{vm_id}/metrics', {
-          params: { path: { project_id: project, vm_id: id! } },
-        }),
-      ).cpu,
-    enabled: !!id && enabled,
-  });
-
 function useInvalidating() {
   const qc = useQueryClient();
   return (
     project: string,
-    ...which: ('vms' | 'ai' | 'containers' | 'databases' | 'events' | 'usage')[]
+    ...which: ('ai' | 'containers' | 'databases' | 'events' | 'usage')[]
   ) => {
     const map = {
-      vms: keys.vms,
       ai: keys.aiKeys,
       containers: keys.containers,
       databases: keys.databases,
@@ -245,60 +212,6 @@ function useInvalidating() {
     };
     for (const w of which) qc.invalidateQueries({ queryKey: map[w](project) });
   };
-}
-
-export function useCreateVm(project: string) {
-  const refresh = useInvalidating();
-  return useMutation({
-    mutationFn: async (body: VmCreate) =>
-      unwrap(
-        await api.POST('/v1/projects/{project_id}/vms', {
-          params: { path: { project_id: project } },
-          body,
-        }),
-      ),
-    onSuccess: (vm) => {
-      refresh(project, 'vms', 'events', 'usage');
-      toast(`Creating ${vm.name}`, { description: 'This page updates when it is ready.' });
-    },
-    onError: (e) => toast.error(e.message),
-  });
-}
-
-export function useVmAction(project: string) {
-  const refresh = useInvalidating();
-  return useMutation({
-    mutationFn: async (v: { id: string; name: string; action: 'start' | 'stop' | 'restart' }) =>
-      unwrap(
-        await api.POST('/v1/projects/{project_id}/vms/{vm_id}/actions', {
-          params: { path: { project_id: project, vm_id: v.id } },
-          body: { action: v.action },
-        }),
-      ),
-    onSuccess: (_d, v) => {
-      refresh(project, 'vms', 'events');
-      const word = { start: 'Starting', stop: 'Stopping', restart: 'Restarting' }[v.action];
-      toast(`${word} ${v.name}`);
-    },
-    onError: (e) => toast.error(e.message),
-  });
-}
-
-export function useDeleteVm(project: string) {
-  const refresh = useInvalidating();
-  return useMutation({
-    mutationFn: async (v: { id: string; name: string }) =>
-      unwrap(
-        await api.DELETE('/v1/projects/{project_id}/vms/{vm_id}', {
-          params: { path: { project_id: project, vm_id: v.id } },
-        }),
-      ),
-    onSuccess: (_d, v) => {
-      refresh(project, 'vms', 'events', 'usage');
-      toast(`Deleting ${v.name}`);
-    },
-    onError: (e) => toast.error(e.message),
-  });
 }
 
 export const useAiKeys = (project: string) =>
@@ -440,7 +353,12 @@ export const useContainers = (project: string, enabled = true) =>
     // A 403 is a state, not a failure. Do not retry it.
     retry: (n, e) => !isNotAllowed(e) && n < 1,
     refetchInterval: (query) =>
-      query.state.data?.some((c) => c.status === 'provisioning' || c.status === 'deleting' || c.tunnel?.status === 'provisioning')
+      query.state.data?.some(
+        (c) =>
+          c.status === 'provisioning' ||
+          c.status === 'deleting' ||
+          c.tunnel?.status === 'provisioning',
+      )
         ? 5000
         : false,
   });
@@ -475,8 +393,21 @@ export function useUpdateContainer(project: string) {
       ),
     onSuccess: (c, v) => {
       refresh(project, 'containers', 'events', 'usage');
-      const appFields = ['image', 'size', 'registry_credential_id', 'runtime', 'ports', 'env', 'env_set', 'env_unset'];
-      toast(Object.keys(v.body).some((key) => appFields.includes(key)) ? `Redeploying ${c.name}` : `Updating tunnel for ${c.name}`);
+      const appFields = [
+        'image',
+        'size',
+        'registry_credential_id',
+        'runtime',
+        'ports',
+        'env',
+        'env_set',
+        'env_unset',
+      ];
+      toast(
+        Object.keys(v.body).some((key) => appFields.includes(key))
+          ? `Redeploying ${c.name}`
+          : `Updating tunnel for ${c.name}`,
+      );
     },
     onError: (e) => toast.error(e.message),
   });

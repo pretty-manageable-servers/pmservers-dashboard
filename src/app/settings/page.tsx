@@ -132,7 +132,8 @@ function Settings() {
           <div>
             <b>Delete project</b>
             <div className="muted" style={{ fontSize: 13 }}>
-              Delete the VMs, containers and AI keys in {project.name} first. You cannot undo this.
+              Delete the containers, databases and AI keys in {project.name} first. You cannot undo
+              this.
             </div>
           </div>
           <div>

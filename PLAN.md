@@ -1,6 +1,6 @@
 # PMServers dashboard: build plan
 
-This file is the build plan for the PMS Cloud console (the PMServers dashboard).
+This file is the build plan for the PMS Cloud console (the PMServers dashboard). The VM service was removed on 2026-10-11.
 Read all of it before you start. Build in the order of the milestones.
 
 ## 1. Context
@@ -13,7 +13,6 @@ The first services are:
 
 | Service | What the user gets |
 |---|---|
-| Virtual machines | Small Linux VMs (KubeVirt) with SSH access |
 | Containers | Run an image with a public HTTPS URL. Idle containers scale to zero. |
 | Object storage | S3-compatible buckets |
 | AI | One OpenAI-compatible endpoint with LLM, embedding and decision models. One API key for each use, with a model list and a budget. |
@@ -47,7 +46,7 @@ The mockup is one HTML file with vanilla JS. Do not copy its code structure. Reb
 Main parts of the design:
 
 - **Theme:** dark first, with a light theme. Fonts: Geist and Geist Mono. Colors: see the `:root` tokens in the mockup. Put them in the Tailwind theme as CSS variables.
-- **Top bar:** sticky, with blur. Logo `/` account `/` project switcher. Search button (⌘K), docs, theme toggle, user menu. Tabs below it: Overview, Virtual machines, Containers, Storage, AI, Settings.
+- **Top bar:** sticky, with blur. Logo `/` account `/` project switcher. Search button (⌘K), docs, theme toggle, user menu. Tabs below it: Overview, Containers, Storage, AI, Settings.
 - **Overview:** project name and meta line, a "New" menu, 4 usage cards (vCPU, memory, storage, AI spend) with sparklines and bars, filterable resource cards, and an activity timeline.
 - **Service pages:** a grid of resource cards and a dashed "create" card.
 - **Resource card:** icon, name, type and age, status dot, one info line, and a sparkline (when running) or an error box (when failed).
@@ -82,7 +81,7 @@ Main parts of the design:
 - Do not use: middleware, route handlers, server actions, `cookies()`, `headers()`, or ISR.
 - Set `images: { unoptimized: true }`, or do not use `next/image`.
 - **No dynamic route segments** such as `/projects/[id]`. A static export needs all IDs at build time.
-  Keep the project ID and the open resource in the query string. Example: `/vms?project=discord-bots&r=vm_123`.
+  Keep the project ID and the open resource in the query string. Example: `/containers?project=discord-bots&r=ctr_123`.
 - All auth checks are on the client side. Protected pages show a loading state, then go to `/login` if there is no session.
 
 ## 5. Environment variables
@@ -110,7 +109,7 @@ Generate `src/lib/api/schema.d.ts` from it with `pnpm api:types`. Do not edit th
 - Auth: `Authorization: Bearer <supabase access token>` on all calls. A missing or bad token gives `401`.
 - IDs: string with a type prefix, for example `prj_...`, `vm_...`, `ct_...`, `bkt_...`, `key_...`.
 - Times: ISO 8601 UTC strings.
-- Errors: `{ "error": { "code": "quota_exceeded", "message": "This project has no vCPU left. Delete a VM or ask for more." } }`.
+- Errors: `{ "error": { "code": "quota_exceeded", "message": "This project has no vCPU left. Delete a container or ask for more." } }`.
 - Lists: `{ "items": [...] }`. Do not add pagination now.
 - Create calls return `202 Accepted` with the resource in `pending` state. The backend then changes the status.
 - Delete calls return `202` and set the status to `deleting`. Then the resource disappears from lists.
@@ -129,10 +128,6 @@ A failed resource has `status_message` with a sentence that the user can act on.
 | GET, PATCH, DELETE | `/v1/projects/{project_id}` | |
 | GET | `/v1/projects/{project_id}/usage` | Used and limit for vCPU, memory GiB, storage GB, AI spend USD. Also a 28-day series for each. |
 | GET | `/v1/projects/{project_id}/events` | Activity feed, newest first |
-| GET, POST | `/v1/projects/{project_id}/vms` | |
-| GET, DELETE | `/v1/projects/{project_id}/vms/{vm_id}` | |
-| POST | `/v1/projects/{project_id}/vms/{vm_id}/actions` | Body `{ "action": "start" \| "stop" \| "restart" }` |
-| GET | `/v1/projects/{project_id}/vms/{vm_id}/metrics` | CPU series for the last hour |
 | GET, POST | `/v1/projects/{project_id}/containers` | |
 | GET, PATCH, DELETE | `/v1/projects/{project_id}/containers/{container_id}` | PATCH changes image, env, port or size |
 | POST | `/v1/projects/{project_id}/containers/{container_id}/actions` | Body `{ "action": "redeploy" }` |
@@ -144,12 +139,11 @@ A failed resource has `status_message` with a sentence that the user can act on.
 | GET, POST | `/v1/projects/{project_id}/ai-keys` | POST returns the full key **once** |
 | GET, PATCH, DELETE | `/v1/projects/{project_id}/ai-keys/{key_id}` | PATCH changes models or budget |
 | POST | `/v1/projects/{project_id}/ai-keys/{key_id}/rotate` | Returns the new key once |
-| GET | `/v1/catalog` | VM sizes, VM images, container sizes, AI models (id, type `llm` / `embedding` / `decision`, description, context or dims). The frontend reads options from here. Do not hard-code them. |
+| GET | `/v1/catalog` | container sizes, AI models (id, type `llm` / `embedding` / `decision`, description, context or dims). The frontend reads options from here. Do not hard-code them. |
 
 ### Main schemas (fields)
 
 - **Project:** `id`, `name`, `region` (for example `ca-tor-1`), `created_at`.
-- **VM:** `id`, `name`, `status`, `status_message`, `size`, `image`, `disk_gb`, `private_ip` (nullable), `ssh_host`, `ssh_user`, `created_at`.
   Create body: `name`, `size`, `image`, `disk_gb`, `ssh_public_key`.
 - **Container:** `id`, `name`, `status`, `status_message`, `image`, `port`, `size`, `env` (map), `scale_to_zero` (bool), `url`, `replicas_ready`, `replicas_desired`, `created_at`.
   Create body: `name`, `image`, `port`, `size`, `env`, `scale_to_zero`.
@@ -160,7 +154,7 @@ A failed resource has `status_message` with a sentence that the user can act on.
 ### Mock API (MSW)
 
 - Put the handlers in `src/mocks/`. Make them from the same generated types.
-- Use the sample data from `docs/mockup.html`: projects `discord-bots` and `personal-site`, and the same VMs, containers, buckets, keys and events.
+- Use the sample data from `docs/mockup.html`: projects `discord-bots` and `personal-site`, and the same containers, buckets, keys and events.
 - Simulate the lifecycle. A new resource is `pending`, then `provisioning` after about 1.5 s, then `running` after about 5 s. Stop, start, restart, redeploy and delete also go through these states.
 - Keep the mock state in memory. A page reload resets it.
 - Add a delay of about 200 ms to each response, so that loading states are visible.
@@ -185,7 +179,6 @@ A failed resource has `status_message` with a sentence that the user can act on.
 | `/` | Go to the last project's overview (remember it in `localStorage`), or to `/projects/new` if there are no projects |
 | `/projects/new` | Create the first project, or another project |
 | `/overview?project=` | Overview |
-| `/vms?project=` | Virtual machines |
 | `/containers?project=` | Containers |
 | `/storage?project=` | Object storage |
 | `/ai?project=` | AI: endpoint, code samples (curl and Python), keys, models |
@@ -229,7 +222,7 @@ Do them in this order. Each milestone ends with a commit. Check the acceptance i
 
 - `api/openapi.yaml` with all endpoints and schemas from section 6.
 - Generated types, an API client, MSW handlers with sample data and the lifecycle.
-- **Done when:** with `NEXT_PUBLIC_API_MOCK=1`, a test page can list VMs, and a new VM goes from `pending` to `running`.
+- **Done when:** with `NEXT_PUBLIC_API_MOCK=1`, a test page can list containers, and a new container goes from `pending` to `running`.
 
 ### M3. Auth
 
@@ -252,8 +245,8 @@ Do them in this order. Each milestone ends with a commit. Check the acceptance i
 
 ### M6. Service pages
 
-- VMs, containers, storage and AI pages, with the side sheet and the create dialog for each type.
-- Actions: VM start, stop, restart and delete. Container redeploy and delete. Bucket access keys and delete. AI key rotate and revoke.
+- Containers, storage and AI pages, with the side sheet and the create dialog for each type.
+- Actions: Container redeploy and delete. Bucket access keys and delete. AI key rotate and revoke.
 - Secret dialog for new keys.
 - AI page: endpoint, curl and Python samples (tabs), models from `/v1/catalog`.
 - Container logs in the side sheet. Refresh them every 5 s while the sheet is open.
@@ -263,7 +256,7 @@ Do them in this order. Each milestone ends with a commit. Check the acceptance i
 ### M7. Settings, empty states and errors
 
 - Settings page. Delete project with name confirmation.
-- Empty states for each page, for example "No VMs yet. Create a VM to get a Linux server with SSH."
+- Empty states for each page, for example "No containers yet."
 - Loading skeletons. Error states with a retry button.
 - 404 page.
 - **Done when:** a new user with no projects can create a project and then a resource, without a dead end.
@@ -271,7 +264,7 @@ Do them in this order. Each milestone ends with a commit. Check the acceptance i
 ### M8. Tests and CI
 
 - Vitest: the polling interval function, status mapping, and form validation (names: lowercase letters, numbers and dashes, 3 to 40 characters).
-- Playwright smoke test against the mock: sign in, create a VM, see it become `running`, delete it.
+- Playwright smoke test against the mock: sign in, create a container, see it become `running`, delete it.
 - GitHub Actions: lint, typecheck, test and build on each push and PR.
 - **Done when:** CI passes.
 
@@ -288,7 +281,7 @@ Do them in this order. Each milestone ends with a commit. Check the acceptance i
 ## 11. Rules for the builder
 
 - Copy the mockup. If the mockup and this plan do not agree, this plan is correct for behavior and the mockup is correct for looks.
-- Write UI text in simple, plain English. Say what happens: "Create VM", then the toast "Creating worker-1".
+- Write UI text in simple, plain English. Say what happens: "Create container", then the toast "Creating worker-1".
 - Use the words a user knows. Do not show internal names (Kubernetes, KubeVirt, Garage, Bifrost) in the UI.
 - Do not put secrets in the repo. The repo is public.
 - Keep components small. Do not add a state library. React Query and URL state are enough.
@@ -312,5 +305,4 @@ Ask the user about these. Do not guess.
 2. **Container URL domain:** `*.pmservers.app` in the mockup. Buying another domain is the user's decision.
 3. **License** for the open source repo.
 4. **GitHub repo:** probably `pretty-manageable-servers/pmservers-dashboard`. It must exist before M9.
-5. **VM SSH method:** not decided. Show the SSH command from the API field `ssh_host`. Do not build anything more.
 6. **Supabase project:** the user makes it. You need the URL and anon key for M3.

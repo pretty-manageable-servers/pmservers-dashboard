@@ -4,14 +4,12 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { DatabaseSecret } from '@/lib/api/types';
 import { useQueryParam, useProject } from '@/lib/project';
-import { useAiKeys, useContainers, useDatabases, useVms } from '@/lib/api/hooks';
+import { useAiKeys, useContainers, useDatabases } from '@/lib/api/hooks';
 
 // Loaded only when opened, to keep the first page load small.
-const VmSheet = dynamic(() => import('./ResourceSheets').then((m) => m.VmSheet));
 const ContainerSheet = dynamic(() => import('./ResourceSheets').then((m) => m.ContainerSheet));
 const DatabaseSheet = dynamic(() => import('./ResourceSheets').then((m) => m.DatabaseSheet));
 const AiKeySheet = dynamic(() => import('./ResourceSheets').then((m) => m.AiKeySheet));
-const CreateVmDialog = dynamic(() => import('./CreateVmDialog').then((m) => m.CreateVmDialog));
 const CreateContainerDialog = dynamic(() =>
   import('./CreateContainerDialog').then((m) => m.CreateContainerDialog),
 );
@@ -31,19 +29,16 @@ export function Overlays() {
   const [creating, setCreating] = useQueryParam('new');
   const [secret, setSecret] = useState<{ title: string; value: string } | null>(null);
   const [dbSecret, setDbSecret] = useState<{ title: string; value: DatabaseSecret } | null>(null);
-  const vms = useVms(project.id);
   const keys = useAiKeys(project.id);
   const containers = useContainers(project.id);
   const databases = useDatabases(project.id);
 
-  const vm = r ? vms.data?.find((v) => v.id === r) : undefined;
   const ct = r ? containers.data?.find((c) => c.id === r) : undefined;
   const db = r ? databases.data?.find((x) => x.id === r) : undefined;
   const key = r ? keys.data?.find((k) => k.id === r) : undefined;
 
   return (
     <>
-      {vm && <VmSheet vm={vm} onClose={() => setR(null)} />}
       {ct && <ContainerSheet c={ct} onClose={() => setR(null)} />}
       {db && (
         <DatabaseSheet
@@ -59,7 +54,6 @@ export function Overlays() {
           onSecret={(value) => setSecret({ title: 'New API key', value })}
         />
       )}
-      {creating === 'vm' && <CreateVmDialog open onOpenChange={(o) => !o && setCreating(null)} />}
       {creating === 'ct' && (
         <CreateContainerDialog open onOpenChange={(o) => !o && setCreating(null)} />
       )}

@@ -21,7 +21,7 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: 'PMS Cloud Console',
-  description: 'Manage your PMS Cloud virtual machines and AI keys.',
+  description: 'Manage your PMS Cloud containers, databases and AI keys.',
 };
 
 export const viewport: Viewport = { width: 'device-width', initialScale: 1 };

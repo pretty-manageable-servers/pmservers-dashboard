@@ -28,7 +28,7 @@ function NewProject() {
       <form onSubmit={submit} noValidate>
         <div>
           <h1>New project</h1>
-          <p>A project holds your VMs and AI keys.</p>
+          <p>A project holds your containers, databases and AI keys.</p>
         </div>
         <div className="field">
           <label htmlFor="pn">Project name</label>

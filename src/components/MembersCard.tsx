@@ -122,7 +122,7 @@ export function MembersCard() {
         description={
           leaving
             ? 'You lose access to this project. The owner must invite you again to get it back.'
-            : 'They lose access to this project. The VMs and keys in the project stay.'
+            : 'They lose access to this project. The containers, databases and keys in the project stay.'
         }
         confirmLabel={leaving ? 'Leave project' : 'Remove member'}
         pending={remove.isPending}

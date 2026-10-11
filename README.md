@@ -2,7 +2,7 @@
 
 The dashboard for PMS Cloud (PMServers). It is a static frontend. Next.js 15 exports it to plain files.
 
-- First release: **virtual machines**, **containers** and **AI keys**. Containers need approval for each account. Storage shows "Coming soon".
+- Features: **containers**, **databases**, **sandboxes** and **AI keys**. Containers need approval for each account. Storage shows "Coming soon".
 - Auth: Supabase Auth (browser client only). No Supabase tables.
 - Data: the private PMS Cloud API at `api.pmservers.org`. The contract is [`api/openapi.json`](api/openapi.json). The API generates it. Do not edit it. Update it with `scripts/sync-api-contract.sh <path to the API's openapi/public.json>`.
   Until the backend exists, a mock API (MSW) runs in the browser.

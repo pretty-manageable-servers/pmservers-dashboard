@@ -7,13 +7,12 @@ import { UsageCard } from '@/components/UsageCard';
 import { ResourceCard, type Resource } from '@/components/ResourceCard';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { CardsSkeleton, EmptyState, ErrorState } from '@/components/States';
-import { useAiKeys, useContainers, useDatabases, useUsage, useVms } from '@/lib/api/hooks';
+import { useAiKeys, useContainers, useDatabases, useUsage } from '@/lib/api/hooks';
 import { useProject } from '@/lib/project';
 import { useNavActions } from '@/lib/nav-actions';
 
 const FILTERS = [
   { id: 'all', label: 'All' },
-  { id: 'vm', label: 'VMs' },
   { id: 'ct', label: 'Containers' },
   { id: 'db', label: 'Databases' },
   { id: 's3', label: 'Buckets', soon: true },
@@ -25,14 +24,12 @@ function Overview() {
   const { openResource, create } = useNavActions();
   const [filter, setFilter] = useState('all');
   const usage = useUsage(project.id);
-  const vms = useVms(project.id);
   const keys = useAiKeys(project.id);
   // A 403 means no container access. Show no containers then, and no error.
   const containers = useContainers(project.id);
   const databases = useDatabases(project.id);
 
   const all: Resource[] = [
-    ...(vms.data ?? []).map((v) => ({ kind: 'vm' as const, ...v })),
     ...(containers.data ?? []).map((c) => ({ kind: 'ct' as const, ...c })),
     ...(databases.data ?? []).map((d) => ({ kind: 'db' as const, ...d })),
     ...(keys.data ?? []).map((k) => ({ kind: 'ai' as const, ...k })),
@@ -87,13 +84,6 @@ function Overview() {
               series={u.memory_gib.series}
             />
             <UsageCard
-              label="Storage"
-              used={u.storage_gb.used}
-              limit={u.storage_gb.limit}
-              unit=" GB"
-              series={u.storage_gb.series}
-            />
-            <UsageCard
               label="AI spend"
               used={u.ai_spend_usd.used}
               limit={u.ai_spend_usd.limit}
@@ -131,16 +121,10 @@ function Overview() {
               ))}
             </div>
           </div>
-          {vms.isLoading || keys.isLoading ? (
+          {keys.isLoading ? (
             <CardsSkeleton />
-          ) : vms.isError || keys.isError ? (
-            <ErrorState
-              error={vms.error ?? keys.error}
-              onRetry={() => {
-                vms.refetch();
-                keys.refetch();
-              }}
-            />
+          ) : keys.isError ? (
+            <ErrorState error={keys.error} onRetry={() => keys.refetch()} />
           ) : shown.length === 0 ? (
             filter === 'ai' ? (
               <EmptyState
@@ -162,9 +146,9 @@ function Overview() {
               />
             ) : (
               <EmptyState
-                text={`No ${filter === 'vm' ? 'VMs' : 'resources'} yet. Create a VM to get a Linux server with SSH.`}
-                action="Create VM"
-                onAction={() => create('/vms', 'vm')}
+                text="No resources yet. Create a container to run a worker, for example a bot."
+                action="Create container"
+                onAction={() => create('/containers', 'ct')}
               />
             )
           ) : (
@@ -174,10 +158,7 @@ function Overview() {
                   key={r.id}
                   r={r}
                   onOpen={() =>
-                    openResource(
-                      { vm: '/vms', ct: '/containers', db: '/databases', ai: '/ai' }[r.kind],
-                      r.id,
-                    )
+                    openResource({ ct: '/containers', db: '/databases', ai: '/ai' }[r.kind], r.id)
                   }
                 />
               ))}

@@ -10,10 +10,6 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         </div>
         <h2>Your cloud, pretty manageable.</h2>
         <div className="term">
-          $ pms vm create worker-1 --size pm.small
-          <br />
-          <b>✓</b> worker-1 running in ca-tor-1 (41s)
-          <br />
           $ pms ai keys create --model vane
           <br />
           <b>✓</b> pms_sk_••••••••3f1a

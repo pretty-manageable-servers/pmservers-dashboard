@@ -1,10 +1,8 @@
 import type { components } from '@/lib/api/schema';
 
-export type Status =
-  | components['schemas']['VmStatus']
-  | components['schemas']['ContainerStatus'];
+export type Status = components['schemas']['ContainerStatus'];
 
-const BUSY: Status[] = ['pending', 'provisioning', 'deleting'];
+const BUSY: Status[] = ['provisioning', 'deleting'];
 
 export const isBusy = (s: Status) => BUSY.includes(s);
 
