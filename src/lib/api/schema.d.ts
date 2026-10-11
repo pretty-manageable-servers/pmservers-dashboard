@@ -732,7 +732,7 @@ export interface components {
          * AiModelType
          * @enum {string}
          */
-        AiModelType: "llm" | "embedding" | "decision";
+        AiModelType: "llm" | "embedding" | "decision" | "stt" | "tts";
         /** ApiToken */
         ApiToken: {
             /**
@@ -805,7 +805,11 @@ export interface components {
             /** Version */
             version: string;
         };
-        /** CatalogModel */
+        /**
+         * CatalogModel
+         * @description An AI model in the catalog. Prices are OUR prices. Aliases (old IDs) are never listed.
+         *     The cache prices are resolved: they default to price_in_per_m. The audio prices are null when not set.
+         */
         CatalogModel: {
             /** Description */
             description: string;
@@ -813,6 +817,18 @@ export interface components {
             detail: string;
             /** Id */
             id: string;
+            /** Price Cache Read Per M */
+            price_cache_read_per_m: number;
+            /** Price Cache Write Per M */
+            price_cache_write_per_m: number;
+            /** Price In Per M */
+            price_in_per_m: number;
+            /** Price Out Per M */
+            price_out_per_m: number;
+            /** Price Per M Chars */
+            price_per_m_chars: number | null;
+            /** Price Per Minute */
+            price_per_minute: number | null;
             type: components["schemas"]["AiModelType"];
         };
         /** ConsoleTicket */
