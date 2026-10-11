@@ -734,6 +734,7 @@ export interface components {
             status: components["schemas"]["ContainerStatus"];
             /** Status Message */
             status_message: string | null;
+            tunnel: components["schemas"]["TunnelConnection"] | null;
             type: components["schemas"]["ContainerType"];
             /**
              * Updated At
@@ -771,6 +772,10 @@ export interface components {
             runtime: components["schemas"]["Runtime"];
             /** Size */
             size: string;
+            /** Tunnel Port */
+            tunnel_port?: number | null;
+            /** Tunnel Token */
+            tunnel_token?: string | null;
             /** @default worker */
             type: components["schemas"]["ContainerType"];
         };
@@ -800,6 +805,8 @@ export interface components {
         ContainerType: "worker";
         /** ContainerUpdate */
         ContainerUpdate: {
+            /** Detach Tunnel */
+            detach_tunnel?: boolean | null;
             /** Env */
             env?: {
                 [key: string]: string;
@@ -819,6 +826,10 @@ export interface components {
             runtime?: components["schemas"]["Runtime"] | null;
             /** Size */
             size?: string | null;
+            /** Tunnel Port */
+            tunnel_port?: number | null;
+            /** Tunnel Token */
+            tunnel_token?: string | null;
         };
         /** CredentialCreate */
         CredentialCreate: {
@@ -1225,6 +1236,22 @@ export interface components {
         Ticket: {
             /** Ticket */
             ticket: string;
+        };
+        /** TunnelConnection */
+        TunnelConnection: {
+            /** Message */
+            message: string | null;
+            /** Observed At */
+            observed_at: string | null;
+            /** Origin */
+            origin: string;
+            /** Port */
+            port: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "provisioning" | "connected" | "disconnected" | "stopped" | "unknown";
         };
         /** Usage */
         Usage: {

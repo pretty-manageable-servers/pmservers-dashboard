@@ -140,6 +140,7 @@ const container = (
     runtime: 'gvisor',
     ports: [],
     internal_host: null,
+    tunnel: null,
     status,
     status_message: null,
     created_at: ago(age),

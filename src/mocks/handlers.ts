@@ -687,6 +687,13 @@ export const handlers = [
       runtime: body.runtime ?? 'gvisor',
       ports: body.ports ?? [],
       internal_host: body.ports?.length ? body.name : null,
+      tunnel: body.tunnel_port ? {
+        port: body.tunnel_port,
+        origin: `http://${body.name}:${body.tunnel_port}`,
+        status: 'provisioning',
+        observed_at: null,
+        message: 'Starting connector.',
+      } : null,
       status: 'provisioning',
       status_message: 'Creating',
       created_at: now,
@@ -738,9 +745,18 @@ export const handlers = [
       c.ports = body.ports;
       c.internal_host = body.ports.length ? c.name : null;
     }
+    if (body.detach_tunnel) c.tunnel = null;
+    else if (body.tunnel_port != null && c.tunnel) {
+      c.tunnel = { ...c.tunnel, port: body.tunnel_port, origin: `http://${c.name}:${body.tunnel_port}`, status: 'provisioning' };
+    }
+    if (body.tunnel_token && body.tunnel_port != null && !c.tunnel) {
+      c.tunnel = { port: body.tunnel_port, origin: `http://${c.name}:${body.tunnel_port}`, status: 'provisioning', observed_at: null, message: 'Starting connector.' };
+    }
     c.updated_at = new Date().toISOString();
-    pushEvent(s, 'info', c.id, c.name, 'Redeploying container');
-    startContainer(c, s);
+    const appChange = ['image', 'size', 'registry_credential_id', 'env', 'env_set', 'env_unset', 'runtime', 'ports']
+      .some((field) => field in body);
+    pushEvent(s, 'info', c.id, c.name, appChange ? 'Redeploying container' : 'Updating tunnel attachment');
+    if (appChange) startContainer(c, s);
     return HttpResponse.json(c, { status: 202 });
   }),
   http.delete(`${base}/projects/:pid/containers/:cid`, async ({ params }) => {

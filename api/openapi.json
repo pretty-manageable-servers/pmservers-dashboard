@@ -454,6 +454,16 @@
             ],
             "title": "Status Message"
           },
+          "tunnel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TunnelConnection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "type": {
             "$ref": "#/components/schemas/ContainerType"
           },
@@ -486,6 +496,7 @@
           "runtime",
           "ports",
           "internal_host",
+          "tunnel",
           "env_names",
           "status",
           "status_message",
@@ -551,6 +562,32 @@
           "size": {
             "title": "Size",
             "type": "string"
+          },
+          "tunnel_port": {
+            "anyOf": [
+              {
+                "maximum": 65535.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tunnel Port"
+          },
+          "tunnel_token": {
+            "anyOf": [
+              {
+                "format": "password",
+                "type": "string",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tunnel Token"
           },
           "type": {
             "$ref": "#/components/schemas/ContainerType",
@@ -625,6 +662,17 @@
       },
       "ContainerUpdate": {
         "properties": {
+          "detach_tunnel": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detach Tunnel"
+          },
           "env": {
             "anyOf": [
               {
@@ -723,6 +771,32 @@
               }
             ],
             "title": "Size"
+          },
+          "tunnel_port": {
+            "anyOf": [
+              {
+                "maximum": 65535.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tunnel Port"
+          },
+          "tunnel_token": {
+            "anyOf": [
+              {
+                "format": "password",
+                "type": "string",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tunnel Token"
           }
         },
         "title": "ContainerUpdate",
@@ -1723,6 +1797,61 @@
           "ticket"
         ],
         "title": "Ticket",
+        "type": "object"
+      },
+      "TunnelConnection": {
+        "properties": {
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "origin": {
+            "title": "Origin",
+            "type": "string"
+          },
+          "port": {
+            "title": "Port",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "provisioning",
+              "connected",
+              "disconnected",
+              "stopped",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "port",
+          "origin",
+          "status",
+          "observed_at",
+          "message"
+        ],
+        "title": "TunnelConnection",
         "type": "object"
       },
       "Usage": {
