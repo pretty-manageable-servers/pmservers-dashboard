@@ -480,6 +480,16 @@ export function ContainerSheet({ c, onClose }: { c: Container; onClose: () => vo
                 ] as [string, React.ReactNode],
               ]
             : []),
+          ...(c.tunnel ? [[
+            'Managed tunnel',
+            <span key="tunnel" style={{ display: 'grid', gap: 4 }}>
+              <b>{c.tunnel.status}</b>
+              <span className="mono">{c.tunnel.origin}</span>
+              {c.tunnel.message && <span className="hint">{c.tunnel.message}</span>}
+              <span className="hint">Connected means Cloudflare has an edge connection; it does not confirm DNS, TLS, or origin health. Your tunnel can reach any service in this project. Use a separate project to limit this.</span>
+              {c.tunnel.observed_at && <span className="hint">Observed {timeAgoLong(c.tunnel.observed_at)}</span>}
+            </span>,
+          ] as [string, React.ReactNode]] : []),
           ['Registry credential', credential],
           [
             'Variables',

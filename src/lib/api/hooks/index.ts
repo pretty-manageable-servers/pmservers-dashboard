@@ -436,7 +436,7 @@ export const useContainers = (project: string, enabled = true) =>
     // A 403 is a state, not a failure. Do not retry it.
     retry: (n, e) => !isNotAllowed(e) && n < 1,
     refetchInterval: (query) =>
-      query.state.data?.some((c) => c.status === 'provisioning' || c.status === 'deleting')
+      query.state.data?.some((c) => c.status === 'provisioning' || c.status === 'deleting' || c.tunnel?.status === 'provisioning')
         ? 5000
         : false,
   });
@@ -469,9 +469,10 @@ export function useUpdateContainer(project: string) {
           body: v.body,
         }),
       ),
-    onSuccess: (c) => {
+    onSuccess: (c, v) => {
       refresh(project, 'containers', 'events', 'usage');
-      toast(`Redeploying ${c.name}`);
+      const appFields = ['image', 'size', 'registry_credential_id', 'runtime', 'ports', 'env', 'env_set', 'env_unset'];
+      toast(Object.keys(v.body).some((key) => appFields.includes(key)) ? `Redeploying ${c.name}` : `Updating tunnel for ${c.name}`);
     },
     onError: (e) => toast.error(e.message),
   });
