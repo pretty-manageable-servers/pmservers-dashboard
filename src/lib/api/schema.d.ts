@@ -399,6 +399,133 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    // HAND-ADDED: the API contract has no sandbox routes yet (pmservers-api, 2026-10-11).
+    // Regenerate with scripts/sync-api-contract.sh once the API adds them, then delete this block.
+    "/v1/projects/{project_id}/sandboxes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Sandboxes */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    project_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ItemList_Sandbox_"];
+                    };
+                };
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorBody"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    // HAND-ADDED (see above).
+    "/v1/projects/{project_id}/sandboxes/{sandbox_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Kill Sandbox */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    project_id: string;
+                    sandbox_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorBody"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Tokens */
+        get: operations["listApiTokens"];
+        put?: never;
+        /** Create Token */
+        post: operations["createApiToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/tokens/{token_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Token */
+        delete: operations["deleteApiToken"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/projects/{project_id}/usage": {
         parameters: {
             query?: never;
@@ -664,6 +791,54 @@ export interface components {
          * @enum {string}
          */
         AiModelType: "llm" | "embedding" | "decision";
+        /** ApiToken */
+        ApiToken: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Expires At */
+            expires_at: string | null;
+            /** Id */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+        };
+        /** ApiTokenCreate */
+        ApiTokenCreate: {
+            /** Expires In Days */
+            expires_in_days?: number | null;
+            /** Name */
+            name: string;
+        };
+        /** ApiTokenCreated */
+        ApiTokenCreated: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Expires At */
+            expires_at: string | null;
+            /** Id */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+            /**
+             * Token
+             * Format: password
+             */
+            token: string;
+        };
         /** Catalog */
         Catalog: {
             /** Ai Models */
@@ -1010,7 +1185,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "unauthorized" | "not_allowed" | "not_found" | "validation_error" | "quota_exceeded" | "native_not_allowed" | "conflict" | "upstream_error" | "internal";
+        ErrorCode: "unauthorized" | "not_allowed" | "not_found" | "validation_error" | "quota_exceeded" | "native_not_allowed" | "conflict" | "upstream_error" | "internal" | "rate_limited";
         /** ErrorDetail */
         ErrorDetail: {
             code: components["schemas"]["ErrorCode"];
@@ -1044,7 +1219,26 @@ export interface components {
             /** Items */
             items: components["schemas"]["AiKey"][];
         };
+        /** ItemList[ApiToken] */
+        ItemList_ApiToken_: {
+            /** Items */
+            items: components["schemas"]["ApiToken"][];
+        };
         /** ItemList[Container] */
+        // HAND-ADDED (see the sandbox paths): not in the API contract yet.
+        Sandbox: {
+            id: string;
+            state: string;
+            template_id: string;
+            vcpu: number;
+            memory_mib: number;
+            created_at: string;
+            started_at: string | null;
+            end_at: string | null;
+        };
+        ItemList_Sandbox_: {
+            items: components["schemas"]["Sandbox"][];
+        };
         ItemList_Container_: {
             /** Items */
             items: components["schemas"]["Container"][];
@@ -2421,6 +2615,102 @@ export interface operations {
             path: {
                 project_id: string;
                 user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listApiTokens: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_ApiToken_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createApiToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApiTokenCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiTokenCreated"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteApiToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                token_id: string;
             };
             cookie?: never;
         };

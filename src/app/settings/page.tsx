@@ -6,6 +6,7 @@ import { Page } from '@/components/Page';
 import { PageHead } from '@/components/PageHead';
 import { Modal } from '@/components/Modal';
 import { MembersCard } from '@/components/MembersCard';
+import { SettingsTabs } from '@/components/SettingsTabs';
 import { SshKeysCard } from '@/components/SshKeysCard';
 import { RegistryCredentialsCard } from '@/components/RegistryCredentialsCard';
 import { useSession } from '@/lib/auth';
@@ -59,6 +60,7 @@ function Settings() {
         title="Settings"
         description="Your account comes from your sign-in. Project limits are set by PMS Cloud."
       />
+      <SettingsTabs current="general" />
       <section className="ucard" style={{ padding: 20, gap: 0 }}>
         <dl className="kv">
           <dt>Email</dt>

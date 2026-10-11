@@ -1,4 +1,8 @@
-export function PageHead(props: { title: string; description?: string; action?: React.ReactNode }) {
+export function PageHead(props: {
+  title: React.ReactNode;
+  description?: string;
+  action?: React.ReactNode;
+}) {
   return (
     <div className="head">
       <div>

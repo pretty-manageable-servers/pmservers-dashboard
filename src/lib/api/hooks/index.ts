@@ -3,6 +3,8 @@ import { toast } from 'sonner';
 import { api, ApiError, unwrap } from '../client';
 import type {
   AiKeyCreate,
+  ApiTokenCreate,
+  ApiTokenCreated,
   ContainerCreate,
   ContainerUpdate,
   DatabaseCreate,
@@ -27,6 +29,8 @@ export const keys = {
   registryCredentials: ['registry-credentials'] as const,
   containers: (p: string) => ['containers', p] as const,
   databases: (p: string) => ['databases', p] as const,
+  tokens: (p: string) => ['tokens', p] as const,
+  sandboxes: (p: string) => ['sandboxes', p] as const,
   containerLogs: (p: string, id: string, previous: boolean) =>
     ['container-logs', p, id, previous] as const,
 };
@@ -625,6 +629,90 @@ export function useDeleteDatabase(project: string) {
     onSuccess: (_d, v) => {
       refresh(project, 'databases', 'events', 'usage');
       toast(`Deleting ${v.name}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export const useApiTokens = (project: string) =>
+  useQuery({
+    queryKey: keys.tokens(project),
+    queryFn: async () =>
+      unwrap(
+        await api.GET('/v1/projects/{project_id}/tokens', {
+          params: { path: { project_id: project } },
+        }),
+      ).items,
+    enabled: !!project,
+  });
+
+/**
+ * `onCreated` is a hook option, not a `mutate` option, for the same reason as `useCreateDatabase`:
+ * the token is shown once, and it must not wait in the mutation cache.
+ */
+export function useCreateApiToken(project: string, onCreated: (t: ApiTokenCreated) => void) {
+  const qc = useQueryClient();
+  return useMutation({
+    gcTime: 0,
+    mutationFn: async (body: ApiTokenCreate) =>
+      unwrap(
+        await api.POST('/v1/projects/{project_id}/tokens', {
+          params: { path: { project_id: project } },
+          body,
+        }),
+      ),
+    onSuccess: (t) => {
+      qc.invalidateQueries({ queryKey: keys.tokens(project) });
+      onCreated(t);
+    },
+  });
+}
+
+export function useRevokeApiToken(project: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; name: string }) =>
+      unwrap(
+        await api.DELETE('/v1/projects/{project_id}/tokens/{token_id}', {
+          params: { path: { project_id: project, token_id: v.id } },
+        }),
+      ),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: keys.tokens(project) });
+      toast(`Revoked ${v.name}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+/** Sandboxes of the project. A list of running sandboxes, so it refreshes every 10 s. */
+export const useSandboxes = (project: string, enabled = true) =>
+  useQuery({
+    queryKey: keys.sandboxes(project),
+    queryFn: async () =>
+      unwrap(
+        await api.GET('/v1/projects/{project_id}/sandboxes', {
+          params: { path: { project_id: project } },
+        }),
+      ).items,
+    enabled: !!project && enabled,
+    // A 403 is a state, not a failure. Do not retry it.
+    retry: (n, e) => !isNotAllowed(e) && n < 1,
+    refetchInterval: 10_000,
+  });
+
+export function useKillSandbox(project: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string }) =>
+      unwrap(
+        await api.DELETE('/v1/projects/{project_id}/sandboxes/{sandbox_id}', {
+          params: { path: { project_id: project, sandbox_id: v.id } },
+        }),
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.sandboxes(project) });
+      toast('Killed the sandbox');
     },
     onError: (e) => toast.error(e.message),
   });

@@ -21,7 +21,7 @@ function About() {
   );
 }
 
-function RequestForm({ again }: { again?: boolean }) {
+export function RequestForm({ again, placeholder }: { again?: boolean; placeholder?: string }) {
   const request = useRequestAccess();
   const [reason, setReason] = useState('');
   const [touched, setTouched] = useState(false);
@@ -45,7 +45,7 @@ function RequestForm({ again }: { again?: boolean }) {
         id="access-reason"
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        placeholder="A Discord bot for my server. It uses about 200 MB of memory."
+        placeholder={placeholder ?? 'A Discord bot for my server. It uses about 200 MB of memory.'}
         maxLength={1000}
         aria-invalid={touched && !!reasonErr}
       />

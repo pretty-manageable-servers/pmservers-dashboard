@@ -156,3 +156,55 @@ test('create a database, see the password once, reset it, delete it', async ({ p
   await page.getByRole('dialog').getByRole('button', { name: 'Reset password' }).click();
   await expect(page.getByRole('dialog', { name: 'Password reset' })).toContainText('postgresql://');
 });
+
+test('create an API token, see it once, then revoke it', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByLabel('Email').fill('robert@example.com');
+  await page.getByLabel('Password').fill('correct-horse');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'discord-bots' })).toBeVisible();
+
+  await page.getByRole('link', { name: /Settings/ }).click();
+  await page.getByRole('link', { name: 'API tokens' }).click();
+  await page.getByRole('button', { name: 'Create token' }).first().click();
+  await page.getByLabel('Name').fill('ci-deploy');
+  await page.getByLabel('Expires').selectOption('30');
+  await page.getByRole('dialog').getByRole('button', { name: 'Create token' }).click();
+
+  const created = page.getByRole('dialog', { name: 'Your new token' });
+  await expect(created).toContainText('You will not see it again.');
+  const token = await created.locator('code').innerText();
+  expect(token).toMatch(/^pms_/);
+  await created.getByRole('button', { name: 'Done' }).click();
+
+  // The list shows the prefix only. The full token is never shown again.
+  const row = page.getByRole('row', { name: /ci-deploy/ });
+  await expect(row).toBeVisible();
+  await expect(row).not.toContainText(token);
+  await page.getByRole('button', { name: 'Revoke ci-deploy' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Revoke token' }).click();
+  await expect(page.getByRole('row', { name: /ci-deploy/ })).toHaveCount(0);
+});
+
+test('the Sandboxes page explains how to start one, then a running sandbox can be killed', async ({
+  page,
+}) => {
+  await page.goto('/login');
+  await page.getByLabel('Email').fill('robert@example.com');
+  await page.getByLabel('Password').fill('correct-horse');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'discord-bots' })).toBeVisible();
+
+  // The URL flag gives the empty state. A reload resets the mock state, so the seeded sandbox comes back.
+  await page.goto('/sandboxes?project=prj_discord-bots&mockSandboxes=empty');
+  await expect(page.getByRole('heading', { name: /Sandboxes/ })).toContainText('Beta');
+  await expect(page.getByText('No sandboxes running')).toBeVisible();
+  await expect(page.getByText('E2B_SANDBOX_URL=https://sandbox.pmservers.org')).toBeVisible();
+
+  await page.goto('/sandboxes?project=prj_discord-bots');
+  const row = page.getByRole('row', { name: /q7d3k9m2/ });
+  await expect(row).toBeVisible();
+  await page.getByRole('button', { name: /Kill q7d3k9m2/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Kill sandbox' }).click();
+  await expect(page.getByText('No sandboxes running')).toBeVisible({ timeout: 20_000 });
+});
