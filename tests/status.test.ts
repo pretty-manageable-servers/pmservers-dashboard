@@ -8,7 +8,7 @@ describe('isBusy', () => {
     }
   });
   it('is false for stable states', () => {
-    for (const status of ['running', 'stopped', 'failed', 'sleeping'] as const) {
+    for (const status of ['running', 'stopped', 'failed', 'unknown'] as const) {
       expect(isBusy(status)).toBe(false);
     }
   });
