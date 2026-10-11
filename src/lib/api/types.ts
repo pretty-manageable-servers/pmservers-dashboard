@@ -38,5 +38,4 @@ export type DatabaseSize = Catalog['database_sizes'][number];
 export type ApiToken = S['ApiToken'];
 export type ApiTokenCreate = S['ApiTokenCreate'];
 export type ApiTokenCreated = S['ApiTokenCreated'];
-// Not in the API contract yet. See the hand-added sandbox paths in schema.d.ts.
-export type Sandbox = S['Sandbox'];
+export type Sandbox = S['SandboxItem'];

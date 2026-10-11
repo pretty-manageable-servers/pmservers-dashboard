@@ -1558,6 +1558,22 @@
         "title": "ItemList[RegistryCredential]",
         "type": "object"
       },
+      "ItemList_SandboxItem_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SandboxItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ItemList[SandboxItem]",
+        "type": "object"
+      },
       "ItemList_SshKey_": {
         "properties": {
           "items": {
@@ -1891,6 +1907,72 @@
         ],
         "title": "Runtime",
         "type": "string"
+      },
+      "SandboxItem": {
+        "description": "PMS shape of one open sandbox: GET /v1/projects/{project_id}/sandboxes. No envd token, no env.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "end_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "memory_mib": {
+            "title": "Memory Mib",
+            "type": "integer"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          },
+          "vcpu": {
+            "title": "Vcpu",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "template_id",
+          "vcpu",
+          "memory_mib",
+          "created_at",
+          "started_at",
+          "end_at"
+        ],
+        "title": "SandboxItem",
+        "type": "object"
       },
       "SshKey": {
         "properties": {
@@ -3762,6 +3844,86 @@
           }
         },
         "summary": "Remove Member"
+      }
+    },
+    "/v1/projects/{project_id}/sandboxes": {
+      "get": {
+        "operationId": "listSandboxes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemList_SandboxItem_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List Project Sandboxes"
+      }
+    },
+    "/v1/projects/{project_id}/sandboxes/{sandbox_id}": {
+      "delete": {
+        "operationId": "deleteSandbox",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "sandbox_id",
+            "required": true,
+            "schema": {
+              "title": "Sandbox Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete Project Sandbox"
       }
     },
     "/v1/projects/{project_id}/tokens": {

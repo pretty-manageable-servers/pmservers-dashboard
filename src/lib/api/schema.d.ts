@@ -399,8 +399,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    // HAND-ADDED: the API contract has no sandbox routes yet (pmservers-api, 2026-10-11).
-    // Regenerate with scripts/sync-api-contract.sh once the API adds them, then delete this block.
     "/v1/projects/{project_id}/sandboxes": {
         parameters: {
             query?: never;
@@ -408,36 +406,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Sandboxes */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    project_id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ItemList_Sandbox_"];
-                    };
-                };
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorBody"];
-                    };
-                };
-            };
-        };
+        /** List Project Sandboxes */
+        get: operations["listSandboxes"];
         put?: never;
         post?: never;
         delete?: never;
@@ -446,7 +416,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    // HAND-ADDED (see above).
     "/v1/projects/{project_id}/sandboxes/{sandbox_id}": {
         parameters: {
             query?: never;
@@ -457,35 +426,8 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Kill Sandbox */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    project_id: string;
-                    sandbox_id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorBody"];
-                    };
-                };
-            };
-        };
+        /** Delete Project Sandbox */
+        delete: operations["deleteSandbox"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1225,20 +1167,6 @@ export interface components {
             items: components["schemas"]["ApiToken"][];
         };
         /** ItemList[Container] */
-        // HAND-ADDED (see the sandbox paths): not in the API contract yet.
-        Sandbox: {
-            id: string;
-            state: string;
-            template_id: string;
-            vcpu: number;
-            memory_mib: number;
-            created_at: string;
-            started_at: string | null;
-            end_at: string | null;
-        };
-        ItemList_Sandbox_: {
-            items: components["schemas"]["Sandbox"][];
-        };
         ItemList_Container_: {
             /** Items */
             items: components["schemas"]["Container"][];
@@ -1267,6 +1195,11 @@ export interface components {
         ItemList_RegistryCredential_: {
             /** Items */
             items: components["schemas"]["RegistryCredential"][];
+        };
+        /** ItemList[SandboxItem] */
+        ItemList_SandboxItem_: {
+            /** Items */
+            items: components["schemas"]["SandboxItem"][];
         };
         /** ItemList[SshKey] */
         ItemList_SshKey_: {
@@ -1403,6 +1336,31 @@ export interface components {
          * @enum {string}
          */
         Runtime: "gvisor" | "native";
+        /**
+         * SandboxItem
+         * @description PMS shape of one open sandbox: GET /v1/projects/{project_id}/sandboxes. No envd token, no env.
+         */
+        SandboxItem: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** End At */
+            end_at: string | null;
+            /** Id */
+            id: string;
+            /** Memory Mib */
+            memory_mib: number;
+            /** Started At */
+            started_at: string | null;
+            /** State */
+            state: string;
+            /** Template Id */
+            template_id: string;
+            /** Vcpu */
+            vcpu: number;
+        };
         /** SshKey */
         SshKey: {
             /**
@@ -2615,6 +2573,67 @@ export interface operations {
             path: {
                 project_id: string;
                 user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listSandboxes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_SandboxItem_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteSandbox: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                sandbox_id: string;
             };
             cookie?: never;
         };
