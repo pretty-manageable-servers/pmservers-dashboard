@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { X } from 'lucide-react';
 import { Modal } from './Modal';
 import {
   CredentialField,
-  EnvEditor,
   ImageField,
   PortsField,
   RuntimeField,
@@ -14,10 +14,10 @@ import {
 import { useUpdateContainer } from '@/lib/api/hooks';
 import {
   changedFields,
-  envMap,
+  envChanges,
   parsePorts,
   portsText as formatPorts,
-  validateEnv,
+  validateEnvEdit,
   validateImage,
   validatePorts,
   type EnvRow,
@@ -40,21 +40,23 @@ export function EditContainerDialog({
   const { chosen } = useCredentialChoice(image, picked);
   const [runtime, setRuntime] = useState<Runtime>(c.runtime);
   const [portsText, setPortsText] = useState(formatPorts(c.ports));
-  const [replaceEnv, setReplaceEnv] = useState(false);
-  // The API never returns values. Start with the names and empty values.
-  const [env, setEnv] = useState<EnvRow[]>(c.env_names.map((name) => ({ name, value: '' })));
+  // The API never returns values. Each current name has an empty value. A typed value changes it.
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [removed, setRemoved] = useState<string[]>([]);
+  const [added, setAdded] = useState<EnvRow[]>([]);
   const [touched, setTouched] = useState(false);
 
   const imageErr = validateImage(image);
+  const edit = { names: c.env_names, values, removed, added };
+  const envErr = validateEnvEdit(edit);
   const portsErr = validatePorts(portsText);
-  const envErr = replaceEnv ? validateEnv(env) : null;
   const body = changedFields(c, {
     image,
     size,
     credential: chosen,
     runtime,
     ports: parsePorts(portsText) ?? c.ports,
-    env: replaceEnv ? envMap(env) : null,
+    env: envChanges(edit),
   });
   const nothing = Object.keys(body).length === 0;
 
@@ -90,34 +92,92 @@ export function EditContainerDialog({
           error={portsErr}
           touched={touched}
         />
-        <div className="field" role="radiogroup" aria-label="Environment variables">
+        <div className="field">
           <span className="fl">Environment variables</span>
-          <label className="hint" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input
-              type="radio"
-              name="env-mode"
-              checked={!replaceEnv}
-              onChange={() => setReplaceEnv(false)}
-            />
-            Keep the current variables ({c.env_names.length})
-          </label>
-          <label className="hint" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input
-              type="radio"
-              name="env-mode"
-              checked={replaceEnv}
-              onChange={() => setReplaceEnv(true)}
-            />
-            Replace all variables
-          </label>
-          {replaceEnv && (
-            <span className="hint">
-              We do not show the current values. Enter all values again. Variables that you remove
-              are deleted.
-            </span>
+          {c.env_names.map((name) => {
+            const gone = removed.includes(name);
+            return (
+              <div className="env-row" key={name}>
+                <span
+                  className="mono"
+                  style={gone ? { textDecoration: 'line-through', opacity: 0.6 } : undefined}
+                >
+                  {name}
+                </span>
+                <input
+                  aria-label={`${name} value`}
+                  type="password"
+                  value={values[name] ?? ''}
+                  onChange={(e) => setValues({ ...values, [name]: e.target.value })}
+                  placeholder="Unchanged (hidden)"
+                  autoComplete="new-password"
+                  disabled={gone}
+                />
+                <button
+                  className="btn sm"
+                  type="button"
+                  aria-label={`${gone ? 'Undo remove' : 'Remove'} ${name}`}
+                  onClick={() =>
+                    setRemoved(gone ? removed.filter((n) => n !== name) : [...removed, name])
+                  }
+                >
+                  {gone ? 'Undo' : 'Remove'}
+                </button>
+              </div>
+            );
+          })}
+          {added.map((r, i) => (
+            <div className="env-row" key={i}>
+              <input
+                aria-label={`New variable ${i + 1} name`}
+                value={r.name}
+                onChange={(e) =>
+                  setAdded(
+                    added.map((x, j) => (j === i ? { ...x, name: e.target.value.trim() } : x)),
+                  )
+                }
+                placeholder="NAME"
+                autoFocus={i === added.length - 1 && !r.name}
+                autoComplete="off"
+                spellCheck={false}
+                className="mono"
+              />
+              <input
+                aria-label={`New variable ${i + 1} value`}
+                type="password"
+                value={r.value}
+                onChange={(e) =>
+                  setAdded(added.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))
+                }
+                placeholder="value"
+                autoComplete="new-password"
+              />
+              <button
+                className="iconbtn"
+                type="button"
+                aria-label={`Remove new variable ${i + 1}`}
+                onClick={() => setAdded(added.filter((_, j) => j !== i))}
+              >
+                <X size={14} aria-hidden="true" />
+              </button>
+            </div>
+          ))}
+          <div>
+            <button
+              className="btn sm"
+              type="button"
+              onClick={() => setAdded([...added, { name: '', value: '' }])}
+            >
+              Add variable
+            </button>
+          </div>
+          {/* Show env errors at once, so a clash is clear before Save. */}
+          {envErr ? (
+            <span className="err-t">{envErr}</span>
+          ) : (
+            <span className="hint">Values are hidden. Leave a value empty to keep it.</span>
           )}
         </div>
-        {replaceEnv && <EnvEditor rows={env} setRows={setEnv} error={envErr} touched={touched} />}
       </form>
       <footer>
         <span className="cost">{nothing ? 'No changes' : 'The container restarts'}</span>
@@ -128,7 +188,7 @@ export function EditContainerDialog({
           className="btn primary"
           form="ct-edit-form"
           type="submit"
-          disabled={update.isPending || nothing}
+          disabled={update.isPending || nothing || !!envErr}
         >
           Save and redeploy
         </button>

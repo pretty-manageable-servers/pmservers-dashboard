@@ -1002,7 +1002,18 @@ components:
         image: { type: string }
         size: { type: string }
         registry_credential_id: { type: [string, 'null'] }
-        env: { type: object, additionalProperties: { type: string } }
+        env:
+          type: object
+          additionalProperties: { type: string }
+          description: Replaces all variables. Do not send it with env_set or env_unset.
+        env_set:
+          type: object
+          additionalProperties: { type: string }
+          description: Adds or changes only these variables.
+        env_unset:
+          type: array
+          items: { type: string }
+          description: Removes only these variables.
         runtime: { $ref: '#/components/schemas/Runtime' }
         ports:
           type: array

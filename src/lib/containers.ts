@@ -103,7 +103,46 @@ export const runtimeLabel = (r: string) => (r === 'native' ? 'Native' : 'gVisor'
 export const sizeLabel = (s: { vcpu: number | null; memory_mib: number | null }) =>
   s.vcpu === null || s.memory_mib === null ? '' : `${s.vcpu} vCPU · ${s.memory_mib} MiB`;
 
-/** Only the fields that changed. `env` only in "replace" mode, because it replaces all. */
+/** The env edit of the dialog: typed values of current names, removed names and new rows. */
+export type EnvEdit = {
+  names: string[];
+  values: Record<string, string>;
+  removed: string[];
+  added: EnvRow[];
+};
+
+/** `env_set` and `env_unset` for the PATCH body. Empty parts are left out. */
+export function envChanges(edit: EnvEdit): {
+  env_set?: Record<string, string>;
+  env_unset?: string[];
+} {
+  const set: Record<string, string> = {};
+  for (const name of edit.names) {
+    if (edit.values[name] && !edit.removed.includes(name)) set[name] = edit.values[name];
+  }
+  Object.assign(set, envMap(edit.added));
+  // A removed name that is added again is a change of its value.
+  const unset = edit.removed.filter((n) => !(n in set));
+  const out: { env_set?: Record<string, string>; env_unset?: string[] } = {};
+  if (Object.keys(set).length) out.env_set = set;
+  if (unset.length) out.env_unset = unset;
+  return out;
+}
+
+/** Check the new rows. A new name must not be a kept name. Count the total. */
+export function validateEnvEdit(edit: EnvEdit): string | null {
+  const kept = edit.names.filter((n) => !edit.removed.includes(n));
+  const added = edit.added.filter((r) => r.name || r.value);
+  const bad = validateEnv(added);
+  if (bad) return bad;
+  const clash = added.find((r) => kept.includes(r.name));
+  if (clash) return `The variable ${clash.name} exists. Type a value in its row to change it.`;
+  return kept.length + added.length > MAX_ENV
+    ? `You can set ${MAX_ENV} environment variables.`
+    : null;
+}
+
+/** Only the fields that changed. Env uses `env_set` and `env_unset`, so other variables keep their values. */
 export function changedFields(
   c: Container,
   next: {
@@ -112,7 +151,7 @@ export function changedFields(
     credential: string | null;
     runtime: Runtime;
     ports: number[];
-    env: Record<string, string> | null;
+    env: { env_set?: Record<string, string>; env_unset?: string[] };
   },
 ): ContainerUpdate {
   const body: ContainerUpdate = {};
@@ -121,6 +160,7 @@ export function changedFields(
   if (next.credential !== c.registry_credential_id) body.registry_credential_id = next.credential;
   if (next.runtime !== c.runtime) body.runtime = next.runtime;
   if (next.ports.join() !== c.ports.join()) body.ports = next.ports;
-  if (next.env) body.env = next.env;
+  if (next.env.env_set) body.env_set = next.env.env_set;
+  if (next.env.env_unset) body.env_unset = next.env.env_unset;
   return body;
 }

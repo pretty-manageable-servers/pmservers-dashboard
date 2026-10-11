@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   changedFields,
   credentialsFor,
+  envChanges,
   envMap,
   imageHost,
   normalizeHost,
   parsePorts,
   validateContainerName,
   validateEnv,
+  validateEnvEdit,
   validateImage,
   validatePorts,
 } from '@/lib/containers';
@@ -105,7 +107,7 @@ describe('changedFields', () => {
     credential: 'reg_1',
     runtime: 'gvisor' as const,
     ports: [8080],
-    env: null,
+    env: {},
   };
   it('sends nothing when nothing changed', () => {
     expect(changedFields(c, same)).toEqual({});
@@ -120,8 +122,67 @@ describe('changedFields', () => {
     expect(changedFields(c, { ...same, ports: [8080, 9000] })).toEqual({ ports: [8080, 9000] });
     expect(changedFields(c, { ...same, ports: [] })).toEqual({ ports: [] });
   });
-  it('sends env only to replace all variables', () => {
-    expect(changedFields(c, { ...same, env: {} })).toEqual({ env: {} });
+  it('sends env_set and env_unset, never env', () => {
+    expect(changedFields(c, { ...same, env: { env_set: { B: '2' }, env_unset: ['C'] } })).toEqual({
+      env_set: { B: '2' },
+      env_unset: ['C'],
+    });
+  });
+});
+
+describe('envChanges', () => {
+  const base = { names: ['A', 'B', 'C'], values: {}, removed: [], added: [] };
+  it('sends nothing when nothing changed', () => {
+    expect(envChanges(base)).toEqual({});
+  });
+  it('sends typed values, new rows and removed names', () => {
+    expect(
+      envChanges({
+        names: ['A', 'B', 'C'],
+        values: { B: '20', A: '' },
+        removed: ['C'],
+        added: [
+          { name: 'D', value: '4' },
+          { name: '', value: '' },
+        ],
+      }),
+    ).toEqual({ env_set: { B: '20', D: '4' }, env_unset: ['C'] });
+  });
+  it('does not send the value of a removed name', () => {
+    expect(envChanges({ ...base, values: { C: 'x' }, removed: ['C'] })).toEqual({
+      env_unset: ['C'],
+    });
+  });
+  it('a removed name that is added again is a change, not a removal', () => {
+    expect(envChanges({ ...base, removed: ['C'], added: [{ name: 'C', value: '3' }] })).toEqual({
+      env_set: { C: '3' },
+    });
+  });
+});
+
+describe('validateEnvEdit', () => {
+  const base = { names: ['A', 'B'], values: {}, removed: [], added: [] };
+  it('accepts no new rows and good new rows', () => {
+    expect(validateEnvEdit(base)).toBeNull();
+    expect(validateEnvEdit({ ...base, added: [{ name: 'C', value: 'x' }] })).toBeNull();
+  });
+  it('rejects a bad name and a name that exists', () => {
+    expect(validateEnvEdit({ ...base, added: [{ name: '1X', value: 'x' }] })).not.toBeNull();
+    expect(validateEnvEdit({ ...base, added: [{ name: 'A', value: 'x' }] })).not.toBeNull();
+  });
+  it('accepts the name of a removed variable', () => {
+    expect(
+      validateEnvEdit({ ...base, removed: ['A'], added: [{ name: 'A', value: 'x' }] }),
+    ).toBeNull();
+  });
+  it('counts kept and new names together', () => {
+    const names = Array.from({ length: 50 }, (_, i) => `K${i}`);
+    expect(
+      validateEnvEdit({ names, values: {}, removed: [], added: [{ name: 'X', value: '1' }] }),
+    ).not.toBeNull();
+    expect(
+      validateEnvEdit({ names, values: {}, removed: ['K0'], added: [{ name: 'X', value: '1' }] }),
+    ).toBeNull();
   });
 });
 
