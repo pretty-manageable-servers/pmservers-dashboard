@@ -154,7 +154,7 @@ export function changedFields(
     env: { env_set?: Record<string, string>; env_unset?: string[] };
   },
 ): ContainerUpdate {
-  const body: ContainerUpdate = { detach_tunnel: false };
+  const body: ContainerUpdate = {};
   if (next.image !== c.image) body.image = next.image;
   if (next.size !== c.size) body.size = next.size;
   if (next.credential !== c.registry_credential_id) body.registry_credential_id = next.credential;
