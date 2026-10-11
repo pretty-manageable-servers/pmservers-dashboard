@@ -243,6 +243,150 @@
         "title": "AiModelType",
         "type": "string"
       },
+      "ApiToken": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "prefix": {
+            "title": "Prefix",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "created_at",
+          "expires_at",
+          "last_used_at"
+        ],
+        "title": "ApiToken",
+        "type": "object"
+      },
+      "ApiTokenCreate": {
+        "properties": {
+          "expires_in_days": {
+            "anyOf": [
+              {
+                "maximum": 365.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires In Days"
+          },
+          "name": {
+            "maxLength": 64,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ApiTokenCreate",
+        "type": "object"
+      },
+      "ApiTokenCreated": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "prefix": {
+            "title": "Prefix",
+            "type": "string"
+          },
+          "token": {
+            "format": "password",
+            "title": "Token",
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "created_at",
+          "expires_at",
+          "last_used_at",
+          "token"
+        ],
+        "title": "ApiTokenCreated",
+        "type": "object"
+      },
       "Catalog": {
         "properties": {
           "ai_models": {
@@ -1215,7 +1359,8 @@
           "native_not_allowed",
           "conflict",
           "upstream_error",
-          "internal"
+          "internal",
+          "rate_limited"
         ],
         "title": "ErrorCode",
         "type": "string"
@@ -1299,6 +1444,22 @@
           "items"
         ],
         "title": "ItemList[AiKey]",
+        "type": "object"
+      },
+      "ItemList_ApiToken_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiToken"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ItemList[ApiToken]",
         "type": "object"
       },
       "ItemList_Container_": {
@@ -1395,6 +1556,22 @@
           "items"
         ],
         "title": "ItemList[RegistryCredential]",
+        "type": "object"
+      },
+      "ItemList_SandboxItem_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SandboxItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ItemList[SandboxItem]",
         "type": "object"
       },
       "ItemList_SshKey_": {
@@ -1730,6 +1907,72 @@
         ],
         "title": "Runtime",
         "type": "string"
+      },
+      "SandboxItem": {
+        "description": "PMS shape of one open sandbox: GET /v1/projects/{project_id}/sandboxes. No envd token, no env.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "end_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "memory_mib": {
+            "title": "Memory Mib",
+            "type": "integer"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          },
+          "vcpu": {
+            "title": "Vcpu",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "template_id",
+          "vcpu",
+          "memory_mib",
+          "created_at",
+          "started_at",
+          "end_at"
+        ],
+        "title": "SandboxItem",
+        "type": "object"
       },
       "SshKey": {
         "properties": {
@@ -3601,6 +3844,213 @@
           }
         },
         "summary": "Remove Member"
+      }
+    },
+    "/v1/projects/{project_id}/sandboxes": {
+      "get": {
+        "operationId": "listSandboxes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemList_SandboxItem_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List Project Sandboxes"
+      }
+    },
+    "/v1/projects/{project_id}/sandboxes/{sandbox_id}": {
+      "delete": {
+        "operationId": "deleteSandbox",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "sandbox_id",
+            "required": true,
+            "schema": {
+              "title": "Sandbox Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete Project Sandbox"
+      }
+    },
+    "/v1/projects/{project_id}/tokens": {
+      "get": {
+        "operationId": "listApiTokens",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemList_ApiToken_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List Tokens"
+      },
+      "post": {
+        "operationId": "createApiToken",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiTokenCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTokenCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create Token"
+      }
+    },
+    "/v1/projects/{project_id}/tokens/{token_id}": {
+      "delete": {
+        "operationId": "deleteApiToken",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "token_id",
+            "required": true,
+            "schema": {
+              "title": "Token Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete Token"
       }
     },
     "/v1/projects/{project_id}/usage": {

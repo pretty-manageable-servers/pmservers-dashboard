@@ -4,6 +4,9 @@ import type {
   AiKey,
   AiKeyCreate,
   ApiEvent,
+  ApiToken,
+  ApiTokenCreate,
+  ApiTokenCreated,
   Container,
   ContainerCreate,
   ContainerUpdate,
@@ -15,6 +18,7 @@ import type {
   Project,
   RegistryCredential,
   RegistryCredentialCreate,
+  Sandbox,
   SshKey,
   SshKeyCreate,
   StreamEvent,
@@ -45,11 +49,42 @@ import {
 } from './data';
 
 const LATENCY = 200;
+
+const MAX_TOKENS = 20;
+const TOKEN_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const randomToken = () =>
+  `pms_${Array.from({ length: 43 }, () => TOKEN_CHARS[Math.floor(Math.random() * 62)]).join('')}`;
+
+/** One running sandbox in the first project. Its id has the same shape as the API id. */
+function seedSandboxes(): Record<string, Sandbox[]> {
+  const started = new Date(Date.now() - 20 * 60_000).toISOString();
+  return {
+    'prj_discord-bots': [
+      {
+        id: 'q7d3k9m2v5x8b1n4c6z0-5f0c1e2d3b4a59687766554433221100',
+        state: 'running',
+        template_id: 'base',
+        vcpu: 2,
+        memory_mib: 512,
+        created_at: started,
+        started_at: started,
+        end_at: new Date(Date.now() + 40 * 60_000).toISOString(),
+      },
+    ],
+  };
+}
+
+/** Mock mode only: `?mockSandboxes=empty` in the page URL shows the empty state of Sandboxes. */
+const sandboxesEmpty = () =>
+  typeof location !== 'undefined' &&
+  new URLSearchParams(location.search).get('mockSandboxes') === 'empty';
 let projects: Project[] = structuredClone(seedProjects);
 let state = seedState();
 let sshKeys: SshKey[] = [];
 let members: Record<string, Member[]> = {};
 let credentials: RegistryCredential[] = seedCredentials();
+let apiTokens: Record<string, ApiToken[]> = {};
+let sandboxes: Record<string, Sandbox[]> = seedSandboxes();
 let counter = 100;
 const id = (p: string) => `${p}_${(counter++).toString(36)}`;
 
@@ -59,6 +94,8 @@ export function resetMockState() {
   sshKeys = [];
   members = {};
   credentials = seedCredentials();
+  apiTokens = {};
+  sandboxes = seedSandboxes();
   access = approvedAccess();
   mockAccessParam = null;
 }
@@ -607,6 +644,71 @@ export const handlers = [
       );
     if (!credentials.some((c) => c.id === params.cid)) return notFound();
     credentials = credentials.filter((c) => c.id !== params.cid);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // API tokens (project level). The token is returned once, by create.
+  http.get(`${base}/projects/:pid/tokens`, async ({ params }) => {
+    await delay(LATENCY);
+    const pid = params.pid as string;
+    if (!state[pid]) return notFound();
+    return HttpResponse.json({ items: apiTokens[pid] ?? [] });
+  }),
+  http.post(`${base}/projects/:pid/tokens`, async ({ params, request }) => {
+    await delay(LATENCY);
+    const pid = params.pid as string;
+    if (!state[pid]) return notFound();
+    const body = (await request.json()) as ApiTokenCreate;
+    const name = body.name?.trim() ?? '';
+    if (name === '' || name.length > 64)
+      return err(422, 'validation_error', 'Use 1 to 64 characters for the name.');
+    const list = apiTokens[pid] ?? [];
+    if (list.length >= MAX_TOKENS)
+      return err(409, 'quota_exceeded', `You can have ${MAX_TOKENS} API tokens in a project.`);
+    const token = randomToken();
+    const now = new Date();
+    const days = body.expires_in_days ?? null;
+    const stored: ApiToken = {
+      id: id('tok'),
+      name,
+      prefix: token.slice(0, 8),
+      created_at: now.toISOString(),
+      expires_at: days ? new Date(now.getTime() + days * 86_400_000).toISOString() : null,
+      last_used_at: null,
+    };
+    apiTokens[pid] = [...list, stored];
+    const created: ApiTokenCreated = { ...stored, token };
+    return HttpResponse.json(created, { status: 201 });
+  }),
+  http.delete(`${base}/projects/:pid/tokens/:tid`, async ({ params }) => {
+    await delay(LATENCY);
+    const pid = params.pid as string;
+    const list = apiTokens[pid] ?? [];
+    if (!list.some((t) => t.id === params.tid)) return notFound();
+    apiTokens[pid] = list.filter((t) => t.id !== params.tid);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Sandboxes (project level). The list needs the same account approval as containers.
+  http.get(`${base}/projects/:pid/sandboxes`, async ({ params }) => {
+    await delay(LATENCY);
+    const pid = params.pid as string;
+    if (!state[pid]) return notFound();
+    readMockAccess();
+    if (access.access !== 'approved')
+      return err(
+        403,
+        'not_allowed',
+        'Sandboxes need approval. Request access on the Account page.',
+      );
+    return HttpResponse.json({ items: sandboxesEmpty() ? [] : (sandboxes[pid] ?? []) });
+  }),
+  http.delete(`${base}/projects/:pid/sandboxes/:sid`, async ({ params }) => {
+    await delay(LATENCY);
+    const pid = params.pid as string;
+    const list = sandboxes[pid] ?? [];
+    if (!list.some((s) => s.id === params.sid)) return notFound();
+    sandboxes[pid] = list.filter((s) => s.id !== params.sid);
     return new HttpResponse(null, { status: 204 });
   }),
 

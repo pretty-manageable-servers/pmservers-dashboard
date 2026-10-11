@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   Container,
+  Box,
   Database,
   HardDrive,
   LayoutGrid,
@@ -22,6 +23,7 @@ export const TABS: TabDef[] = [
   { id: 'vm', label: 'Virtual machines', path: '/vms', icon: Server },
   { id: 'ct', label: 'Containers', path: '/containers', icon: Container },
   { id: 'db', label: 'Databases', path: '/databases', icon: Database },
+  { id: 'sbx', label: 'Sandboxes', path: '/sandboxes', icon: Box },
   { id: 's3', label: 'Storage', path: '/storage', icon: HardDrive, soon: true },
   { id: 'ai', label: 'AI', path: '/ai', icon: Sparkles },
   { id: 'settings', label: 'Settings', path: '/settings', icon: Settings },

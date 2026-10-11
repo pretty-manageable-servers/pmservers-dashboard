@@ -35,3 +35,7 @@ export type DatabaseCreate = S['DatabaseCreate'];
 export type DatabaseUpdate = S['DatabaseUpdate'];
 export type DatabaseStatus = S['DatabaseStatus'];
 export type DatabaseSize = Catalog['database_sizes'][number];
+export type ApiToken = S['ApiToken'];
+export type ApiTokenCreate = S['ApiTokenCreate'];
+export type ApiTokenCreated = S['ApiTokenCreated'];
+export type Sandbox = S['SandboxItem'];
