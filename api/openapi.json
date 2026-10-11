@@ -845,15 +845,8 @@
             "type": "string"
           },
           "used_bytes": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Used Bytes"
+            "title": "Used Bytes",
+            "type": "integer"
           },
           "user": {
             "const": "app",
@@ -1075,15 +1068,8 @@
             "type": "string"
           },
           "used_bytes": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Used Bytes"
+            "title": "Used Bytes",
+            "type": "integer"
           },
           "user": {
             "const": "app",
@@ -1145,11 +1131,25 @@
         "title": "ErrorBody",
         "type": "object"
       },
+      "ErrorCode": {
+        "enum": [
+          "unauthorized",
+          "not_allowed",
+          "not_found",
+          "validation_error",
+          "quota_exceeded",
+          "native_not_allowed",
+          "conflict",
+          "upstream_error",
+          "internal"
+        ],
+        "title": "ErrorCode",
+        "type": "string"
+      },
       "ErrorDetail": {
         "properties": {
           "code": {
-            "title": "Code",
-            "type": "string"
+            "$ref": "#/components/schemas/ErrorCode"
           },
           "message": {
             "title": "Message",

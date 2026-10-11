@@ -878,7 +878,7 @@ export interface components {
              */
             updated_at: string;
             /** Used Bytes */
-            used_bytes: number | null;
+            used_bytes: number;
             /**
              * User
              * @constant
@@ -977,7 +977,7 @@ export interface components {
              */
             updated_at: string;
             /** Used Bytes */
-            used_bytes: number | null;
+            used_bytes: number;
             /**
              * User
              * @constant
@@ -995,10 +995,14 @@ export interface components {
         ErrorBody: {
             error: components["schemas"]["ErrorDetail"];
         };
+        /**
+         * ErrorCode
+         * @enum {string}
+         */
+        ErrorCode: "unauthorized" | "not_allowed" | "not_found" | "validation_error" | "quota_exceeded" | "native_not_allowed" | "conflict" | "upstream_error" | "internal";
         /** ErrorDetail */
         ErrorDetail: {
-            /** Code */
-            code: string;
+            code: components["schemas"]["ErrorCode"];
             /** Message */
             message: string;
         };

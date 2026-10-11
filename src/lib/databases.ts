@@ -18,9 +18,9 @@ export const DATABASE_STATUS_HELP: Partial<Record<DatabaseStatus, string>> = {
 
 export const isDatabaseBusy = (s: DatabaseStatus) => s === 'provisioning' || s === 'deleting';
 
-export function formatBytes(bytes: number | null): string {
+export function formatBytes(bytes: number): string {
   const units = ['B', 'KiB', 'MiB', 'GiB'];
-  let v = bytes ?? 0;
+  let v = bytes;
   let i = 0;
   while (v >= 1024 && i < units.length - 1) {
     v /= 1024;
@@ -33,7 +33,7 @@ export const storageLine = (d: Pick<Database, 'used_bytes' | 'storage_limit_byte
   `${formatBytes(d.used_bytes)} of ${formatBytes(d.storage_limit_bytes)}`;
 
 export const storagePercent = (d: Pick<Database, 'used_bytes' | 'storage_limit_bytes'>) =>
-  d.storage_limit_bytes ? ((d.used_bytes ?? 0) / d.storage_limit_bytes) * 100 : 0;
+  d.storage_limit_bytes ? (d.used_bytes / d.storage_limit_bytes) * 100 : 0;
 
 export function sizeLabel(d: { vcpu: number | null; memory_mib: number | null }): string {
   if (d.vcpu == null || d.memory_mib == null) return '';
