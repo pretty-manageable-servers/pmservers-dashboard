@@ -219,7 +219,12 @@ export function CreateVmDialog({
         <button className="btn" type="button" onClick={() => onOpenChange(false)}>
           Cancel
         </button>
-        <button className="btn primary" form="vm-form" type="submit" disabled={create.isPending}>
+        <button
+          className="btn primary"
+          form="vm-form"
+          type="submit"
+          disabled={create.isPending || !size || !image}
+        >
           Create VM
         </button>
       </footer>
