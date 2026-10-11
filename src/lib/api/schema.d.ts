@@ -4,364 +4,6 @@
  */
 
 export interface paths {
-    "/v1/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getMe"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/catalog": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getCatalog"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listProjects"];
-        put?: never;
-        post: operations["createProject"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        get: operations["getProject"];
-        put?: never;
-        post?: never;
-        delete: operations["deleteProject"];
-        options?: never;
-        head?: never;
-        patch: operations["updateProject"];
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/members": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        get: operations["listMembers"];
-        put?: never;
-        post: operations["addMember"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/members/{user_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                user_id: string;
-            };
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: operations["removeMember"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/usage": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        get: operations["getUsage"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/events": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        get: operations["listEvents"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/vms": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        get: operations["listVms"];
-        put?: never;
-        post: operations["createVm"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/vms/{vm_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                vm_id: components["parameters"]["VmId"];
-            };
-            cookie?: never;
-        };
-        get: operations["getVm"];
-        put?: never;
-        post?: never;
-        delete: operations["deleteVm"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/vms/{vm_id}/actions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                vm_id: components["parameters"]["VmId"];
-            };
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["vmAction"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/vms/{vm_id}/metrics": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                vm_id: components["parameters"]["VmId"];
-            };
-            cookie?: never;
-        };
-        get: operations["getVmMetrics"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/events/ticket": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** @description Get a short-lived ticket (60 s) to open the event stream. */
-        post: operations["createEventsTicket"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/events/stream": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Server-sent events for all projects of the user. Authenticate with `?ticket=` from `POST /v1/events/ticket`, because `EventSource` cannot send headers. Each message has `id`, `event: event` and `data` with a StreamEvent as JSON. After a reconnect, send `Last-Event-ID` to get missed events first. A `: ping` comment comes every 15 s. */
-        get: operations["streamEvents"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/vms/{vm_id}/console/ticket": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                vm_id: components["parameters"]["VmId"];
-            };
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** @description Get a ticket (60 s) for the serial console. The VM must be `running`, else `409`. Then open a WebSocket at `url` (same host, `ws` or `wss`). OpenAPI 3.1 cannot describe WebSockets, so the socket is described here. Messages are binary frames with raw terminal bytes in both directions. The server closes the socket when the VM stops, after 30 minutes with no data, or when another console opens. */
-        post: operations["createConsoleTicket"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/ai-keys": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        get: operations["listAiKeys"];
-        put?: never;
-        post: operations["createAiKey"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/ai-keys/{key_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                key_id: components["parameters"]["KeyId"];
-            };
-            cookie?: never;
-        };
-        get: operations["getAiKey"];
-        put?: never;
-        post?: never;
-        delete: operations["deleteAiKey"];
-        options?: never;
-        head?: never;
-        patch: operations["updateAiKey"];
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/ai-keys/{key_id}/rotate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                key_id: components["parameters"]["KeyId"];
-            };
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["rotateAiKey"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/ssh-keys": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listSshKeys"];
-        put?: never;
-        post: operations["createSshKey"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/ssh-keys/{key_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                key_id: components["parameters"]["KeyId"];
-            };
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: operations["deleteSshKey"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v1/account/access": {
         parameters: {
             query?: never;
@@ -369,7 +11,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description The container access state of the signed-in user's account. */
+        /** Get Access */
         get: operations["getAccess"];
         put?: never;
         post?: never;
@@ -388,7 +30,473 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Request Access */
         post: operations["requestAccess"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Catalog */
+        get: operations["getCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/events/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Events Stream */
+        get: operations["streamEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/events/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Events Ticket */
+        post: operations["createEventsTicket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Me */
+        get: operations["getMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Projects */
+        get: operations["listProjects"];
+        put?: never;
+        /** Create Project */
+        post: operations["createProject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Project */
+        get: operations["getProject"];
+        put?: never;
+        post?: never;
+        /** Delete Project */
+        delete: operations["deleteProject"];
+        options?: never;
+        head?: never;
+        /** Update Project */
+        patch: operations["updateProject"];
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/ai-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Keys */
+        get: operations["listAiKeys"];
+        put?: never;
+        /** Create Key */
+        post: operations["createAiKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/ai-keys/{key_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Key */
+        get: operations["getAiKey"];
+        put?: never;
+        post?: never;
+        /** Delete Key */
+        delete: operations["deleteAiKey"];
+        options?: never;
+        head?: never;
+        /** Update Key */
+        patch: operations["updateAiKey"];
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/ai-keys/{key_id}/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rotate Key */
+        post: operations["rotateAiKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/containers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Containers */
+        get: operations["listContainers"];
+        put?: never;
+        /** Create Container */
+        post: operations["createContainer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/containers/{container_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Container */
+        get: operations["getContainer"];
+        put?: never;
+        post?: never;
+        /** Delete Container */
+        delete: operations["deleteContainer"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Container
+         * @description Redeploy with a new image, size, credential or env.
+         *
+         *     `env` replaces all variables. `env_set` and `env_unset` change only the named variables.
+         */
+        patch: operations["updateContainer"];
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/containers/{container_id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Container Action */
+        post: operations["runContainerAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/containers/{container_id}/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Container Logs
+         * @description The last lines of the newest pod. `previous`: the run before the last restart (for a crash).
+         */
+        get: operations["getContainerLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/databases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Databases */
+        get: operations["listDatabases"];
+        put?: never;
+        /** Create Database */
+        post: operations["createDatabase"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/databases/{database_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Database */
+        get: operations["getDatabase"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Database
+         * @description No backups: the data is gone after this.
+         */
+        delete: operations["deleteDatabase"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Database
+         * @description Turn vector on or off. On: the reconciler runs CREATE EXTENSION. Off: DROP EXTENSION at once,
+         *     refused if a column or index uses it.
+         */
+        patch: operations["updateDatabase"];
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/databases/{database_id}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset Password
+         * @description A new password for the role app. The old one works until the reconciler applies the new one
+         *     (a few seconds).
+         */
+        post: operations["resetDatabasePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Events */
+        get: operations["listEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Members */
+        get: operations["listMembers"];
+        put?: never;
+        /**
+         * Add Member
+         * @description Owner only. An existing user is added at once. A new email gets a Supabase invite, then is added.
+         */
+        post: operations["addMember"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/members/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove Member
+         * @description The owner removes a member. A member removes themselves to leave the project.
+         */
+        delete: operations["removeMember"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Usage */
+        get: operations["getUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/vms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Vms */
+        get: operations["listVms"];
+        put?: never;
+        /** Create Vm */
+        post: operations["createVm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/vms/{vm_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Vm */
+        get: operations["getVm"];
+        put?: never;
+        post?: never;
+        /** Delete Vm */
+        delete: operations["deleteVm"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/vms/{vm_id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Vm Action */
+        post: operations["runVmAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/vms/{vm_id}/console/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Console Ticket */
+        post: operations["createConsoleTicket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/vms/{vm_id}/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Vm Metrics */
+        get: operations["getVmMetrics"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -402,8 +510,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List Credentials */
         get: operations["listRegistryCredentials"];
         put?: never;
+        /** Create Credential */
         post: operations["createRegistryCredential"];
         delete?: never;
         options?: never;
@@ -415,153 +525,49 @@ export interface paths {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                credential_id: string;
-            };
+            path?: never;
             cookie?: never;
         };
         get?: never;
         put?: never;
         post?: never;
+        /** Delete Credential */
         delete: operations["deleteRegistryCredential"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/v1/projects/{project_id}/containers": {
+    "/v1/ssh-keys": {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
+            path?: never;
             cookie?: never;
         };
-        get: operations["listContainers"];
+        /** List Ssh Keys */
+        get: operations["listSshKeys"];
         put?: never;
-        post: operations["createContainer"];
+        /** Create Ssh Key */
+        post: operations["createSshKey"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/v1/projects/{project_id}/containers/{container_id}": {
+    "/v1/ssh-keys/{key_id}": {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                container_id: components["parameters"]["ContainerId"];
-            };
-            cookie?: never;
-        };
-        get: operations["getContainer"];
-        put?: never;
-        post?: never;
-        delete: operations["deleteContainer"];
-        options?: never;
-        head?: never;
-        /** @description Redeploy. `env` replaces all variables. `registry_credential_id` null removes it. */
-        patch: operations["updateContainer"];
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/containers/{container_id}/actions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                container_id: components["parameters"]["ContainerId"];
-            };
+            path?: never;
             cookie?: never;
         };
         get?: never;
         put?: never;
-        post: operations["containerAction"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/databases": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        get: operations["listDatabases"];
-        put?: never;
-        post: operations["createDatabase"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/databases/{database_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                database_id: components["parameters"]["DatabaseId"];
-            };
-            cookie?: never;
-        };
-        get: operations["getDatabase"];
-        put?: never;
         post?: never;
-        /** @description No backups. The data is lost. */
-        delete: operations["deleteDatabase"];
-        options?: never;
-        head?: never;
-        /** @description Turn vector on or off. 409 if a column or index uses vector. */
-        patch: operations["updateDatabase"];
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/databases/{database_id}/reset-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                database_id: components["parameters"]["DatabaseId"];
-            };
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["resetDatabasePassword"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/projects/{project_id}/containers/{container_id}/logs": {
-        parameters: {
-            query?: {
-                tail?: number;
-                /** @description The run before the last restart (for a crash). */
-                previous?: boolean;
-            };
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                container_id: components["parameters"]["ContainerId"];
-            };
-            cookie?: never;
-        };
-        get: operations["getContainerLogs"];
-        put?: never;
-        post?: never;
-        delete?: never;
+        /** Delete Ssh Key */
+        delete: operations["deleteSshKey"];
         options?: never;
         head?: never;
         patch?: never;
@@ -571,1085 +577,744 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        ErrorBody: {
-            error: {
-                /** @example quota_exceeded */
-                code: string;
-                message: string;
-            };
-        };
-        /** @enum {string} */
-        Status: "pending" | "provisioning" | "running" | "stopped" | "sleeping" | "failed" | "deleting" | "unknown";
-        Me: {
-            id: string;
-            email: string;
-            plan: string;
-        };
-        /** @enum {string} */
-        Role: "owner" | "member";
-        Project: {
-            /** @example prj_01 */
-            id: string;
-            name: string;
-            /** @example ca-tor-1 */
-            region: string;
-            role: components["schemas"]["Role"];
-            /** Format: date-time */
-            created_at: string;
-        };
-        Member: {
-            user_id: string;
-            email: string;
-            role: components["schemas"]["Role"];
-            /** Format: date-time */
-            created_at: string;
-        };
-        MemberList: {
-            items: components["schemas"]["Member"][];
-        };
-        MemberCreate: {
-            email: string;
-        };
-        MemberAdded: components["schemas"]["Member"] & {
-            /** @description True if the user had no account and got an invite email. */
-            invited: boolean;
-        };
-        ProjectList: {
-            items: components["schemas"]["Project"][];
-        };
-        ProjectCreate: {
-            name: string;
-        };
-        ProjectUpdate: {
-            name?: string;
-        };
-        UsageMetric: {
-            used: number;
-            limit: number;
-            /** @description 28 daily values from 0 to 1, oldest first. */
-            series: number[];
-        };
-        Usage: {
-            vcpu: components["schemas"]["UsageMetric"];
-            memory_gib: components["schemas"]["UsageMetric"];
-            storage_gb: components["schemas"]["UsageMetric"];
-            ai_spend_usd: components["schemas"]["UsageMetric"];
-        };
-        Event: {
-            id: string;
-            /** Format: date-time */
-            time: string;
-            /** @enum {string} */
-            level: "info" | "success" | "warning" | "error";
-            resource_id: string;
-            resource_name: string;
-            message: string;
-        };
-        Ticket: {
-            ticket: string;
-        };
-        ConsoleTicket: {
-            ticket: string;
-            /** @description Path and query for the WebSocket */
-            url: string;
-        };
-        StreamEvent: components["schemas"]["Event"] & {
-            project_id: string;
-        };
-        EventList: {
-            items: components["schemas"]["Event"][];
-        };
-        Vm: {
-            /** @example vm_01 */
-            id: string;
-            name: string;
-            status: components["schemas"]["Status"];
-            status_message: string | null;
-            size: string;
-            image: string;
-            disk_gb: number;
-            private_ip: string | null;
-            ssh_host: string;
-            ssh_user: string;
-            /** Format: date-time */
-            created_at: string;
-        };
-        VmList: {
-            items: components["schemas"]["Vm"][];
-        };
-        VmCreate: {
-            name: string;
-            size: string;
-            image: string;
-            disk_gb: number;
-            ssh_public_key: string;
-        };
-        VmAction: {
-            /** @enum {string} */
-            action: "start" | "stop" | "restart";
-        };
-        VmMetrics: {
-            /** @description CPU use from 0 to 1 for the last hour. */
-            cpu: number[];
-        };
-        AiKey: {
-            /** @example key_01 */
-            id: string;
-            name: string;
-            status: components["schemas"]["Status"];
-            prefix: string;
-            models: string[];
-            budget_usd: number;
-            spend_usd: number;
-            rate_limit_rpm: number;
-            /** Format: date-time */
-            created_at: string;
-        };
-        AiKeyList: {
-            items: components["schemas"]["AiKey"][];
-        };
-        SshKey: {
-            id: string;
-            name: string;
-            public_key: string;
-            /** @example SHA256:abc */
-            fingerprint: string;
-            /** Format: date-time */
-            created_at: string;
-        };
-        SshKeyList: {
-            items: components["schemas"]["SshKey"][];
-        };
-        SshKeyCreate: {
-            name: string;
-            public_key: string;
-        };
-        AiKeyCreate: {
-            name: string;
-            models: string[];
-            budget_usd: number;
-        };
-        AiKeyUpdate: {
-            models?: string[];
-            budget_usd?: number;
-        };
-        AiKeyCreated: components["schemas"]["AiKey"] & {
-            secret: string;
-        };
-        Catalog: {
-            regions: string[];
-            vm_sizes: {
-                id: string;
-                vcpu: number;
-                memory_gib: number;
-            }[];
-            vm_images: {
-                id: string;
-                name: string;
-                version: string;
-            }[];
-            container_sizes: {
-                /** @example pms-c-250m-512 */
-                id: string;
-                vcpu: number;
-                memory_mib: number;
-            }[];
-            database_sizes: {
-                /** @example pms-db-250m-512 */
-                id: string;
-                vcpu: number;
-                memory_mib: number;
-            }[];
-            ai_models: {
-                id: string;
-                /** @enum {string} */
-                type: "llm" | "embedding" | "decision";
-                description: string;
-                /** @description Context size, vector dims or latency. */
-                detail: string;
-            }[];
-        };
-        /** @enum {string} */
-        Runtime: "gvisor" | "native";
-        Access: {
-            /** @enum {string} */
-            access: "none" | "pending" | "approved" | "rejected";
-            runtime: components["schemas"]["Runtime"];
-            /** @enum {string} */
-            vcluster: "none" | "creating" | "ready" | "failed" | "deleting";
-            reason: string | null;
-            /** @description The admin's message to the customer. */
-            note: string | null;
-            /** Format: date-time */
-            requested_at: string | null;
-            /** Format: date-time */
-            decided_at: string | null;
-        };
+        /**
+         * Access
+         * @enum {string}
+         */
+        Access: "none" | "pending" | "approved" | "rejected";
+        /** AccessRequest */
         AccessRequest: {
+            /** Reason */
             reason: string;
         };
-        RegistryCredential: {
-            /** @example reg_01 */
-            id: string;
-            name: string;
-            /** @example ghcr.io */
-            host: string;
-            username: string;
-            /** Format: date-time */
-            created_at: string;
-        };
-        RegistryCredentialList: {
-            items: components["schemas"]["RegistryCredential"][];
-        };
-        RegistryCredentialCreate: {
-            name: string;
-            host: string;
-            username: string;
-            /** @description Write-only. */
-            token: string;
-        };
-        Container: {
-            /** @example ctr_01 */
-            id: string;
-            name: string;
-            /** @enum {string} */
-            type: "worker";
-            image: string;
-            size: string;
-            vcpu: number | null;
-            memory_mib: number | null;
-            registry_credential_id: string | null;
-            /** @description Values are never returned. */
-            env_names: string[];
+        /** AccountAccess */
+        AccountAccess: {
+            access: components["schemas"]["Access"];
+            /** Decided At */
+            decided_at: string | null;
+            /** Note */
+            note: string | null;
+            /** Reason */
+            reason: string | null;
+            /** Requested At */
+            requested_at: string | null;
             runtime: components["schemas"]["Runtime"];
-            /** @description Private TCP ports. At most 5. */
-            ports: number[];
-            /** @description The name that other containers in the same project use, as host:port. Null when the container has no ports. */
-            internal_host: string | null;
-            status: components["schemas"]["Status"];
-            status_message: string | null;
-            /** Format: date-time */
+            vcluster: components["schemas"]["VclusterState"];
+        };
+        /**
+         * Action
+         * @enum {string}
+         */
+        Action: "start" | "stop" | "restart";
+        /** AiKey */
+        AiKey: {
+            /** Budget Usd */
+            budget_usd: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
             created_at: string;
-            /** Format: date-time */
-            updated_at: string;
-        };
-        ContainerList: {
-            items: components["schemas"]["Container"][];
-        };
-        ContainerCreate: {
+            /** Id */
+            id: string;
+            /** Models */
+            models: string[];
+            /** Name */
             name: string;
-            /** @enum {string} */
-            type: "worker";
-            image: string;
-            size: string;
-            registry_credential_id?: string | null;
-            env?: {
-                [key: string]: string;
-            };
-            runtime?: components["schemas"]["Runtime"];
-            /** @description Private TCP ports. In an update, [] removes all ports. Omit to keep them. */
-            ports?: number[];
+            /** Prefix */
+            prefix: string;
+            /** Rate Limit Rpm */
+            rate_limit_rpm: number;
+            /** Spend Usd */
+            spend_usd: number;
+            status: components["schemas"]["AiKeyStatus"];
         };
-        ContainerUpdate: {
-            image?: string;
-            size?: string;
-            registry_credential_id?: string | null;
-            /** @description Replaces all variables. Do not send it with env_set or env_unset. */
-            env?: {
+        /** AiKeyCreated */
+        AiKeyCreated: {
+            /** Budget Usd */
+            budget_usd: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: string;
+            /** Models */
+            models: string[];
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+            /** Rate Limit Rpm */
+            rate_limit_rpm: number;
+            /** Secret */
+            secret: string;
+            /** Spend Usd */
+            spend_usd: number;
+            status: components["schemas"]["AiKeyStatus"];
+        };
+        /**
+         * AiKeyStatus
+         * @enum {string}
+         */
+        AiKeyStatus: "running" | "deleting";
+        /**
+         * AiModelType
+         * @enum {string}
+         */
+        AiModelType: "llm" | "embedding" | "decision";
+        /** Catalog */
+        Catalog: {
+            /** Ai Models */
+            ai_models: components["schemas"]["CatalogModel"][];
+            /** Container Sizes */
+            container_sizes: components["schemas"]["ContainerSize"][];
+            /** Database Sizes */
+            database_sizes: components["schemas"]["DatabaseSize"][];
+            /** Regions */
+            regions: string[];
+            /** Vm Images */
+            vm_images: components["schemas"]["CatalogImage"][];
+            /** Vm Sizes */
+            vm_sizes: components["schemas"]["VmSize"][];
+        };
+        /** CatalogImage */
+        CatalogImage: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Version */
+            version: string;
+        };
+        /** CatalogModel */
+        CatalogModel: {
+            /** Description */
+            description: string;
+            /** Detail */
+            detail: string;
+            /** Id */
+            id: string;
+            type: components["schemas"]["AiModelType"];
+        };
+        /** ConsoleTicket */
+        ConsoleTicket: {
+            /** Ticket */
+            ticket: string;
+            /** Url */
+            url: string;
+        };
+        /** Container */
+        Container: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Env Names */
+            env_names: string[];
+            /** Id */
+            id: string;
+            /** Image */
+            image: string;
+            /** Internal Host */
+            internal_host: string | null;
+            /** Memory Mib */
+            memory_mib: number | null;
+            /** Name */
+            name: string;
+            /** Ports */
+            ports: number[];
+            /** Registry Credential Id */
+            registry_credential_id: string | null;
+            runtime: components["schemas"]["Runtime"];
+            /** Size */
+            size: string;
+            status: components["schemas"]["ContainerStatus"];
+            /** Status Message */
+            status_message: string | null;
+            type: components["schemas"]["ContainerType"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Vcpu */
+            vcpu: number | null;
+        };
+        /** ContainerActionBody */
+        ContainerActionBody: {
+            action: components["schemas"]["Action"];
+        };
+        /** ContainerCreate */
+        ContainerCreate: {
+            /**
+             * Env
+             * @default {}
+             */
+            env: {
                 [key: string]: string;
             };
-            /** @description Adds or changes only these variables. */
+            /** Image */
+            image: string;
+            /** Name */
+            name: string;
+            /**
+             * Ports
+             * @default []
+             */
+            ports: number[];
+            /** Registry Credential Id */
+            registry_credential_id?: string | null;
+            /** @default gvisor */
+            runtime: components["schemas"]["Runtime"];
+            /** Size */
+            size: string;
+            /** @default worker */
+            type: components["schemas"]["ContainerType"];
+        };
+        /** ContainerLogs */
+        ContainerLogs: {
+            /** Lines */
+            lines: components["schemas"]["LogLine"][];
+        };
+        /** ContainerSize */
+        ContainerSize: {
+            /** Id */
+            id: string;
+            /** Memory Mib */
+            memory_mib: number;
+            /** Vcpu */
+            vcpu: number;
+        };
+        /**
+         * ContainerStatus
+         * @enum {string}
+         */
+        ContainerStatus: "provisioning" | "running" | "stopped" | "failed" | "deleting" | "unknown";
+        /**
+         * ContainerType
+         * @enum {string}
+         */
+        ContainerType: "worker";
+        /** ContainerUpdate */
+        ContainerUpdate: {
+            /** Env */
+            env?: {
+                [key: string]: string;
+            } | null;
+            /** Env Set */
             env_set?: {
                 [key: string]: string;
-            };
-            /** @description Removes only these variables. */
-            env_unset?: string[];
-            runtime?: components["schemas"]["Runtime"];
-            /** @description Private TCP ports. In an update, [] removes all ports. Omit to keep them. */
-            ports?: number[];
+            } | null;
+            /** Env Unset */
+            env_unset?: string[] | null;
+            /** Image */
+            image?: string | null;
+            /** Ports */
+            ports?: number[] | null;
+            /** Registry Credential Id */
+            registry_credential_id?: string | null;
+            runtime?: components["schemas"]["Runtime"] | null;
+            /** Size */
+            size?: string | null;
         };
-        /** @enum {string} */
-        DatabaseStatus: "provisioning" | "running" | "read_only" | "suspended" | "failed" | "deleting" | "unknown";
-        Database: {
-            /** @example db_01 */
-            id: string;
-            name: string;
-            /** @enum {string} */
-            engine: "postgres";
-            size: string;
-            vcpu: number | null;
-            memory_mib: number | null;
-            vector: boolean;
-            status: components["schemas"]["DatabaseStatus"];
-            status_message: string | null;
+        /** CredentialCreate */
+        CredentialCreate: {
+            /** Host */
             host: string;
-            port: number;
-            database: string;
-            user: string;
-            used_bytes: number;
-            /** @description The limit for all databases of the account. */
-            storage_limit_bytes: number;
-            /** Format: date-time */
+            /** Name */
+            name: string;
+            /** Token */
+            token: string;
+            /** Username */
+            username: string;
+        };
+        /** Database */
+        Database: {
+            /**
+             * Created At
+             * Format: date-time
+             */
             created_at: string;
-            /** Format: date-time */
+            /**
+             * Database
+             * @constant
+             */
+            database: "app";
+            /**
+             * Engine
+             * @constant
+             */
+            engine: "postgres";
+            /** Host */
+            host: string;
+            /** Id */
+            id: string;
+            /** Memory Mib */
+            memory_mib: number | null;
+            /** Name */
+            name: string;
+            /**
+             * Port
+             * @constant
+             */
+            port: 5432;
+            /** Private Ip */
+            private_ip: string;
+            /** Size */
+            size: string;
+            /** Ssh Host */
+            ssh_host: string;
+            status: components["schemas"]["DatabaseStatus"];
+            /** Status Message */
+            status_message: string | null;
+            /** Storage Limit Bytes */
+            storage_limit_bytes: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
             updated_at: string;
+            /** Used Bytes */
+            used_bytes: number | null;
+            /**
+             * User
+             * @constant
+             */
+            user: "app";
+            /** Vcpu */
+            vcpu: number | null;
+            /** Vector */
+            vector: boolean;
         };
-        DatabaseSecret: components["schemas"]["Database"] & {
-            /** @description Shown one time. */
-            password: string;
-            /** @description Shown one time. */
+        /** DatabaseCreate */
+        DatabaseCreate: {
+            /** Name */
+            name: string;
+            /** Size */
+            size?: string | null;
+            /**
+             * Vector
+             * @default false
+             */
+            vector: boolean;
+        };
+        /** DatabaseSize */
+        DatabaseSize: {
+            /** Id */
+            id: string;
+            /** Memory Mib */
+            memory_mib: number;
+            /** Vcpu */
+            vcpu: number;
+        };
+        /**
+         * DatabaseStatus
+         * @enum {string}
+         */
+        DatabaseStatus: "provisioning" | "running" | "read_only" | "suspended" | "failed" | "deleting" | "unknown";
+        /** DatabaseUpdate */
+        DatabaseUpdate: {
+            /** Vector */
+            vector?: boolean | null;
+        };
+        /** DatabaseWithSecret */
+        DatabaseWithSecret: {
+            /**
+             * Connection Url
+             * Format: password
+             */
             connection_url: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Database
+             * @constant
+             */
+            database: "app";
+            /**
+             * Engine
+             * @constant
+             */
+            engine: "postgres";
+            /** Host */
+            host: string;
+            /** Id */
+            id: string;
+            /** Memory Mib */
+            memory_mib: number | null;
+            /** Name */
+            name: string;
+            /**
+             * Password
+             * Format: password
+             */
+            password: string;
+            /**
+             * Port
+             * @constant
+             */
+            port: 5432;
+            /** Private Ip */
+            private_ip: string;
+            /** Size */
+            size: string;
+            /** Ssh Host */
+            ssh_host: string;
+            status: components["schemas"]["DatabaseStatus"];
+            /** Status Message */
+            status_message: string | null;
+            /** Storage Limit Bytes */
+            storage_limit_bytes: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Used Bytes */
+            used_bytes: number | null;
+            /**
+             * User
+             * @constant
+             */
+            user: "app";
+            /** Vcpu */
+            vcpu: number | null;
+            /** Vector */
+            vector: boolean;
         };
-        DatabaseList: {
+        /**
+         * ErrorBody
+         * @description The body of every error response. Used in the OpenAPI contract.
+         */
+        ErrorBody: {
+            error: components["schemas"]["ErrorDetail"];
+        };
+        /** ErrorDetail */
+        ErrorDetail: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+        };
+        /** Event */
+        Event: {
+            /** Id */
+            id: string;
+            level: components["schemas"]["EventLevel"];
+            /** Message */
+            message: string;
+            /** Resource Id */
+            resource_id: string;
+            /** Resource Name */
+            resource_name: string;
+            /**
+             * Time
+             * Format: date-time
+             */
+            time: string;
+        };
+        /**
+         * EventLevel
+         * @enum {string}
+         */
+        EventLevel: "info" | "success" | "warning" | "error";
+        /** ItemList[AiKey] */
+        ItemList_AiKey_: {
+            /** Items */
+            items: components["schemas"]["AiKey"][];
+        };
+        /** ItemList[Container] */
+        ItemList_Container_: {
+            /** Items */
+            items: components["schemas"]["Container"][];
+        };
+        /** ItemList[Database] */
+        ItemList_Database_: {
+            /** Items */
             items: components["schemas"]["Database"][];
         };
-        DatabaseCreate: {
+        /** ItemList[Event] */
+        ItemList_Event_: {
+            /** Items */
+            items: components["schemas"]["Event"][];
+        };
+        /** ItemList[Member] */
+        ItemList_Member_: {
+            /** Items */
+            items: components["schemas"]["Member"][];
+        };
+        /** ItemList[Project] */
+        ItemList_Project_: {
+            /** Items */
+            items: components["schemas"]["Project"][];
+        };
+        /** ItemList[RegistryCredential] */
+        ItemList_RegistryCredential_: {
+            /** Items */
+            items: components["schemas"]["RegistryCredential"][];
+        };
+        /** ItemList[SshKey] */
+        ItemList_SshKey_: {
+            /** Items */
+            items: components["schemas"]["SshKey"][];
+        };
+        /** ItemList[Vm] */
+        ItemList_Vm_: {
+            /** Items */
+            items: components["schemas"]["Vm"][];
+        };
+        /** KeyCreate */
+        KeyCreate: {
+            /** Budget Usd */
+            budget_usd: number;
+            /** Models */
+            models: string[];
+            /** Name */
             name: string;
-            size?: string;
-            vector?: boolean;
         };
-        DatabaseUpdate: {
-            vector?: boolean;
+        /** KeyUpdate */
+        KeyUpdate: {
+            /** Budget Usd */
+            budget_usd?: number | null;
+            /** Models */
+            models?: string[] | null;
         };
-        ContainerLogs: {
-            lines: {
-                time: string;
-                message: string;
-            }[];
+        /** LogLine */
+        LogLine: {
+            /** Message */
+            message: string;
+            /** Time */
+            time: string;
         };
+        /** Me */
+        Me: {
+            /** Email */
+            email: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Plan */
+            plan: string;
+        };
+        /** Member */
+        Member: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string;
+            role: components["schemas"]["ProjectRole"];
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
+        /** MemberAdded */
+        MemberAdded: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string;
+            /** Invited */
+            invited: boolean;
+            role: components["schemas"]["ProjectRole"];
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
+        /** MemberCreate */
+        MemberCreate: {
+            /** Email */
+            email: string;
+        };
+        /** NameBody */
+        NameBody: {
+            /** Name */
+            name: string;
+        };
+        /** Project */
+        Project: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Region */
+            region: string;
+            role: components["schemas"]["ProjectRole"];
+        };
+        /**
+         * ProjectRole
+         * @enum {string}
+         */
+        ProjectRole: "owner" | "member";
+        /** ProjectUpdate */
+        ProjectUpdate: {
+            /** Name */
+            name?: string | null;
+        };
+        /** RegistryCredential */
+        RegistryCredential: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Host */
+            host: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Username */
+            username: string;
+        };
+        /**
+         * Runtime
+         * @enum {string}
+         */
+        Runtime: "gvisor" | "native";
+        /** SshKey */
+        SshKey: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Fingerprint */
+            fingerprint: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Public Key */
+            public_key: string;
+        };
+        /** SshKeyCreate */
+        SshKeyCreate: {
+            /** Name */
+            name: string;
+            /** Public Key */
+            public_key: string;
+        };
+        /** Ticket */
+        Ticket: {
+            /** Ticket */
+            ticket: string;
+        };
+        /** Usage */
+        Usage: {
+            ai_spend_usd: components["schemas"]["UsageMetric"];
+            memory_gib: components["schemas"]["UsageMetric"];
+            storage_gb: components["schemas"]["UsageMetric"];
+            vcpu: components["schemas"]["UsageMetric"];
+        };
+        /** UsageMetric */
+        UsageMetric: {
+            /** Limit */
+            limit: number;
+            /** Series */
+            series: number[];
+            /** Used */
+            used: number;
+        };
+        /**
+         * VclusterState
+         * @enum {string}
+         */
+        VclusterState: "none" | "creating" | "ready" | "failed" | "deleting";
+        /** Vm */
+        Vm: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Disk Gb */
+            disk_gb: number;
+            /** Id */
+            id: string;
+            /** Image */
+            image: string;
+            /** Name */
+            name: string;
+            /** Private Ip */
+            private_ip: string | null;
+            /** Size */
+            size: string;
+            /** Ssh Host */
+            ssh_host: string;
+            /** Ssh User */
+            ssh_user: string;
+            status: components["schemas"]["VmStatus"];
+            /** Status Message */
+            status_message: string | null;
+        };
+        /** VmActionBody */
+        VmActionBody: {
+            action: components["schemas"]["Action"];
+        };
+        /** VmCreate */
+        VmCreate: {
+            /** Disk Gb */
+            disk_gb: number;
+            /** Image */
+            image: string;
+            /** Name */
+            name: string;
+            /** Size */
+            size: string;
+            /** Ssh Public Key */
+            ssh_public_key: string;
+        };
+        /** VmMetrics */
+        VmMetrics: {
+            /** Cpu */
+            cpu: number[];
+        };
+        /** VmSize */
+        VmSize: {
+            /** Id */
+            id: string;
+            /** Memory Gib */
+            memory_gib: number;
+            /** Vcpu */
+            vcpu: number;
+        };
+        /**
+         * VmStatus
+         * @enum {string}
+         */
+        VmStatus: "pending" | "provisioning" | "running" | "stopped" | "failed" | "deleting";
     };
-    responses: {
-        /** @description Error */
-        Error: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorBody"];
-            };
-        };
-    };
-    parameters: {
-        ProjectId: string;
-        VmId: string;
-        KeyId: string;
-        ContainerId: string;
-        DatabaseId: string;
-    };
+    responses: never;
+    parameters: never;
     requestBodies: never;
     headers: never;
     pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    getMe: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The user */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Me"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    getCatalog: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Options for create forms */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Catalog"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    listProjects: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Projects */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProjectList"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    createProject: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProjectCreate"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Project"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    getProject: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Project */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Project"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    deleteProject: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Accepted. 403 if the user is a member and not the owner. */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    updateProject: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProjectUpdate"];
-            };
-        };
-        responses: {
-            /** @description Updated */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Project"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    listMembers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The owner first */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MemberList"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    addMember: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MemberCreate"];
-            };
-        };
-        responses: {
-            /** @description Added at once. Owner only (403). A new email gets an invite email. 409 if already a member. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MemberAdded"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    removeMember: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                user_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Removed. The owner removes a member */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    getUsage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Usage */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Usage"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    listEvents: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Activity */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EventList"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    listVms: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description VMs */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VmList"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    createVm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VmCreate"];
-            };
-        };
-        responses: {
-            /** @description Accepted */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Vm"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    getVm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                vm_id: components["parameters"]["VmId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description VM */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Vm"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    deleteVm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                vm_id: components["parameters"]["VmId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Accepted */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    vmAction: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                vm_id: components["parameters"]["VmId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VmAction"];
-            };
-        };
-        responses: {
-            /** @description Accepted */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Vm"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    getVmMetrics: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                vm_id: components["parameters"]["VmId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description CPU series for the last hour */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VmMetrics"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    createEventsTicket: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Ticket */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Ticket"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    streamEvents: {
-        parameters: {
-            query: {
-                ticket: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Event stream */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/event-stream": components["schemas"]["StreamEvent"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    createConsoleTicket: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                vm_id: components["parameters"]["VmId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Ticket */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ConsoleTicket"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    listAiKeys: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description AI keys */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AiKeyList"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    createAiKey: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AiKeyCreate"];
-            };
-        };
-        responses: {
-            /** @description Created. The secret is shown once. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AiKeyCreated"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    getAiKey: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                key_id: components["parameters"]["KeyId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description AI key */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AiKey"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    deleteAiKey: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                key_id: components["parameters"]["KeyId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Revoked */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    updateAiKey: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                key_id: components["parameters"]["KeyId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AiKeyUpdate"];
-            };
-        };
-        responses: {
-            /** @description Updated */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AiKey"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    rotateAiKey: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                key_id: components["parameters"]["KeyId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The new key. Shown once. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AiKeyCreated"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    listSshKeys: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Saved public keys. Newest first. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SshKeyList"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    createSshKey: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SshKeyCreate"];
-            };
-        };
-        responses: {
-            /** @description Saved. 409 for a key that is already saved or after 20 keys. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SshKey"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    deleteSshKey: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                key_id: components["parameters"]["KeyId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Deleted. VMs that already have the key keep it. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            default: components["responses"]["Error"];
-        };
-    };
     getAccess: {
         parameters: {
             query?: never;
@@ -1659,16 +1324,24 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Access */
+            /** @description Successful Response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Access"];
+                    "application/json": components["schemas"]["AccountAccess"];
                 };
             };
-            default: components["responses"]["Error"];
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
         };
     };
     requestAccess: {
@@ -1684,16 +1357,1321 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Access. 409 if the state is pending or approved. */
+            /** @description Successful Response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Access"];
+                    "application/json": components["schemas"]["AccountAccess"];
                 };
             };
-            default: components["responses"]["Error"];
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Catalog"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    streamEvents: {
+        parameters: {
+            query: {
+                ticket: string;
+                last_event_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createEventsTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ticket"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listProjects: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_Project_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NameBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listAiKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_AiKey_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createAiKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KeyCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiKeyCreated"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getAiKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiKey"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteAiKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateAiKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KeyUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiKey"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    rotateAiKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiKeyCreated"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listContainers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_Container_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createContainer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContainerCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Container"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getContainer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                container_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Container"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteContainer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                container_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateContainer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                container_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContainerUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Container"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    runContainerAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                container_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContainerActionBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Container"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getContainerLogs: {
+        parameters: {
+            query?: {
+                tail?: number;
+                previous?: boolean;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+                container_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContainerLogs"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listDatabases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_Database_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createDatabase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DatabaseCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatabaseWithSecret"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getDatabase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                database_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Database"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteDatabase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                database_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateDatabase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                database_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DatabaseUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Database"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    resetDatabasePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                database_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatabaseWithSecret"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_Event_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_Member_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    addMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberAdded"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    removeMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getUsage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Usage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listVms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_Vm_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createVm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VmCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Vm"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getVm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                vm_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Vm"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteVm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                vm_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    runVmAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                vm_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VmActionBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Vm"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createConsoleTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                vm_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsoleTicket"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getVmMetrics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                vm_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VmMetrics"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
         };
     };
     listRegistryCredentials: {
@@ -1705,16 +2683,24 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Registry credentials. Newest first. */
+            /** @description Successful Response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RegistryCredentialList"];
+                    "application/json": components["schemas"]["ItemList_RegistryCredential_"];
                 };
             };
-            default: components["responses"]["Error"];
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
         };
     };
     createRegistryCredential: {
@@ -1726,11 +2712,11 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RegistryCredentialCreate"];
+                "application/json": components["schemas"]["CredentialCreate"];
             };
         };
         responses: {
-            /** @description Saved. 10 at most. 409 if the name exists. The token is never returned. */
+            /** @description Successful Response */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -1739,7 +2725,15 @@ export interface operations {
                     "application/json": components["schemas"]["RegistryCredential"];
                 };
             };
-            default: components["responses"]["Error"];
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
         };
     };
     deleteRegistryCredential: {
@@ -1753,342 +2747,113 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Deleted. 409 if a container uses it. */
+            /** @description Successful Response */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            default: components["responses"]["Error"];
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
         };
     };
-    listContainers: {
+    listSshKeys: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Containers. 403 not_allowed if the owner's account is not approved. */
+            /** @description Successful Response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ContainerList"];
+                    "application/json": components["schemas"]["ItemList_SshKey_"];
                 };
             };
-            default: components["responses"]["Error"];
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
         };
     };
-    createContainer: {
+    createSshKey: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ContainerCreate"];
+                "application/json": components["schemas"]["SshKeyCreate"];
             };
         };
         responses: {
-            /** @description Accepted */
-            202: {
+            /** @description Successful Response */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Container"];
+                    "application/json": components["schemas"]["SshKey"];
                 };
             };
-            default: components["responses"]["Error"];
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
         };
     };
-    getContainer: {
+    deleteSshKey: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                project_id: components["parameters"]["ProjectId"];
-                container_id: components["parameters"]["ContainerId"];
+                key_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Container */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Container"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    deleteContainer: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                container_id: components["parameters"]["ContainerId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Accepted */
-            202: {
+            /** @description Successful Response */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            default: components["responses"]["Error"];
-        };
-    };
-    updateContainer: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                container_id: components["parameters"]["ContainerId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ContainerUpdate"];
-            };
-        };
-        responses: {
-            /** @description Accepted */
-            202: {
+            /** @description Error */
+            default: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Container"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            default: components["responses"]["Error"];
-        };
-    };
-    containerAction: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                container_id: components["parameters"]["ContainerId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VmAction"];
-            };
-        };
-        responses: {
-            /** @description Accepted */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Container"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    listDatabases: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Databases */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DatabaseList"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    createDatabase: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DatabaseCreate"];
-            };
-        };
-        responses: {
-            /** @description Creating. The response has the password one time. */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DatabaseSecret"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    getDatabase: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                database_id: components["parameters"]["DatabaseId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Database */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Database"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    deleteDatabase: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                database_id: components["parameters"]["DatabaseId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Deleting */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    updateDatabase: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                database_id: components["parameters"]["DatabaseId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DatabaseUpdate"];
-            };
-        };
-        responses: {
-            /** @description Updated */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Database"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    resetDatabasePassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                database_id: components["parameters"]["DatabaseId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description A new password, one time. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DatabaseSecret"];
-                };
-            };
-            default: components["responses"]["Error"];
-        };
-    };
-    getContainerLogs: {
-        parameters: {
-            query?: {
-                tail?: number;
-                /** @description The run before the last restart (for a crash). */
-                previous?: boolean;
-            };
-            header?: never;
-            path: {
-                project_id: components["parameters"]["ProjectId"];
-                container_id: components["parameters"]["ContainerId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The last log lines of the newest run */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ContainerLogs"];
-                };
-            };
-            default: components["responses"]["Error"];
         };
     };
 }

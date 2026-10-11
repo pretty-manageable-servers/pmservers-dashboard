@@ -710,31 +710,31 @@ export const handlers = [
     const denied = accessError();
     if (denied) return denied;
     const body = (await request.json()) as ContainerUpdate;
-    if (body.image !== undefined && !imageHost(body.image))
+    if (body.image != null && !imageHost(body.image))
       return err(
         422,
         'validation_error',
         'The image reference is not valid. Example: ghcr.io/owner/app:1.0',
       );
-    if (body.size !== undefined) {
+    if (body.size != null) {
       const spec = containerSizeSpec(body.size);
       if (!spec) return err(422, 'validation_error', 'Unknown size.');
       Object.assign(c, { size: spec.id, vcpu: spec.vcpu, memory_mib: spec.memory_mib });
     }
-    if (body.image !== undefined) c.image = body.image;
+    if (body.image != null) c.image = body.image;
     if (body.registry_credential_id !== undefined)
       c.registry_credential_id = body.registry_credential_id;
-    if (body.env !== undefined && (body.env_set || body.env_unset))
+    if (body.env != null && (body.env_set || body.env_unset))
       return err(422, 'validation_error', 'Send env, or env_set and env_unset. Not both.');
-    if (body.env !== undefined) c.env_names = Object.keys(body.env).sort();
+    if (body.env != null) c.env_names = Object.keys(body.env).sort();
     if (body.env_set || body.env_unset) {
       const names = new Set(c.env_names);
       for (const n of body.env_unset ?? []) names.delete(n);
       for (const n of Object.keys(body.env_set ?? {})) names.add(n);
       c.env_names = [...names].sort();
     }
-    if (body.runtime !== undefined) c.runtime = body.runtime;
-    if (body.ports !== undefined) {
+    if (body.runtime != null) c.runtime = body.runtime;
+    if (body.ports != null) {
       c.ports = body.ports;
       c.internal_host = body.ports.length ? c.name : null;
     }
@@ -832,7 +832,7 @@ export const handlers = [
     const body = (await request.json()) as DatabaseUpdate;
     if (body.vector === false && x.name.includes('vec'))
       return err(409, 'conflict', 'A column or index uses vector. Remove it first.');
-    if (body.vector !== undefined) x.vector = body.vector;
+    if (body.vector != null) x.vector = body.vector;
     x.updated_at = new Date().toISOString();
     pushEvent(s, 'info', x.id, x.name, body.vector ? 'Turning on vector' : 'Turned off vector');
     return HttpResponse.json(x, { status: 202 });

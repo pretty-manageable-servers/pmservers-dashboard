@@ -95,6 +95,8 @@ export const mockDatabase = (
   status,
   status_message: null,
   host: `${name}.${id}.svc`,
+  private_ip: '',
+  ssh_host: '',
   port: 5432,
   database: 'app',
   user: 'app',

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Copy the API's generated OpenAPI file in, and make the API types from it.
 # Usage: scripts/sync-api-contract.sh <path to public.json>
-# Example: scripts/sync-api-contract.sh ../pmservers-api-types-phase-6/openapi/public.json
+# Example: scripts/sync-api-contract.sh ../pmservers-api/openapi/public.json
 # The API makes the file (openapi/public.json). This repo does not edit it.
 set -euo pipefail
 cd "$(dirname "$0")/.."
