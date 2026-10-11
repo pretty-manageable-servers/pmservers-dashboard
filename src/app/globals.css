@@ -471,7 +471,7 @@ button {
 /* Usage */
 .usage {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 .ucard {
@@ -1771,7 +1771,7 @@ svg.spark {
   color: var(--muted);
 }
 
-/* Links inside hint text, for example "Setup help" in the VM sheet. */
+/* Links inside hint text. */
 .hint a {
   color: var(--accent);
   text-decoration: underline;

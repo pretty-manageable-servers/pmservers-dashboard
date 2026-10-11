@@ -12,8 +12,8 @@ describe('backoffDelay', () => {
 
 describe('toastText', () => {
   it('adds the resource name', () => {
-    expect(toastText({ resource_name: 'worker-1', message: 'VM is running' })).toBe(
-      'worker-1: VM is running',
+    expect(toastText({ resource_name: 'worker-1', message: 'Container is running' })).toBe(
+      'worker-1: Container is running',
     );
   });
   it('keeps a message that has the name', () => {

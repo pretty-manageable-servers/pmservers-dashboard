@@ -23,9 +23,6 @@ export function NewMenu() {
       </DropMenuTrigger>
       <DropMenuContent align="end">
         <DropMenuLabel>Create</DropMenuLabel>
-        <DropMenuItem onSelect={() => create('/vms', 'vm')}>
-          {TYPE_ICON.vm}Virtual machine
-        </DropMenuItem>
         <DropMenuItem onSelect={() => create('/containers', 'ct')}>
           {TYPE_ICON.ct}Container
         </DropMenuItem>

@@ -20,7 +20,6 @@ export const toastText = (e: Pick<StreamEvent, 'resource_name' | 'message'>) =>
 export function applyEvent(qc: QueryClient, e: StreamEvent) {
   const p = e.project_id;
   for (const key of [
-    keys.vms(p),
     keys.containers(p),
     keys.databases(p),
     keys.aiKeys(p),

@@ -10,7 +10,7 @@ export function useNavActions() {
   return {
     openResource: (path: string, id: string) =>
       router.push(projectHref(path, project.id, { r: id })),
-    create: (path: string, kind: 'vm' | 'ct' | 'db' | 'ai') =>
+    create: (path: string, kind: 'ct' | 'db' | 'ai') =>
       router.push(projectHref(path, project.id, { new: kind })),
   };
 }

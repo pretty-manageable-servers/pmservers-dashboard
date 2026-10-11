@@ -18,17 +18,15 @@ import {
 import { useSession } from '@/lib/auth';
 import { projectHref, useProject } from '@/lib/project';
 import { toggleTheme } from '@/lib/theme';
-import { useAiKeys, useVms } from '@/lib/api/hooks';
+import { useAiKeys } from '@/lib/api/hooks';
 
 export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const { user, signOut } = useSession();
   const { project, projects } = useProject();
   const pathname = usePathname();
   const router = useRouter();
-  const vms = useVms(project.id);
   const keys = useAiKeys(project.id);
   const counts: Record<string, number | undefined> = {
-    vm: vms.data?.length,
     ai: keys.data?.length,
   };
   const initial = (user?.email[0] ?? '?').toUpperCase();

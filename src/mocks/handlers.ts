@@ -1,4 +1,4 @@
-import { delay, http, HttpResponse, sse, ws } from 'msw';
+import { delay, http, HttpResponse, sse } from 'msw';
 import type {
   Access,
   AiKey,
@@ -22,8 +22,6 @@ import type {
   SshKey,
   SshKeyCreate,
   StreamEvent,
-  Vm,
-  VmCreate,
 } from '@/lib/api/types';
 import { validateDatabaseName } from '@/lib/databases';
 import {
@@ -39,12 +37,10 @@ import {
   containerSizeSpec,
   databaseSizeSpec,
   mockDatabase,
-  LIMITS,
   projects as seedProjects,
   seedCredentials,
   seedState,
   series,
-  sizeSpec,
   type ProjectState,
 } from './data';
 
@@ -272,35 +268,7 @@ const pushEvent = (
   broadcast({ ...e, project_id: projectOf(s) });
 };
 
-/** Move a resource through a list of [delay ms, status] steps. */
-function lifecycle(vm: Vm, s: ProjectState, steps: [number, Vm['status'], (() => void)?][]) {
-  for (const [ms, status, fn] of steps) {
-    setTimeout(() => {
-      vm.status = status;
-      fn?.();
-      broadcast({
-        id: id('ev'),
-        time: new Date().toISOString(),
-        level: 'info',
-        resource_id: vm.id,
-        resource_name: vm.name,
-        message: `VM is ${status}`,
-        project_id: projectOf(s),
-      });
-    }, ms);
-  }
-}
-
-const IMAGE_USER: Record<string, string> = {
-  debian: 'debian',
-  ubuntu: 'ubuntu',
-  alpine: 'alpine',
-  fedora: 'fedora',
-};
-
 const base = '*/v1';
-
-const consoleSocket = ws.link('*/v1/projects/:pid/vms/:vid/console');
 
 export const handlers = [
   http.get(`${base}/me`, async () => {
@@ -367,16 +335,13 @@ export const handlers = [
     };
     projects.push(p);
     state[p.id] = {
-      vms: [],
       containers: [],
       databases: [],
       aiKeys: [],
       events: [],
-      metrics: {},
       usageSeries: {
         vcpu: series(28, 0.05, 0.02),
         memory: series(28, 0.05, 0.02),
-        storage: series(28, 0.05, 0.02),
         ai: series(28, 0.05, 0.02),
       },
     };
@@ -401,7 +366,7 @@ export const handlers = [
       return err(
         409,
         'conflict',
-        'Delete the VMs, containers, databases and AI keys of this project first.',
+        'Delete the containers, databases and AI keys of this project first.',
       );
     projects = projects.filter((x) => x.id !== params.pid);
     delete state[params.pid as string];
@@ -455,116 +420,6 @@ export const handlers = [
     await delay(LATENCY);
     const s = state[params.pid as string];
     return s ? HttpResponse.json({ items: s.events.slice(0, 20) }) : notFound();
-  }),
-
-  // VMs
-  http.get(`${base}/projects/:pid/vms`, async ({ params }) => {
-    await delay(LATENCY);
-    const s = state[params.pid as string];
-    return s ? HttpResponse.json({ items: s.vms }) : notFound();
-  }),
-  http.post(`${base}/projects/:pid/vms`, async ({ params, request }) => {
-    await delay(LATENCY);
-    const s = state[params.pid as string];
-    const p = projects.find((x) => x.id === params.pid);
-    if (!s || !p) return notFound();
-    const body = (await request.json()) as VmCreate;
-    if (s.vms.some((v) => v.name === body.name))
-      return err(409, 'name_taken', `A VM named ${body.name} already exists.`);
-    const spec = sizeSpec(body.size);
-    const usage = computeUsage(s);
-    if (spec && usage.vcpu.used + spec.vcpu > LIMITS.vcpu) {
-      return err(
-        402,
-        'quota_exceeded',
-        'This project has no vCPU left. Delete a VM or ask for more.',
-      );
-    }
-    const imageName = body.image.split('-')[0] ?? 'debian';
-    const vm: Vm = {
-      id: id('vm'),
-      name: body.name,
-      status: 'pending',
-      status_message: null,
-      size: body.size,
-      image: body.image,
-      disk_gb: body.disk_gb,
-      private_ip: null,
-      ssh_host: 'jump.pmservers.org',
-      ssh_user: IMAGE_USER[imageName] ?? 'user',
-      created_at: new Date().toISOString(),
-    };
-    s.vms.unshift(vm);
-    pushEvent(s, 'info', vm.id, vm.name, 'Creating VM');
-    lifecycle(vm, s, [
-      [1500, 'provisioning'],
-      [
-        5000,
-        'running',
-        () => {
-          vm.private_ip = `10.40.0.${40 + Math.floor(Math.random() * 120)}`;
-          s.metrics[vm.id] = series(60, 0.3, 0.3);
-          pushEvent(s, 'success', vm.id, vm.name, 'VM is running');
-        },
-      ],
-    ]);
-    return HttpResponse.json(vm, { status: 202 });
-  }),
-  http.get(`${base}/projects/:pid/vms/:vid`, async ({ params }) => {
-    await delay(LATENCY);
-    const vm = state[params.pid as string]?.vms.find((v) => v.id === params.vid);
-    return vm ? HttpResponse.json(vm) : notFound();
-  }),
-  http.delete(`${base}/projects/:pid/vms/:vid`, async ({ params }) => {
-    await delay(LATENCY);
-    const s = state[params.pid as string];
-    const vm = s?.vms.find((v) => v.id === params.vid);
-    if (!s || !vm) return notFound();
-    vm.status = 'deleting';
-    pushEvent(s, 'info', vm.id, vm.name, 'Deleting VM');
-    setTimeout(() => {
-      s.vms = s.vms.filter((v) => v.id !== vm.id);
-      broadcast({
-        id: id('ev'),
-        time: new Date().toISOString(),
-        level: 'info',
-        resource_id: vm.id,
-        resource_name: vm.name,
-        message: 'VM deleted',
-        project_id: projectOf(s),
-      });
-    }, 2500);
-    return new HttpResponse(null, { status: 202 });
-  }),
-  http.post(`${base}/projects/:pid/vms/:vid/actions`, async ({ params, request }) => {
-    await delay(LATENCY);
-    const s = state[params.pid as string];
-    const vm = s?.vms.find((v) => v.id === params.vid);
-    if (!s || !vm) return notFound();
-    const { action } = (await request.json()) as { action: 'start' | 'stop' | 'restart' };
-    const end = action === 'stop' ? 'stopped' : 'running';
-    vm.status = 'pending';
-    lifecycle(vm, s, [
-      [1000, 'provisioning'],
-      [
-        3000,
-        end,
-        () =>
-          pushEvent(
-            s,
-            'info',
-            vm.id,
-            vm.name,
-            action === 'stop' ? 'VM stopped' : action === 'start' ? 'VM started' : 'VM restarted',
-          ),
-      ],
-    ]);
-    return HttpResponse.json(vm, { status: 202 });
-  }),
-  http.get(`${base}/projects/:pid/vms/:vid/metrics`, async ({ params }) => {
-    await delay(LATENCY);
-    const s = state[params.pid as string];
-    return s ? HttpResponse.json({ cpu: s.metrics[params.vid as string] ?? [] }) : notFound();
   }),
 
   // Container access (account level)
@@ -789,13 +644,15 @@ export const handlers = [
       runtime: body.runtime ?? 'gvisor',
       ports: body.ports ?? [],
       internal_host: body.ports?.length ? body.name : null,
-      tunnel: body.tunnel_port ? {
-        port: body.tunnel_port,
-        origin: `http://${body.name}:${body.tunnel_port}`,
-        status: 'provisioning',
-        observed_at: null,
-        message: 'Starting connector.',
-      } : null,
+      tunnel: body.tunnel_port
+        ? {
+            port: body.tunnel_port,
+            origin: `http://${body.name}:${body.tunnel_port}`,
+            status: 'provisioning',
+            observed_at: null,
+            message: 'Starting connector.',
+          }
+        : null,
       status: 'provisioning',
       status_message: 'Creating',
       created_at: now,
@@ -849,15 +706,40 @@ export const handlers = [
     }
     if (body.detach_tunnel) c.tunnel = null;
     else if (body.tunnel_port != null && c.tunnel) {
-      c.tunnel = { ...c.tunnel, port: body.tunnel_port, origin: `http://${c.name}:${body.tunnel_port}`, status: 'provisioning' };
+      c.tunnel = {
+        ...c.tunnel,
+        port: body.tunnel_port,
+        origin: `http://${c.name}:${body.tunnel_port}`,
+        status: 'provisioning',
+      };
     }
     if (body.tunnel_token && body.tunnel_port != null && !c.tunnel) {
-      c.tunnel = { port: body.tunnel_port, origin: `http://${c.name}:${body.tunnel_port}`, status: 'provisioning', observed_at: null, message: 'Starting connector.' };
+      c.tunnel = {
+        port: body.tunnel_port,
+        origin: `http://${c.name}:${body.tunnel_port}`,
+        status: 'provisioning',
+        observed_at: null,
+        message: 'Starting connector.',
+      };
     }
     c.updated_at = new Date().toISOString();
-    const appChange = ['image', 'size', 'registry_credential_id', 'env', 'env_set', 'env_unset', 'runtime', 'ports']
-      .some((field) => field in body);
-    pushEvent(s, 'info', c.id, c.name, appChange ? 'Redeploying container' : 'Updating tunnel attachment');
+    const appChange = [
+      'image',
+      'size',
+      'registry_credential_id',
+      'env',
+      'env_set',
+      'env_unset',
+      'runtime',
+      'ports',
+    ].some((field) => field in body);
+    pushEvent(
+      s,
+      'info',
+      c.id,
+      c.name,
+      appChange ? 'Redeploying container' : 'Updating tunnel attachment',
+    );
     if (appChange) startContainer(c, s);
     return HttpResponse.json(c, { status: 202 });
   }),
@@ -1051,39 +933,5 @@ export const handlers = [
     const send = (e: StreamEvent) => client.send({ id: e.id, event: 'event', data: e });
     listeners.add(send);
     request.signal.addEventListener('abort', () => listeners.delete(send));
-  }),
-  http.post(`${base}/projects/:pid/vms/:vid/console/ticket`, async ({ params }) => {
-    await delay(LATENCY);
-    const vm = state[params.pid as string]?.vms.find((v) => v.id === params.vid);
-    if (!vm) return notFound();
-    if (vm.status !== 'running') return err(409, 'conflict', 'The VM must be running.');
-    return HttpResponse.json({
-      ticket: 'mock-console-ticket',
-      url: `/v1/projects/${params.pid}/vms/${params.vid}/console?ticket=mock-console-ticket`,
-    });
-  }),
-  consoleSocket.addEventListener('connection', ({ client }) => {
-    const enc = new TextEncoder();
-    const say = (t: string) => client.send(enc.encode(t));
-    let line = '';
-    say('Mock console. Type something and it is echoed.\r\n$ ');
-    client.addEventListener('message', (m) => {
-      const text =
-        typeof m.data === 'string' ? m.data : new TextDecoder().decode(m.data as ArrayBuffer);
-      for (const ch of text) {
-        if (ch === '\r' || ch === '\n') {
-          say(`\r\n${line ? `you typed: ${line}\r\n` : ''}$ `);
-          line = '';
-        } else if (ch === '\x7f') {
-          if (line) {
-            line = line.slice(0, -1);
-            say('\b \b');
-          }
-        } else {
-          line += ch;
-          say(ch);
-        }
-      }
-    });
   }),
 ];
