@@ -576,6 +576,8 @@ button {
   align-items: center;
   gap: 10px;
   min-width: 0;
+  /* The card is a <button>. Safari does not stretch its flex children, so set the width. */
+  width: 100%;
 }
 .ricon {
   width: 32px;
@@ -607,12 +609,12 @@ button {
   margin-left: auto;
 }
 .card .info {
+  width: 100%;
+  min-width: 0;
   color: var(--muted);
   font-size: 12.5px;
   font-family: var(--font-mono);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .card svg.spark {
   width: 100%;
