@@ -1588,11 +1588,20 @@ button:disabled {
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   text-decoration: none;
 }
 .tabs a:hover {
   color: var(--fg);
+}
+.tabs a svg,
+.tab-soon svg {
+  flex: none;
+  opacity: 0.7;
+}
+.tabs a:hover svg,
+.tabs a[aria-current='page'] svg {
+  opacity: 1;
 }
 .tabs a .c {
   font-size: 11px;
@@ -1618,7 +1627,7 @@ button:disabled {
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -1795,4 +1804,112 @@ svg.spark {
   .dialog footer .cost {
     flex-basis: 100%;
   }
+}
+
+/* Mobile menu: hamburger button, drawer and backdrop. Tabs move into the drawer. */
+.menu-btn {
+  display: none;
+}
+.mnav-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  z-index: 31;
+  animation: fade 0.2s ease-out;
+}
+.mnav-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(280px, 85vw);
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  z-index: 32;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px 16px;
+  overflow-y: auto;
+  animation: mnav-in 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes mnav-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.mnav-head {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+.mnav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mnav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.mnav-link:hover {
+  background: var(--panel-2);
+  color: var(--fg);
+}
+.mnav-link svg {
+  flex: none;
+  opacity: 0.7;
+}
+.mnav-link .c {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.mnav-link .soon {
+  margin-left: auto;
+}
+.mnav-link[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+.mnav-link[aria-current='page'] svg {
+  opacity: 1;
+  color: var(--accent);
+}
+.mnav-link[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.mnav-link[aria-disabled='true']:hover {
+  background: none;
+  color: var(--muted);
+}
+.mnav-sep {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 10px 2px;
+}
+
+.bar.collapsed .menu-btn {
+  display: grid;
+}
+/* Keep the tabs in the layout so their width can still be measured. */
+.bar.collapsed nav.tabs {
+  height: 0;
+  visibility: hidden;
 }

@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { BookOpen, ChevronsUpDown, LogOut, Plus, Search, Sun } from 'lucide-react';
 import { Logo } from './icons';
 import { TABS } from './nav';
+import { MobileNav } from './MobileNav';
 import {
   DropMenu,
   DropMenuContent,
@@ -32,14 +34,29 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const initial = (user?.email[0] ?? '?').toUpperCase();
   const name = user?.email.split('@')[0] ?? '';
 
+  // Use the hamburger menu when the tabs do not fit on one line.
+  const tabsRef = useRef<HTMLElement>(null);
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    const nav = tabsRef.current;
+    if (!nav) return;
+    const check = () => setCollapsed(nav.scrollWidth > nav.clientWidth + 1);
+    const observer = new ResizeObserver(check);
+    observer.observe(nav);
+    for (const child of Array.from(nav.children)) observer.observe(child);
+    check();
+    return () => observer.disconnect();
+  }, []);
+
   const switchTo = (id: string) => {
     router.push(projectHref(pathname === '/' ? '/overview' : pathname, id));
   };
 
   return (
-    <header className="bar">
+    <header className={collapsed ? 'bar collapsed' : 'bar'}>
       <div className="bar-in">
         <div className="row1">
+          <MobileNav counts={counts} projectId={project.id} />
           <Link href={projectHref('/overview', project.id)} aria-label="PMS Cloud home">
             <Logo />
           </Link>
@@ -124,12 +141,19 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             </DropMenuContent>
           </DropMenu>
         </div>
-        <nav className="tabs" aria-label="Sections">
+        <nav
+          ref={tabsRef}
+          className="tabs"
+          aria-label="Sections"
+          aria-hidden={collapsed || undefined}
+          inert={collapsed || undefined}
+        >
           {TABS.map((t) => {
             const n = counts[t.id];
             if (t.soon) {
               return (
                 <span key={t.id} className="tab-soon" aria-disabled="true" title="Coming soon">
+                  <t.icon size={16} aria-hidden="true" />
                   {t.label}
                   <span className="soon">Coming soon</span>
                 </span>
@@ -141,6 +165,7 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
                 href={projectHref(t.path, project.id)}
                 aria-current={pathname === t.path ? 'page' : undefined}
               >
+                <t.icon size={16} aria-hidden="true" />
                 {t.label}
                 {n ? <span className="c">{n}</span> : null}
               </Link>
