@@ -9,16 +9,12 @@ import { CopyField } from '@/components/CopyField';
 import { CodeSample } from '@/components/CodeSample';
 import { PremiumModels } from '@/components/PremiumModels';
 import { useAiKeys, useCatalog } from '@/lib/api/hooks';
+import { modelBadge, modelPrice } from '@/lib/catalog';
 import { env } from '@/lib/env';
 import { useProject } from '@/lib/project';
 import { useNavActions } from '@/lib/nav-actions';
 
 const ENDPOINT = env.aiUrl;
-const BADGE = {
-  llm: ['llm', 'LLM'],
-  embedding: ['emb', 'Embedding'],
-  decision: ['dec', 'Decision'],
-} as const;
 
 function Ai() {
   const { project } = useProject();
@@ -29,8 +25,10 @@ function Ai() {
   const llm = models.find((m) => m.type === 'llm')?.id ?? '<model>';
   const decision = models.find((m) => m.type === 'decision')?.id ?? '<decision-model>';
   const emb = models.find((m) => m.type === 'embedding')?.id ?? '<embedding-model>';
+  const stt = models.find((m) => m.type === 'stt')?.id;
+  const tts = models.find((m) => m.type === 'tts')?.id;
 
-  const samples = {
+  const samples: Record<string, string> = {
     curl: `curl ${ENDPOINT}/chat/completions \\
   -H "Authorization: Bearer $PMS_API_KEY" \\
   -d '{"model": "${llm}",
@@ -50,13 +48,38 @@ client.embeddings.create(model="${emb}", input="hello")`,
          "instructions": "Should the bot answer?",
          "criteria": {"respond": "Answer the message",
                       "ignore": "Do nothing"}}}}'`,
+    ...(stt
+      ? {
+          transcription: `from openai import OpenAI
+
+client = OpenAI(base_url="${ENDPOINT}",
+                api_key=os.environ["PMS_API_KEY"])
+# Audio must be WAV.
+transcript = client.audio.transcriptions.create(
+    model="${stt}", file=open("audio.wav", "rb"))
+print(transcript.text)`,
+        }
+      : {}),
+    ...(tts
+      ? {
+          speech: `from openai import OpenAI
+
+client = OpenAI(base_url="${ENDPOINT}",
+                api_key=os.environ["PMS_API_KEY"])
+# Output is WAV. Ask for it: the default is mp3.
+response = client.audio.speech.create(
+    model="${tts}", voice="alloy", input="Hello",
+    response_format="wav")
+response.write_to_file("speech.wav")`,
+        }
+      : {}),
   };
 
   return (
     <>
       <PageHead
         title="AI"
-        description="LLM, embedding and decision models behind one OpenAI-compatible endpoint. Each key has its own models and budget."
+        description="LLM, embedding, decision and speech models behind one OpenAI-compatible endpoint. Each key has its own models and budget."
         action={
           <button className="btn primary" type="button" onClick={() => create('/ai', 'ai')}>
             <Plus aria-hidden="true" />
@@ -108,16 +131,20 @@ client.embeddings.create(model="${emb}", input="hello")`,
         <CardsSkeleton count={3} />
       ) : (
         <div className="models">
-          {models.map((m) => (
-            <div className="model" key={m.id}>
-              <div className="mid">
-                {m.id}
-                <span className={`badge ${BADGE[m.type][0]}`}>{BADGE[m.type][1]}</span>
+          {models.map((m) => {
+            const badge = modelBadge(m.type);
+            const price = modelPrice(m);
+            return (
+              <div className="model" key={m.id}>
+                <div className="mid">
+                  {m.id}
+                  <span className={badge.className}>{badge.label}</span>
+                </div>
+                <p>{m.description}</p>
+                <span className="ctx">{[m.detail, price].filter(Boolean).join(' · ')}</span>
               </div>
-              <p>{m.description}</p>
-              <span className="ctx">{m.detail}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
       <PremiumModels />

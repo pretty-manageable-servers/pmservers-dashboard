@@ -3,14 +3,9 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
 import { useCatalog, useCreateAiKey } from '@/lib/api/hooks';
+import { defaultModelIds, modelBadge } from '@/lib/catalog';
 import { useProject } from '@/lib/project';
 import { validateName } from '@/lib/validation';
-
-const BADGE = {
-  llm: ['llm', 'LLM'],
-  embedding: ['emb', 'Embedding'],
-  decision: ['dec', 'Decision'],
-} as const;
 
 export function CreateKeyDialog(props: {
   open: boolean;
@@ -22,9 +17,8 @@ export function CreateKeyDialog(props: {
   const create = useCreateAiKey(project.id);
   const [name, setName] = useState('');
   const [picked, setModels] = useState<string[] | null>(null);
-  // Until the user picks, select the embedding and decision models from the catalog.
-  const models =
-    picked ?? catalog.data?.ai_models.filter((m) => m.type !== 'llm').map((m) => m.id) ?? [];
+  // Until the user picks, select the embedding, decision and STT models from the catalog.
+  const models = picked ?? defaultModelIds(catalog.data?.ai_models ?? []);
   const [budget, setBudget] = useState('1');
   const [touched, setTouched] = useState(false);
 
@@ -83,7 +77,7 @@ export function CreateKeyDialog(props: {
                   }
                 />
                 <span className="mono">{m.id}</span>
-                <span className={`badge ${BADGE[m.type][0]}`}>{BADGE[m.type][1]}</span>
+                <span className={modelBadge(m.type).className}>{modelBadge(m.type).label}</span>
               </label>
             ))}
           </div>

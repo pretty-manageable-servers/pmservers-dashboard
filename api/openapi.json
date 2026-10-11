@@ -238,7 +238,9 @@
         "enum": [
           "llm",
           "embedding",
-          "decision"
+          "decision",
+          "stt",
+          "tts"
         ],
         "title": "AiModelType",
         "type": "string"
@@ -467,6 +469,7 @@
         "type": "object"
       },
       "CatalogModel": {
+        "description": "An AI model in the catalog. Prices are OUR prices. Aliases (old IDs) are never listed.\nThe cache prices are resolved: they default to price_in_per_m. The audio prices are null when not set.",
         "properties": {
           "description": {
             "title": "Description",
@@ -480,6 +483,44 @@
             "title": "Id",
             "type": "string"
           },
+          "price_cache_read_per_m": {
+            "title": "Price Cache Read Per M",
+            "type": "number"
+          },
+          "price_cache_write_per_m": {
+            "title": "Price Cache Write Per M",
+            "type": "number"
+          },
+          "price_in_per_m": {
+            "title": "Price In Per M",
+            "type": "number"
+          },
+          "price_out_per_m": {
+            "title": "Price Out Per M",
+            "type": "number"
+          },
+          "price_per_m_chars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Per M Chars"
+          },
+          "price_per_minute": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Per Minute"
+          },
           "type": {
             "$ref": "#/components/schemas/AiModelType"
           }
@@ -488,7 +529,13 @@
           "id",
           "type",
           "description",
-          "detail"
+          "detail",
+          "price_in_per_m",
+          "price_out_per_m",
+          "price_cache_read_per_m",
+          "price_cache_write_per_m",
+          "price_per_minute",
+          "price_per_m_chars"
         ],
         "title": "CatalogModel",
         "type": "object"

@@ -29,6 +29,10 @@
   --on-accent: #161615;
   --ok: #3ddc84;
   --ok-soft: rgba(61, 220, 132, 0.12);
+  --teal: #2dd4bf;
+  --teal-soft: rgba(45, 212, 191, 0.12);
+  --violet: #b197fc;
+  --violet-soft: rgba(177, 151, 252, 0.12);
   --warn: #f5b84a;
   --warn-soft: rgba(245, 184, 74, 0.12);
   --bad: #ff6b6b;
@@ -59,6 +63,10 @@
     --on-accent: #ffffff;
     --ok: #12924a;
     --ok-soft: rgba(18, 146, 74, 0.1);
+    --teal: #0f766e;
+    --teal-soft: rgba(15, 118, 110, 0.1);
+    --violet: #6d28d9;
+    --violet-soft: rgba(109, 40, 217, 0.09);
     --warn: #b07103;
     --warn-soft: rgba(176, 113, 3, 0.1);
     --bad: #d93a3a;
@@ -86,6 +94,10 @@
   --on-accent: #ffffff;
   --ok: #12924a;
   --ok-soft: rgba(18, 146, 74, 0.1);
+  --teal: #0f766e;
+  --teal-soft: rgba(15, 118, 110, 0.1);
+  --violet: #6d28d9;
+  --violet-soft: rgba(109, 40, 217, 0.09);
   --warn: #b07103;
   --warn-soft: rgba(176, 113, 3, 0.1);
   --bad: #d93a3a;
@@ -717,6 +729,16 @@ button {
 .badge.dec {
   color: var(--warn);
   background: var(--warn-soft);
+  border-color: transparent;
+}
+.badge.stt {
+  color: var(--teal);
+  background: var(--teal-soft);
+  border-color: transparent;
+}
+.badge.tts {
+  color: var(--violet);
+  background: var(--violet-soft);
   border-color: transparent;
 }
 
