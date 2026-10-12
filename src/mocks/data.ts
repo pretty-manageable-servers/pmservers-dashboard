@@ -183,12 +183,16 @@ const container = (
   };
 };
 
+/** The mock user. The mock sign-in and the mock projects use this ID. */
+export const MOCK_USER_ID = '5b1c0e2a-8d41-4f3e-9a77-1e0c3d2b6f90';
+
 export const projects: Project[] = [
   {
     id: 'prj_discord-bots',
     name: 'discord-bots',
     region: 'ca-tor-1',
     role: 'owner',
+    owner_id: MOCK_USER_ID,
     created_at: ago(17 * DAY),
   },
   {
@@ -196,6 +200,7 @@ export const projects: Project[] = [
     name: 'personal-site',
     region: 'ca-tor-1',
     role: 'owner',
+    owner_id: MOCK_USER_ID,
     created_at: ago(40 * DAY),
   },
 ];

@@ -1,8 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import { copyText } from './CopyField';
 
-export function CodeSample({ samples }: { samples: Record<string, string> }) {
+/** Tabs of code samples. `copyable` adds a Copy button for the shown sample. */
+export function CodeSample({
+  samples,
+  copyable,
+}: {
+  samples: Record<string, string>;
+  copyable?: boolean;
+}) {
   const tabs = Object.keys(samples);
   const [tab, setTab] = useState(tabs[0] ?? '');
   return (
@@ -13,6 +21,16 @@ export function CodeSample({ samples }: { samples: Record<string, string> }) {
             {t}
           </button>
         ))}
+        {copyable && (
+          <button
+            className="btn sm"
+            type="button"
+            style={{ marginLeft: 'auto' }}
+            onClick={() => copyText(samples[tab] ?? '')}
+          >
+            Copy
+          </button>
+        )}
       </div>
       <pre>{samples[tab]}</pre>
     </div>

@@ -492,7 +492,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Credentials */
+        /**
+         * List Credentials
+         * @description Your credentials. With `project_id`, also the credentials of the project owner.
+         */
         get: operations["listRegistryCredentials"];
         put?: never;
         /** Create Credential */
@@ -550,6 +553,177 @@ export interface paths {
         post?: never;
         /** Delete Ssh Key */
         delete: operations["deleteSshKey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Storage */
+        get: operations["getStorage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/storage/buckets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Buckets */
+        get: operations["listBuckets"];
+        put?: never;
+        /** Create Bucket */
+        post: operations["createBucket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/storage/buckets/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Bucket */
+        get: operations["getBucket"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Bucket
+         * @description The reconciler deletes the bucket. Garage refuses a bucket that is not empty: the reconciler then sets
+         *     status_message and the bucket stays.
+         */
+        delete: operations["deleteBucket"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Bucket
+         * @description public_read: the reconciler sets the website mode of the bucket.
+         */
+        patch: operations["updateBucket"];
+        trace?: never;
+    };
+    "/v1/storage/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Disable Storage
+         * @description Only with no buckets. The reconciler deletes the Garage objects, then the storage row.
+         */
+        post: operations["deleteStorage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/storage/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enable Storage
+         * @description Makes the storage row (provisioning) and the account vcluster. Idempotent. The reconciler does the rest.
+         */
+        post: operations["createStorage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/storage/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Keys */
+        get: operations["listStorageKeys"];
+        put?: never;
+        /**
+         * Create Key
+         * @description The row first, then the key in Garage. If Garage does not take the key, the row goes and the request is 502.
+         *     The secret is in this response only.
+         */
+        post: operations["createStorageKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/storage/keys/{key_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Key */
+        get: operations["getStorageKey"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Key
+         * @description Garage first, then the row. If Garage fails, the row stays and the request can be sent again. Once the storage
+         *     is disabling, the Garage is going away: only the row goes.
+         */
+        delete: operations["deleteStorageKey"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Key
+         * @description The reconciler applies the permission and the buckets to Garage.
+         */
+        patch: operations["updateStorageKey"];
+        trace?: never;
+    };
+    "/v1/storage/keys/{key_id}/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset Key
+         * @description A new key ID and secret, with the same name, permission and buckets. The order: the new key in Garage, the
+         *     old key out of Garage, then the rows change in one transaction. The old key stops working before the new one
+         *     is saved, so a failed step never leaves the old key working without a row.
+         */
+        post: operations["resetStorageKey"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -693,6 +867,51 @@ export interface components {
              * Format: password
              */
             token: string;
+        };
+        /** Bucket */
+        Bucket: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Name */
+            name: string;
+            /** Object Count */
+            object_count: number;
+            /** Public Read */
+            public_read: boolean;
+            status: components["schemas"]["BucketStatus"];
+            /** Status Message */
+            status_message: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Used Bytes */
+            used_bytes: number;
+        };
+        /** BucketCreate */
+        BucketCreate: {
+            /** Name */
+            name: string;
+            /**
+             * Public Read
+             * @default false
+             */
+            public_read: boolean;
+        };
+        /**
+         * BucketStatus
+         * @description The state of a bucket (pms.buckets.status). The account state (read_only, suspended) is in StorageStatus.
+         * @enum {string}
+         */
+        BucketStatus: "provisioning" | "active" | "deleting" | "failed";
+        /** BucketUpdate */
+        BucketUpdate: {
+            /** Public Read */
+            public_read?: boolean | null;
         };
         /** Catalog */
         Catalog: {
@@ -1075,6 +1294,11 @@ export interface components {
             /** Items */
             items: components["schemas"]["ApiToken"][];
         };
+        /** ItemList[Bucket] */
+        ItemList_Bucket_: {
+            /** Items */
+            items: components["schemas"]["Bucket"][];
+        };
         /** ItemList[Container] */
         ItemList_Container_: {
             /** Items */
@@ -1114,6 +1338,11 @@ export interface components {
         ItemList_SshKey_: {
             /** Items */
             items: components["schemas"]["SshKey"][];
+        };
+        /** ItemList[StorageKey] */
+        ItemList_StorageKey_: {
+            /** Items */
+            items: components["schemas"]["StorageKey"][];
         };
         /** KeyCreate */
         KeyCreate: {
@@ -1205,6 +1434,11 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+            /**
+             * Owner Id
+             * Format: uuid
+             */
+            owner_id: string;
             /** Region */
             region: string;
             role: components["schemas"]["ProjectRole"];
@@ -1288,6 +1522,106 @@ export interface components {
             /** Public Key */
             public_key: string;
         };
+        /** Storage */
+        Storage: {
+            /** Buckets Count */
+            buckets_count: number;
+            /** Buckets Limit */
+            buckets_limit: number;
+            /** Endpoint */
+            endpoint: string;
+            /** Keys Count */
+            keys_count: number;
+            /** Keys Limit */
+            keys_limit: number;
+            /** Limit Bytes */
+            limit_bytes: number;
+            /** Region */
+            region: string;
+            status: components["schemas"]["StorageStatus"] | null;
+            /** Status Message */
+            status_message: string | null;
+            /** Used Bytes */
+            used_bytes: number;
+            /** Would Cost Usd */
+            would_cost_usd: number;
+        };
+        /** StorageKey */
+        StorageKey: {
+            /** Buckets */
+            buckets: "all" | string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Key Id */
+            key_id: string;
+            /** Name */
+            name: string;
+            permission: components["schemas"]["StorageKeyPermission"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** StorageKeyCreate */
+        StorageKeyCreate: {
+            /** Buckets */
+            buckets: "all" | string[];
+            /** Name */
+            name: string;
+            permission: components["schemas"]["StorageKeyPermission"];
+        };
+        /**
+         * StorageKeyPermission
+         * @enum {string}
+         */
+        StorageKeyPermission: "read_write" | "read_only";
+        /** StorageKeyUpdate */
+        StorageKeyUpdate: {
+            /** Buckets */
+            buckets?: "all" | string[] | null;
+            /** Name */
+            name?: string | null;
+            permission?: components["schemas"]["StorageKeyPermission"] | null;
+        };
+        /** StorageKeyWithSecret */
+        StorageKeyWithSecret: {
+            /** Buckets */
+            buckets: "all" | string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Endpoint */
+            endpoint: string;
+            /** Key Id */
+            key_id: string;
+            /** Name */
+            name: string;
+            permission: components["schemas"]["StorageKeyPermission"];
+            /** Region */
+            region: string;
+            /**
+             * Secret Access Key
+             * Format: password
+             */
+            secret_access_key: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * StorageStatus
+         * @description The state of the object storage of an account (pms.storage.status).
+         * @enum {string}
+         */
+        StorageStatus: "provisioning" | "active" | "read_only" | "suspended" | "disabling" | "failed";
         /** Ticket */
         Ticket: {
             /** Ticket */
@@ -2796,6 +3130,468 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getStorage: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Storage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listBuckets: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_Bucket_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createBucket: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BucketCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Bucket"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getBucket: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Bucket"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteBucket: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateBucket: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BucketUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Bucket"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteStorage: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Storage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createStorage: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Storage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listStorageKeys: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_StorageKey_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createStorageKey: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorageKeyCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageKeyWithSecret"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getStorageKey: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageKey"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteStorageKey: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateStorageKey: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorageKeyUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageKey"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    resetStorageKey: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageKeyWithSecret"];
+                };
             };
             /** @description Error */
             default: {

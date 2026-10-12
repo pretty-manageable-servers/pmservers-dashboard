@@ -389,6 +389,108 @@
         "title": "ApiTokenCreated",
         "type": "object"
       },
+      "Bucket": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "object_count": {
+            "title": "Object Count",
+            "type": "integer"
+          },
+          "public_read": {
+            "title": "Public Read",
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BucketStatus"
+          },
+          "status_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Message"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "used_bytes": {
+            "title": "Used Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "public_read",
+          "status",
+          "status_message",
+          "used_bytes",
+          "object_count",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Bucket",
+        "type": "object"
+      },
+      "BucketCreate": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "public_read": {
+            "default": false,
+            "title": "Public Read",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "BucketCreate",
+        "type": "object"
+      },
+      "BucketStatus": {
+        "description": "The state of a bucket (pms.buckets.status). The account state (read_only, suspended) is in StorageStatus.",
+        "enum": [
+          "provisioning",
+          "active",
+          "deleting",
+          "failed"
+        ],
+        "title": "BucketStatus",
+        "type": "string"
+      },
+      "BucketUpdate": {
+        "properties": {
+          "public_read": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Public Read"
+          }
+        },
+        "title": "BucketUpdate",
+        "type": "object"
+      },
       "Catalog": {
         "properties": {
           "ai_models": {
@@ -1452,6 +1554,22 @@
         "title": "ItemList[ApiToken]",
         "type": "object"
       },
+      "ItemList_Bucket_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Bucket"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ItemList[Bucket]",
+        "type": "object"
+      },
       "ItemList_Container_": {
         "properties": {
           "items": {
@@ -1578,6 +1696,22 @@
           "items"
         ],
         "title": "ItemList[SshKey]",
+        "type": "object"
+      },
+      "ItemList_StorageKey_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StorageKey"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ItemList[StorageKey]",
         "type": "object"
       },
       "KeyCreate": {
@@ -1793,6 +1927,11 @@
             "title": "Name",
             "type": "string"
           },
+          "owner_id": {
+            "format": "uuid",
+            "title": "Owner Id",
+            "type": "string"
+          },
           "region": {
             "title": "Region",
             "type": "string"
@@ -1806,6 +1945,7 @@
           "name",
           "region",
           "role",
+          "owner_id",
           "created_at"
         ],
         "title": "Project",
@@ -2002,6 +2142,302 @@
         ],
         "title": "SshKeyCreate",
         "type": "object"
+      },
+      "Storage": {
+        "properties": {
+          "buckets_count": {
+            "title": "Buckets Count",
+            "type": "integer"
+          },
+          "buckets_limit": {
+            "title": "Buckets Limit",
+            "type": "integer"
+          },
+          "endpoint": {
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "keys_count": {
+            "title": "Keys Count",
+            "type": "integer"
+          },
+          "keys_limit": {
+            "title": "Keys Limit",
+            "type": "integer"
+          },
+          "limit_bytes": {
+            "title": "Limit Bytes",
+            "type": "integer"
+          },
+          "region": {
+            "title": "Region",
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StorageStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Message"
+          },
+          "used_bytes": {
+            "title": "Used Bytes",
+            "type": "integer"
+          },
+          "would_cost_usd": {
+            "title": "Would Cost Usd",
+            "type": "number"
+          }
+        },
+        "required": [
+          "status",
+          "status_message",
+          "endpoint",
+          "region",
+          "used_bytes",
+          "limit_bytes",
+          "buckets_count",
+          "buckets_limit",
+          "keys_count",
+          "keys_limit",
+          "would_cost_usd"
+        ],
+        "title": "Storage",
+        "type": "object"
+      },
+      "StorageKey": {
+        "properties": {
+          "buckets": {
+            "anyOf": [
+              {
+                "const": "all",
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Buckets"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "key_id": {
+            "title": "Key Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "permission": {
+            "$ref": "#/components/schemas/StorageKeyPermission"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key_id",
+          "name",
+          "permission",
+          "buckets",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "StorageKey",
+        "type": "object"
+      },
+      "StorageKeyCreate": {
+        "properties": {
+          "buckets": {
+            "anyOf": [
+              {
+                "const": "all",
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Buckets"
+          },
+          "name": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "permission": {
+            "$ref": "#/components/schemas/StorageKeyPermission"
+          }
+        },
+        "required": [
+          "name",
+          "permission",
+          "buckets"
+        ],
+        "title": "StorageKeyCreate",
+        "type": "object"
+      },
+      "StorageKeyPermission": {
+        "enum": [
+          "read_write",
+          "read_only"
+        ],
+        "title": "StorageKeyPermission",
+        "type": "string"
+      },
+      "StorageKeyUpdate": {
+        "properties": {
+          "buckets": {
+            "anyOf": [
+              {
+                "const": "all",
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buckets"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "permission": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StorageKeyPermission"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "StorageKeyUpdate",
+        "type": "object"
+      },
+      "StorageKeyWithSecret": {
+        "properties": {
+          "buckets": {
+            "anyOf": [
+              {
+                "const": "all",
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Buckets"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "endpoint": {
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "key_id": {
+            "title": "Key Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "permission": {
+            "$ref": "#/components/schemas/StorageKeyPermission"
+          },
+          "region": {
+            "title": "Region",
+            "type": "string"
+          },
+          "secret_access_key": {
+            "format": "password",
+            "title": "Secret Access Key",
+            "type": "string",
+            "writeOnly": true
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key_id",
+          "name",
+          "permission",
+          "buckets",
+          "created_at",
+          "updated_at",
+          "secret_access_key",
+          "endpoint",
+          "region"
+        ],
+        "title": "StorageKeyWithSecret",
+        "type": "object"
+      },
+      "StorageStatus": {
+        "description": "The state of the object storage of an account (pms.storage.status).",
+        "enum": [
+          "provisioning",
+          "active",
+          "read_only",
+          "suspended",
+          "disabling",
+          "failed"
+        ],
+        "title": "StorageStatus",
+        "type": "string"
       },
       "Ticket": {
         "properties": {
@@ -3889,7 +4325,26 @@
     },
     "/v1/registry-credentials": {
       "get": {
+        "description": "Your credentials. With `project_id`, also the credentials of the project owner.",
         "operationId": "listRegistryCredentials",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -4077,6 +4532,754 @@
           }
         },
         "summary": "Delete Ssh Key"
+      }
+    },
+    "/v1/storage": {
+      "get": {
+        "operationId": "getStorage",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Storage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Get Storage"
+      }
+    },
+    "/v1/storage/buckets": {
+      "get": {
+        "operationId": "listBuckets",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemList_Bucket_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List Buckets"
+      },
+      "post": {
+        "operationId": "createBucket",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BucketCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bucket"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create Bucket"
+      }
+    },
+    "/v1/storage/buckets/{name}": {
+      "delete": {
+        "description": "The reconciler deletes the bucket. Garage refuses a bucket that is not empty: the reconciler then sets\nstatus_message and the bucket stays.",
+        "operationId": "deleteBucket",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete Bucket"
+      },
+      "get": {
+        "operationId": "getBucket",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bucket"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Get Bucket"
+      },
+      "patch": {
+        "description": "public_read: the reconciler sets the website mode of the bucket.",
+        "operationId": "updateBucket",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BucketUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bucket"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Update Bucket"
+      }
+    },
+    "/v1/storage/disable": {
+      "post": {
+        "description": "Only with no buckets. The reconciler deletes the Garage objects, then the storage row.",
+        "operationId": "deleteStorage",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Storage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Disable Storage"
+      }
+    },
+    "/v1/storage/enable": {
+      "post": {
+        "description": "Makes the storage row (provisioning) and the account vcluster. Idempotent. The reconciler does the rest.",
+        "operationId": "createStorage",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Storage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Enable Storage"
+      }
+    },
+    "/v1/storage/keys": {
+      "get": {
+        "operationId": "listStorageKeys",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemList_StorageKey_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List Keys"
+      },
+      "post": {
+        "description": "The row first, then the key in Garage. If Garage does not take the key, the row goes and the request is 502.\nThe secret is in this response only.",
+        "operationId": "createStorageKey",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorageKeyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageKeyWithSecret"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create Key"
+      }
+    },
+    "/v1/storage/keys/{key_id}": {
+      "delete": {
+        "description": "Garage first, then the row. If Garage fails, the row stays and the request can be sent again. Once the storage\nis disabling, the Garage is going away: only the row goes.",
+        "operationId": "deleteStorageKey",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "title": "Key Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete Key"
+      },
+      "get": {
+        "operationId": "getStorageKey",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "title": "Key Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageKey"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Get Key"
+      },
+      "patch": {
+        "description": "The reconciler applies the permission and the buckets to Garage.",
+        "operationId": "updateStorageKey",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "title": "Key Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorageKeyUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageKey"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Update Key"
+      }
+    },
+    "/v1/storage/keys/{key_id}/reset": {
+      "post": {
+        "description": "A new key ID and secret, with the same name, permission and buckets. The order: the new key in Garage, the\nold key out of Garage, then the rows change in one transaction. The old key stops working before the new one\nis saved, so a failed step never leaves the old key working without a row.",
+        "operationId": "resetStorageKey",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "title": "Key Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageKeyWithSecret"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Reset Key"
       }
     }
   },

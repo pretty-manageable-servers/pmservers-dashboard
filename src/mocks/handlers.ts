@@ -24,6 +24,7 @@ import type {
   StreamEvent,
 } from '@/lib/api/types';
 import { validateDatabaseName } from '@/lib/databases';
+import { resetStorageMock, storageHandlers } from './storage';
 import {
   credentialsFor,
   imageHost,
@@ -36,6 +37,7 @@ import {
   computeUsage,
   containerSizeSpec,
   databaseSizeSpec,
+  MOCK_USER_ID,
   mockDatabase,
   projects as seedProjects,
   seedCredentials,
@@ -94,6 +96,7 @@ export function resetMockState() {
   sandboxes = seedSandboxes();
   access = approvedAccess();
   mockAccessParam = null;
+  resetStorageMock();
 }
 
 // Container access of the mock account. Approved and ready by default.
@@ -331,6 +334,7 @@ export const handlers = [
       name,
       region: 'ca-tor-1',
       role: 'owner',
+      owner_id: MOCK_USER_ID,
       created_at: new Date().toISOString(),
     };
     projects.push(p);
@@ -930,6 +934,7 @@ export const handlers = [
     await delay(LATENCY);
     return HttpResponse.json({ ticket: 'mock-events-ticket' });
   }),
+  ...storageHandlers(() => access.access === 'approved'),
   sse<{ event: StreamEvent }>(`${base}/events/stream`, ({ client, request }) => {
     const send = (e: StreamEvent) => client.send({ id: e.id, event: 'event', data: e });
     listeners.add(send);

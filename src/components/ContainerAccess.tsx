@@ -21,7 +21,15 @@ function About() {
   );
 }
 
-export function RequestForm({ again, placeholder }: { again?: boolean; placeholder?: string }) {
+export function RequestForm({
+  again,
+  placeholder,
+  label,
+}: {
+  again?: boolean;
+  placeholder?: string;
+  label?: string;
+}) {
   const request = useRequestAccess();
   const [reason, setReason] = useState('');
   const [touched, setTouched] = useState(false);
@@ -40,7 +48,7 @@ export function RequestForm({ again, placeholder }: { again?: boolean; placehold
   };
   return (
     <form onSubmit={submit} noValidate className="field" style={{ margin: 0 }}>
-      <label htmlFor="access-reason">What do you want to run?</label>
+      <label htmlFor="access-reason">{label ?? 'What do you want to run?'}</label>
       <textarea
         id="access-reason"
         value={reason}
