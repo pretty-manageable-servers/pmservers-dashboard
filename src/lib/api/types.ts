@@ -10,8 +10,6 @@ export type Usage = S['Usage'];
 export type ApiEvent = S['Event'];
 // The event stream route has no response model, so the contract has no StreamEvent.
 export type StreamEvent = ApiEvent & { project_id: string };
-export type SshKey = S['SshKey'];
-export type SshKeyCreate = S['SshKeyCreate'];
 export type AiKey = S['AiKey'];
 export type AiKeyCreate = S['KeyCreate'];
 export type AiKeyCreated = S['AiKeyCreated'];
