@@ -673,17 +673,20 @@ button {
   background: currentColor;
   box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent);
 }
-.dot.running {
+.dot.running,
+.dot.active {
   color: var(--ok);
 }
 .dot.pending,
 .dot.provisioning,
-.dot.deleting {
+.dot.deleting,
+.dot.disabling {
   color: var(--warn);
 }
 .dot.pending::before,
 .dot.provisioning::before,
-.dot.deleting::before {
+.dot.deleting::before,
+.dot.disabling::before {
   animation: pulse 1.2s ease-in-out infinite;
 }
 .dot.failed,
@@ -1995,6 +1998,39 @@ svg.spark {
   .rtable td:not([data-label]) {
     justify-content: flex-end;
   }
+}
+
+/* Object storage: the usage bar with marks at 90, 100 and 125 percent */
+.usage-track {
+  position: relative;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+.usage-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 8px;
+  background: var(--accent);
+}
+.usage-fill.warn {
+  background: var(--warn);
+}
+.usage-fill.read_only,
+.usage-fill.suspended {
+  background: var(--bad);
+}
+.usage-mark {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--muted);
 }
 
 /* Numbered setup steps on the Sandboxes page */

@@ -11,7 +11,11 @@ import type {
   DatabaseSecret,
   RegistryCredentialCreate,
   SshKeyCreate,
+  BucketCreate,
+  StorageKeyCreate,
+  StorageKeyWithSecret,
 } from '../types';
+import { isNotAvailable } from '../../storage';
 
 export const keys = {
   me: ['me'] as const,
@@ -30,6 +34,8 @@ export const keys = {
   sandboxes: (p: string) => ['sandboxes', p] as const,
   containerLogs: (p: string, id: string, previous: boolean) =>
     ['container-logs', p, id, previous] as const,
+  // The account of the storage. `undefined` is the caller's own account.
+  storage: (account?: string) => ['storage', account ?? 'self'] as const,
 };
 
 export const useMe = () =>
@@ -655,6 +661,161 @@ export function useKillSandbox(project: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.sandboxes(project) });
       toast('Killed the sandbox');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+/** The storage calls take the account of a member's project. The owner's own account needs no ID. */
+const storageQuery = (account?: string) => ({ params: { query: { account_id: account } } });
+
+/** Poll while a state can change by itself. Otherwise check the usage every 30 s. */
+export const useStorage = (account?: string, enabled = true) =>
+  useQuery({
+    queryKey: keys.storage(account),
+    queryFn: async () => unwrap(await api.GET('/v1/storage', storageQuery(account))),
+    enabled,
+    // A 403 is a state, not a failure. Do not retry it.
+    retry: (n, e) => !isNotAllowed(e) && n < 1,
+    refetchInterval: (query) => {
+      const s = query.state.data?.status;
+      return s === 'provisioning' || s === 'disabling' ? 5000 : 30_000;
+    },
+  });
+
+export function useEnableStorage(account?: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => unwrap(await api.POST('/v1/storage/enable', storageQuery(account))),
+    onSuccess: (s) => {
+      qc.setQueryData(keys.storage(account), s);
+      qc.invalidateQueries({ queryKey: keys.storage(account) });
+      toast('Turning on object storage');
+    },
+    onError: (e) => {
+      if (!isNotAvailable(e)) toast.error(e.message);
+    },
+  });
+}
+
+export function useDisableStorage(account?: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => unwrap(await api.POST('/v1/storage/disable', storageQuery(account))),
+    onSuccess: (s) => {
+      qc.setQueryData(keys.storage(account), s);
+      qc.invalidateQueries({ queryKey: keys.storage(account) });
+      toast('Turning off object storage');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export const useStorageBuckets = (account?: string, enabled = true) =>
+  useQuery({
+    queryKey: [...keys.storage(account), 'buckets'],
+    queryFn: async () => unwrap(await api.GET('/v1/storage/buckets', storageQuery(account))).items,
+    enabled,
+    retry: (n, e) => !isNotAllowed(e) && n < 1,
+    refetchInterval: (query) =>
+      query.state.data?.some((b) => b.status === 'provisioning' || b.status === 'deleting')
+        ? 5000
+        : false,
+  });
+
+export function useCreateBucket(account?: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: BucketCreate) =>
+      unwrap(await api.POST('/v1/storage/buckets', { ...storageQuery(account), body })),
+    onSuccess: (b) => {
+      qc.invalidateQueries({ queryKey: keys.storage(account) });
+      toast(`Creating ${b.name}`, { description: 'This list updates when it is ready.' });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export function useDeleteBucket(account?: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (name: string) =>
+      unwrap(
+        await api.DELETE('/v1/storage/buckets/{name}', {
+          params: { path: { name }, query: { account_id: account } },
+        }),
+      ),
+    onSuccess: (_d, name) => {
+      qc.invalidateQueries({ queryKey: keys.storage(account) });
+      toast(`Deleting ${name}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export const useStorageKeys = (account?: string, enabled = true) =>
+  useQuery({
+    queryKey: [...keys.storage(account), 'keys'],
+    queryFn: async () => unwrap(await api.GET('/v1/storage/keys', storageQuery(account))).items,
+    enabled,
+    retry: (n, e) => !isNotAllowed(e) && n < 1,
+  });
+
+/**
+ * `onSecret` is a hook option, not a `mutate` option, so the secret is not lost if the dialog
+ * closes first. The mutation does not keep the secret in the mutation cache (`gcTime: 0`).
+ */
+export function useCreateStorageKey(
+  account: string | undefined,
+  onSecret: (k: StorageKeyWithSecret) => void,
+) {
+  const qc = useQueryClient();
+  return useMutation({
+    gcTime: 0,
+    mutationFn: async (body: StorageKeyCreate) =>
+      unwrap(await api.POST('/v1/storage/keys', { ...storageQuery(account), body })),
+    onSuccess: (k) => {
+      qc.invalidateQueries({ queryKey: keys.storage(account) });
+      onSecret(k);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+/** A reset makes a new key ID and secret. The API deletes the old key. */
+export function useResetStorageKey(
+  account: string | undefined,
+  onSecret: (k: StorageKeyWithSecret) => void,
+) {
+  const qc = useQueryClient();
+  return useMutation({
+    gcTime: 0,
+    mutationFn: async (id: string) =>
+      unwrap(
+        await api.POST('/v1/storage/keys/{key_id}/reset', {
+          params: { path: { key_id: id }, query: { account_id: account } },
+        }),
+      ),
+    onSuccess: (k) => {
+      qc.invalidateQueries({ queryKey: keys.storage(account) });
+      onSecret(k);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+export function useDeleteStorageKey(account?: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; name: string }) =>
+      unwrap(
+        await api.DELETE('/v1/storage/keys/{key_id}', {
+          params: { path: { key_id: v.id }, query: { account_id: account } },
+        }),
+      ),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: keys.storage(account) });
+      toast(`Deleted ${v.name}`);
     },
     onError: (e) => toast.error(e.message),
   });

@@ -4,6 +4,46 @@
  */
 
 export interface paths {
+    "/ai/v1/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create an Anthropic Message
+         * @description PMS AI keys, model permissions, rate limits, and budgets apply. Native function tools and streaming are forwarded to the model service. Responses storage, conversation IDs, background generation, retrieval, and deletion are not supported.
+         */
+        post: operations["createAiMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ai/v1/responses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a stateless OpenAI Response
+         * @description PMS AI keys, model permissions, rate limits, and budgets apply. Native function tools and streaming are forwarded to the model service. Responses storage, conversation IDs, background generation, retrieval, and deletion are not supported.
+         */
+        post: operations["createAiResponse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/account/access": {
         parameters: {
             query?: never;
@@ -492,7 +532,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Credentials */
+        /**
+         * List Credentials
+         * @description Your credentials. With `project_id`, also the credentials of the project owner.
+         */
         get: operations["listRegistryCredentials"];
         put?: never;
         /** Create Credential */
@@ -555,6 +598,173 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Storage */
+        get: operations["getStorage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/storage/buckets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Buckets */
+        get: operations["listBuckets"];
+        put?: never;
+        /** Create Bucket */
+        post: operations["createBucket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/storage/buckets/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Bucket */
+        get: operations["getBucket"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Bucket
+         * @description The reconciler deletes the bucket. A bucket with objects is refused here (409), by the size the reconciler
+         *     last read. The reconciler checks again: Garage refuses a bucket that is not empty, and then the bucket stays.
+         */
+        delete: operations["deleteBucket"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/storage/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Disable Storage
+         * @description Only with no buckets. The reconciler deletes the Garage objects, then the storage row.
+         */
+        post: operations["deleteStorage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/storage/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enable Storage
+         * @description Makes the storage row (provisioning) and the account vcluster. Idempotent. The reconciler does the rest.
+         */
+        post: operations["createStorage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/storage/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Keys */
+        get: operations["listStorageKeys"];
+        put?: never;
+        /**
+         * Create Key
+         * @description The row first, then the key in Garage. If Garage does not take the key, the row goes and the request is 502.
+         *     The secret is in this response only.
+         */
+        post: operations["createStorageKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/storage/keys/{key_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Key */
+        get: operations["getStorageKey"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Key
+         * @description Garage first, then the row. If Garage fails, the row stays and the request can be sent again. Once the storage
+         *     is disabling, the Garage is going away: only the row goes.
+         */
+        delete: operations["deleteStorageKey"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Key
+         * @description The reconciler applies the permission and the buckets to Garage.
+         */
+        patch: operations["updateStorageKey"];
+        trace?: never;
+    };
+    "/v1/storage/keys/{key_id}/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset Key
+         * @description A new key ID and secret, with the same name, permission and buckets. The order: the new key in Garage, the
+         *     old key out of Garage, then the rows change in one transaction. The old key stops working before the new one
+         *     is saved, so a failed step never leaves the old key working without a row.
+         */
+        post: operations["resetStorageKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -563,7 +773,7 @@ export interface components {
          * Access
          * @enum {string}
          */
-        Access: "none" | "pending" | "approved" | "rejected";
+        Access: "none" | "pending" | "approved" | "rejected" | "terminated";
         /** AccessRequest */
         AccessRequest: {
             /** Reason */
@@ -588,6 +798,14 @@ export interface components {
          * @enum {string}
          */
         Action: "start" | "stop" | "restart";
+        AiAnthropicError: {
+            error: {
+                message: string;
+                type: string;
+            };
+            /** @constant */
+            type: "error";
+        };
         /** AiKey */
         AiKey: {
             /** Budget Usd */
@@ -641,11 +859,108 @@ export interface components {
          * @enum {string}
          */
         AiKeyStatus: "running" | "deleting";
+        AiMessage: {
+            content: {
+                [key: string]: unknown;
+            }[];
+            id: string;
+            /** @description Public PMS model ID. */
+            model: string;
+            /** @constant */
+            role: "assistant";
+            /** @constant */
+            type: "message";
+            usage?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description Native Anthropic Messages payload. Tools use input_schema; tool_use and tool_result blocks remain in native format. */
+        AiMessagesRequest: {
+            max_tokens: number;
+            messages: ({
+                content: string | {
+                    [key: string]: unknown;
+                }[];
+                /** @enum {string} */
+                role: "user" | "assistant";
+            } & {
+                [key: string]: unknown;
+            })[];
+            model: string;
+            /** @default false */
+            stream: boolean;
+            tool_choice?: {
+                [key: string]: unknown;
+            };
+            tools?: ({
+                input_schema: {
+                    [key: string]: unknown;
+                };
+                name: string;
+            } & {
+                [key: string]: unknown;
+            })[];
+        } & {
+            [key: string]: unknown;
+        };
         /**
          * AiModelType
          * @enum {string}
          */
         AiModelType: "llm" | "embedding" | "decision" | "stt" | "tts";
+        AiOpenAIError: {
+            error: {
+                code: string;
+                message: string;
+                type: string;
+            };
+        };
+        AiResponse: {
+            id: string;
+            /** @description Public PMS model ID. */
+            model: string;
+            /** @constant */
+            object: "response";
+            output: {
+                [key: string]: unknown;
+            }[];
+            usage?: {
+                [key: string]: unknown;
+            } | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description OpenAI Responses create payload. Stateless only; provide full history and function_call_output items in input. */
+        AiResponsesRequest: {
+            /**
+             * @default false
+             * @enum {boolean|null}
+             */
+            background: false | null;
+            conversation?: null;
+            input: string | {
+                [key: string]: unknown;
+            }[];
+            model: string;
+            previous_response_id?: null;
+            /**
+             * @default false
+             * @enum {boolean|null}
+             */
+            store: false | null;
+            /** @default false */
+            stream: boolean;
+            tool_choice?: string | {
+                [key: string]: unknown;
+            };
+            tools?: {
+                [key: string]: unknown;
+            }[];
+        } & {
+            [key: string]: unknown;
+        };
         /** ApiToken */
         ApiToken: {
             /**
@@ -694,6 +1009,39 @@ export interface components {
              */
             token: string;
         };
+        /** Bucket */
+        Bucket: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Name */
+            name: string;
+            /** Object Count */
+            object_count: number;
+            status: components["schemas"]["BucketStatus"];
+            /** Status Message */
+            status_message: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Used Bytes */
+            used_bytes: number;
+        };
+        /** BucketCreate */
+        BucketCreate: {
+            /** Name */
+            name: string;
+        };
+        /**
+         * BucketStatus
+         * @description The state of a bucket (pms.buckets.status). The account state (read_only, suspended) is in StorageStatus.
+         * @enum {string}
+         */
+        BucketStatus: "provisioning" | "active" | "deleting" | "failed";
         /** Catalog */
         Catalog: {
             /** Ai Models */
@@ -1036,7 +1384,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "unauthorized" | "not_allowed" | "not_found" | "validation_error" | "quota_exceeded" | "native_not_allowed" | "conflict" | "upstream_error" | "internal" | "rate_limited";
+        ErrorCode: "unauthorized" | "not_allowed" | "not_found" | "validation_error" | "quota_exceeded" | "native_not_allowed" | "conflict" | "upstream_error" | "internal" | "rate_limited" | "account_terminated" | "not_available";
         /** ErrorDetail */
         ErrorDetail: {
             code: components["schemas"]["ErrorCode"];
@@ -1074,6 +1422,11 @@ export interface components {
         ItemList_ApiToken_: {
             /** Items */
             items: components["schemas"]["ApiToken"][];
+        };
+        /** ItemList[Bucket] */
+        ItemList_Bucket_: {
+            /** Items */
+            items: components["schemas"]["Bucket"][];
         };
         /** ItemList[Container] */
         ItemList_Container_: {
@@ -1114,6 +1467,11 @@ export interface components {
         ItemList_SshKey_: {
             /** Items */
             items: components["schemas"]["SshKey"][];
+        };
+        /** ItemList[StorageKey] */
+        ItemList_StorageKey_: {
+            /** Items */
+            items: components["schemas"]["StorageKey"][];
         };
         /** KeyCreate */
         KeyCreate: {
@@ -1205,6 +1563,11 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+            /**
+             * Owner Id
+             * Format: uuid
+             */
+            owner_id: string;
             /** Region */
             region: string;
             role: components["schemas"]["ProjectRole"];
@@ -1288,6 +1651,106 @@ export interface components {
             /** Public Key */
             public_key: string;
         };
+        /** Storage */
+        Storage: {
+            /** Buckets Count */
+            buckets_count: number;
+            /** Buckets Limit */
+            buckets_limit: number;
+            /** Endpoint */
+            endpoint: string;
+            /** Keys Count */
+            keys_count: number;
+            /** Keys Limit */
+            keys_limit: number;
+            /** Limit Bytes */
+            limit_bytes: number;
+            /** Region */
+            region: string;
+            status: components["schemas"]["StorageStatus"] | null;
+            /** Status Message */
+            status_message: string | null;
+            /** Used Bytes */
+            used_bytes: number;
+            /** Would Cost Usd */
+            would_cost_usd: number;
+        };
+        /** StorageKey */
+        StorageKey: {
+            /** Buckets */
+            buckets: "all" | string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Key Id */
+            key_id: string;
+            /** Name */
+            name: string;
+            permission: components["schemas"]["StorageKeyPermission"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** StorageKeyCreate */
+        StorageKeyCreate: {
+            /** Buckets */
+            buckets: "all" | string[];
+            /** Name */
+            name: string;
+            permission: components["schemas"]["StorageKeyPermission"];
+        };
+        /**
+         * StorageKeyPermission
+         * @enum {string}
+         */
+        StorageKeyPermission: "read_write" | "read_only";
+        /** StorageKeyUpdate */
+        StorageKeyUpdate: {
+            /** Buckets */
+            buckets?: "all" | string[] | null;
+            /** Name */
+            name?: string | null;
+            permission?: components["schemas"]["StorageKeyPermission"] | null;
+        };
+        /** StorageKeyWithSecret */
+        StorageKeyWithSecret: {
+            /** Buckets */
+            buckets: "all" | string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Endpoint */
+            endpoint: string;
+            /** Key Id */
+            key_id: string;
+            /** Name */
+            name: string;
+            permission: components["schemas"]["StorageKeyPermission"];
+            /** Region */
+            region: string;
+            /**
+             * Secret Access Key
+             * Format: password
+             */
+            secret_access_key: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * StorageStatus
+         * @description The state of the object storage of an account (pms.storage.status).
+         * @enum {string}
+         */
+        StorageStatus: "provisioning" | "active" | "read_only" | "suspended" | "disabling" | "failed";
         /** Ticket */
         Ticket: {
             /** Ticket */
@@ -1338,6 +1801,80 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    createAiMessage: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @example 2023-06-01 */
+                "anthropic-version": string;
+                "anthropic-beta"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiMessagesRequest"];
+            };
+        };
+        responses: {
+            /** @description Native protocol JSON response, or SSE when stream=true. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiMessage"];
+                    /** @description Native protocol events, including function tool argument deltas and usage. */
+                    "text/event-stream": string;
+                };
+            };
+            /** @description Sanitized Anthropic error. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiAnthropicError"];
+                };
+            };
+        };
+    };
+    createAiResponse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiResponsesRequest"];
+            };
+        };
+        responses: {
+            /** @description Native protocol JSON response, or SSE when stream=true. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiResponse"];
+                    /** @description Native protocol events, including function tool argument deltas and usage. */
+                    "text/event-stream": string;
+                };
+            };
+            /** @description Sanitized OpenAI error. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiOpenAIError"];
+                };
+            };
+        };
+    };
     getAccess: {
         parameters: {
             query?: never;
@@ -2796,6 +3333,431 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getStorage: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Storage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listBuckets: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_Bucket_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createBucket: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BucketCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Bucket"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getBucket: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Bucket"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteBucket: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteStorage: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Storage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createStorage: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Storage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listStorageKeys: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemList_StorageKey_"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createStorageKey: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorageKeyCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageKeyWithSecret"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getStorageKey: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageKey"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteStorageKey: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateStorageKey: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorageKeyUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageKey"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    resetStorageKey: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageKeyWithSecret"];
+                };
             };
             /** @description Error */
             default: {
