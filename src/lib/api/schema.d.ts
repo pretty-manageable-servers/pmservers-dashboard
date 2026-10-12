@@ -4,6 +4,46 @@
  */
 
 export interface paths {
+    "/ai/v1/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create an Anthropic Message
+         * @description PMS AI keys, model permissions, rate limits, and budgets apply. Native function tools and streaming are forwarded to the model service. Responses storage, conversation IDs, background generation, retrieval, and deletion are not supported.
+         */
+        post: operations["createAiMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ai/v1/responses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a stateless OpenAI Response
+         * @description PMS AI keys, model permissions, rate limits, and budgets apply. Native function tools and streaming are forwarded to the model service. Responses storage, conversation IDs, background generation, retrieval, and deletion are not supported.
+         */
+        post: operations["createAiResponse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/account/access": {
         parameters: {
             query?: never;
@@ -606,17 +646,13 @@ export interface paths {
         post?: never;
         /**
          * Delete Bucket
-         * @description The reconciler deletes the bucket. Garage refuses a bucket that is not empty: the reconciler then sets
-         *     status_message and the bucket stays.
+         * @description The reconciler deletes the bucket. A bucket with objects is refused here (409), by the size the reconciler
+         *     last read. The reconciler checks again: Garage refuses a bucket that is not empty, and then the bucket stays.
          */
         delete: operations["deleteBucket"];
         options?: never;
         head?: never;
-        /**
-         * Update Bucket
-         * @description public_read: the reconciler sets the website mode of the bucket.
-         */
-        patch: operations["updateBucket"];
+        patch?: never;
         trace?: never;
     };
     "/v1/storage/disable": {
@@ -737,7 +773,7 @@ export interface components {
          * Access
          * @enum {string}
          */
-        Access: "none" | "pending" | "approved" | "rejected";
+        Access: "none" | "pending" | "approved" | "rejected" | "terminated";
         /** AccessRequest */
         AccessRequest: {
             /** Reason */
@@ -762,6 +798,14 @@ export interface components {
          * @enum {string}
          */
         Action: "start" | "stop" | "restart";
+        AiAnthropicError: {
+            error: {
+                message: string;
+                type: string;
+            };
+            /** @constant */
+            type: "error";
+        };
         /** AiKey */
         AiKey: {
             /** Budget Usd */
@@ -815,11 +859,108 @@ export interface components {
          * @enum {string}
          */
         AiKeyStatus: "running" | "deleting";
+        AiMessage: {
+            content: {
+                [key: string]: unknown;
+            }[];
+            id: string;
+            /** @description Public PMS model ID. */
+            model: string;
+            /** @constant */
+            role: "assistant";
+            /** @constant */
+            type: "message";
+            usage?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description Native Anthropic Messages payload. Tools use input_schema; tool_use and tool_result blocks remain in native format. */
+        AiMessagesRequest: {
+            max_tokens: number;
+            messages: ({
+                content: string | {
+                    [key: string]: unknown;
+                }[];
+                /** @enum {string} */
+                role: "user" | "assistant";
+            } & {
+                [key: string]: unknown;
+            })[];
+            model: string;
+            /** @default false */
+            stream: boolean;
+            tool_choice?: {
+                [key: string]: unknown;
+            };
+            tools?: ({
+                input_schema: {
+                    [key: string]: unknown;
+                };
+                name: string;
+            } & {
+                [key: string]: unknown;
+            })[];
+        } & {
+            [key: string]: unknown;
+        };
         /**
          * AiModelType
          * @enum {string}
          */
         AiModelType: "llm" | "embedding" | "decision" | "stt" | "tts";
+        AiOpenAIError: {
+            error: {
+                code: string;
+                message: string;
+                type: string;
+            };
+        };
+        AiResponse: {
+            id: string;
+            /** @description Public PMS model ID. */
+            model: string;
+            /** @constant */
+            object: "response";
+            output: {
+                [key: string]: unknown;
+            }[];
+            usage?: {
+                [key: string]: unknown;
+            } | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description OpenAI Responses create payload. Stateless only; provide full history and function_call_output items in input. */
+        AiResponsesRequest: {
+            /**
+             * @default false
+             * @enum {boolean|null}
+             */
+            background: false | null;
+            conversation?: null;
+            input: string | {
+                [key: string]: unknown;
+            }[];
+            model: string;
+            previous_response_id?: null;
+            /**
+             * @default false
+             * @enum {boolean|null}
+             */
+            store: false | null;
+            /** @default false */
+            stream: boolean;
+            tool_choice?: string | {
+                [key: string]: unknown;
+            };
+            tools?: {
+                [key: string]: unknown;
+            }[];
+        } & {
+            [key: string]: unknown;
+        };
         /** ApiToken */
         ApiToken: {
             /**
@@ -879,8 +1020,6 @@ export interface components {
             name: string;
             /** Object Count */
             object_count: number;
-            /** Public Read */
-            public_read: boolean;
             status: components["schemas"]["BucketStatus"];
             /** Status Message */
             status_message: string | null;
@@ -896,11 +1035,6 @@ export interface components {
         BucketCreate: {
             /** Name */
             name: string;
-            /**
-             * Public Read
-             * @default false
-             */
-            public_read: boolean;
         };
         /**
          * BucketStatus
@@ -908,11 +1042,6 @@ export interface components {
          * @enum {string}
          */
         BucketStatus: "provisioning" | "active" | "deleting" | "failed";
-        /** BucketUpdate */
-        BucketUpdate: {
-            /** Public Read */
-            public_read?: boolean | null;
-        };
         /** Catalog */
         Catalog: {
             /** Ai Models */
@@ -1255,7 +1384,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "unauthorized" | "not_allowed" | "not_found" | "validation_error" | "quota_exceeded" | "native_not_allowed" | "conflict" | "upstream_error" | "internal" | "rate_limited" | "not_available";
+        ErrorCode: "unauthorized" | "not_allowed" | "not_found" | "validation_error" | "quota_exceeded" | "native_not_allowed" | "conflict" | "upstream_error" | "internal" | "rate_limited" | "account_terminated" | "not_available";
         /** ErrorDetail */
         ErrorDetail: {
             code: components["schemas"]["ErrorCode"];
@@ -1672,6 +1801,80 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    createAiMessage: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @example 2023-06-01 */
+                "anthropic-version": string;
+                "anthropic-beta"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiMessagesRequest"];
+            };
+        };
+        responses: {
+            /** @description Native protocol JSON response, or SSE when stream=true. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiMessage"];
+                    /** @description Native protocol events, including function tool argument deltas and usage. */
+                    "text/event-stream": string;
+                };
+            };
+            /** @description Sanitized Anthropic error. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiAnthropicError"];
+                };
+            };
+        };
+    };
+    createAiResponse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiResponsesRequest"];
+            };
+        };
+        responses: {
+            /** @description Native protocol JSON response, or SSE when stream=true. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiResponse"];
+                    /** @description Native protocol events, including function tool argument deltas and usage. */
+                    "text/event-stream": string;
+                };
+            };
+            /** @description Sanitized OpenAI error. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiOpenAIError"];
+                };
+            };
+        };
+    };
     getAccess: {
         parameters: {
             query?: never;
@@ -3292,43 +3495,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    updateBucket: {
-        parameters: {
-            query?: {
-                account_id?: string | null;
-            };
-            header?: never;
-            path: {
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BucketUpdate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Bucket"];
                 };
             };
             /** @description Error */

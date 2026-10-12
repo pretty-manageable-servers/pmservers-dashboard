@@ -8,7 +8,7 @@ import {
   envSnippet,
   isNotAvailable,
   keyBucketsLabel,
-  publicUrl,
+  SHARE_COMMAND,
   storageAccount,
   usageLevel,
   usagePercent,
@@ -122,8 +122,10 @@ describe('snippets and links', () => {
       'aws configure set default.s3.addressing_style path',
     );
   });
-  it('builds the public URL', () => {
-    expect(publicUrl('site-assets')).toBe('https://site-assets-pub.pmservers.org/');
+  it('shows a presigned URL command for sharing', () => {
+    expect(SHARE_COMMAND).toContain('aws s3 presign s3://<bucket>/<key>');
+    expect(SHARE_COMMAND).toContain('--expires-in 3600');
+    expect(SHARE_COMMAND).toContain('--endpoint-url https://s3.pmservers.org');
   });
   it('labels the bucket scope of a key', () => {
     expect(keyBucketsLabel('all')).toBe('All buckets');

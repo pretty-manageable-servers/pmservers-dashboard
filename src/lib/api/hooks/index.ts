@@ -736,25 +736,6 @@ export function useCreateBucket(account?: string) {
   });
 }
 
-/** Only `public_read` can change. The reconciler sets the website mode of the bucket. */
-export function useUpdateBucket(account?: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (v: { name: string; public_read: boolean }) =>
-      unwrap(
-        await api.PATCH('/v1/storage/buckets/{name}', {
-          params: { path: { name: v.name }, query: { account_id: account } },
-          body: { public_read: v.public_read },
-        }),
-      ),
-    onSuccess: (b) => {
-      qc.invalidateQueries({ queryKey: keys.storage(account) });
-      toast(b.public_read ? `${b.name} is public` : `${b.name} is private`);
-    },
-    onError: (e) => toast.error(e.message),
-  });
-}
-
 export function useDeleteBucket(account?: string) {
   const qc = useQueryClient();
   return useMutation({

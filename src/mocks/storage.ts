@@ -50,9 +50,8 @@ interface MockStorage {
 
 function seed(): MockStorage {
   const now = new Date().toISOString();
-  const bucket = (name: string, publicRead: boolean, used: number, objects: number): Bucket => ({
+  const bucket = (name: string, used: number, objects: number): Bucket => ({
     name,
-    public_read: publicRead,
     status: 'active',
     status_message: null,
     used_bytes: used,
@@ -63,7 +62,7 @@ function seed(): MockStorage {
   return {
     status: 'active',
     status_message: null,
-    buckets: [bucket('photos', false, 3.2 * GIB, 1840), bucket('site-assets', true, 0.8 * GIB, 96)],
+    buckets: [bucket('photos', 3.2 * GIB, 1840), bucket('site-assets', 0.8 * GIB, 96)],
     keys: [
       {
         key_id: newKeyId(),
@@ -212,7 +211,6 @@ export const storageHandlers = (isApproved: () => boolean) => {
       const now = new Date().toISOString();
       const b: Bucket = {
         name: body.name,
-        public_read: !!body.public_read,
         status: 'provisioning',
         status_message: null,
         used_bytes: 0,
@@ -231,17 +229,6 @@ export const storageHandlers = (isApproved: () => boolean) => {
       await delay(LATENCY);
       const b = st.buckets.find((x) => x.name === params.name);
       return b ? HttpResponse.json(b) : err(404, 'not_found', 'Bucket not found.');
-    }),
-
-    http.patch(`${base}/buckets/:name`, async ({ params, request }) => {
-      await delay(LATENCY);
-      const b = st.buckets.find((x) => x.name === params.name);
-      if (!b) return err(404, 'not_found', 'Bucket not found.');
-      if (b.status === 'deleting') return err(409, 'conflict', 'The bucket is deleting.');
-      const body = (await request.json()) as { public_read?: boolean | null };
-      if (body.public_read != null) b.public_read = body.public_read;
-      b.updated_at = new Date().toISOString();
-      return HttpResponse.json(b, { status: 202 });
     }),
 
     http.delete(`${base}/buckets/:name`, async ({ params }) => {

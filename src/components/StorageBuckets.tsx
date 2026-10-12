@@ -3,30 +3,23 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { ConfirmDialog } from './ConfirmDialog';
-import { copyText } from './CopyField';
 import { Modal } from './Modal';
 import { EmptyState, ErrorState } from './States';
-import {
-  useCreateBucket,
-  useDeleteBucket,
-  useStorageBuckets,
-  useUpdateBucket,
-} from '@/lib/api/hooks';
+import { useCreateBucket, useDeleteBucket, useStorageBuckets } from '@/lib/api/hooks';
 import type { Bucket, Storage } from '@/lib/api/types';
 import { formatBytes } from '@/lib/databases';
 import {
   BUCKET_RULES,
   BUCKET_STATUS_LABEL,
   canCreateBuckets,
+  SHARE_COMMAND,
   isBucketBusy,
-  publicUrl,
   validateBucketName,
 } from '@/lib/storage';
 
-/** The buckets of the account: the list, the public switch, create and delete. */
+/** The buckets of the account: the list, create and delete. */
 export function StorageBuckets({ s, account }: { s: Storage; account?: string }) {
   const buckets = useStorageBuckets(account);
-  const update = useUpdateBucket(account);
   const del = useDeleteBucket(account);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<Bucket | null>(null);
@@ -58,6 +51,10 @@ export function StorageBuckets({ s, account }: { s: Storage; account?: string })
         </button>
       </div>
       {createHint && <span className="hint">{createHint}</span>}
+      <p className="hint" style={{ margin: 0 }}>
+        To share a file, make a presigned URL. It works without a key until it expires. Presigned
+        URLs last up to 7 days. Example: <code className="mono">{SHARE_COMMAND}</code>
+      </p>
 
       {buckets.isLoading ? (
         <div className="skeleton" style={{ height: 120 }} role="status" aria-label="Loading" />
@@ -72,7 +69,6 @@ export function StorageBuckets({ s, account }: { s: Storage; account?: string })
               <th scope="col">Name</th>
               <th scope="col">Size</th>
               <th scope="col">Objects</th>
-              <th scope="col">Public read</th>
               <th scope="col">Status</th>
               <th scope="col">
                 <span className="sr-only">Actions</span>
@@ -91,45 +87,12 @@ export function StorageBuckets({ s, account }: { s: Storage; account?: string })
                         {b.status_message}
                       </div>
                     )}
-                    {b.public_read && (
-                      <div
-                        className="hint"
-                        style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}
-                      >
-                        <span className="mono" style={{ wordBreak: 'break-all' }}>
-                          {publicUrl(b.name)}
-                        </span>
-                        <button
-                          className="btn sm"
-                          type="button"
-                          aria-label={`Copy the public URL of ${b.name}`}
-                          onClick={() => copyText(publicUrl(b.name))}
-                        >
-                          Copy
-                        </button>
-                      </div>
-                    )}
                   </td>
                   <td data-label="Size" className="num">
                     {formatBytes(b.used_bytes)}
                   </td>
                   <td data-label="Objects" className="num">
                     {b.object_count}
-                  </td>
-                  <td data-label="Public read">
-                    <label className="switch">
-                      <input
-                        type="checkbox"
-                        role="switch"
-                        checked={b.public_read}
-                        disabled={busy || update.isPending}
-                        aria-label={`Public read for ${b.name}`}
-                        onChange={(e) =>
-                          update.mutate({ name: b.name, public_read: e.target.checked })
-                        }
-                      />
-                      <span>{b.public_read ? 'On' : 'Off'}</span>
-                    </label>
                   </td>
                   <td data-label="Status">
                     <span className={`dot ${b.status}`}>{BUCKET_STATUS_LABEL[b.status]}</span>
@@ -180,7 +143,6 @@ function CreateBucketDialog({
 }) {
   const create = useCreateBucket(account);
   const [name, setName] = useState('');
-  const [publicRead, setPublicRead] = useState(false);
   const [touched, setTouched] = useState(false);
   const nameErr = name ? validateBucketName(name) : 'Enter a bucket name.';
 
@@ -189,11 +151,10 @@ function CreateBucketDialog({
     setTouched(true);
     if (create.isPending || nameErr) return;
     create.mutate(
-      { name, public_read: publicRead },
+      { name },
       {
         onSuccess: () => {
           setName('');
-          setPublicRead(false);
           setTouched(false);
           onOpenChange(false);
         },
@@ -233,21 +194,6 @@ function CreateBucketDialog({
           {create.isError && (
             <span className="err-t" role="alert">
               {create.error.message}
-            </span>
-          )}
-        </div>
-        <div className="field">
-          <label className="hint" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              checked={publicRead}
-              onChange={(e) => setPublicRead(e.target.checked)}
-            />
-            Public read. Anyone with a link can read the files.
-          </label>
-          {publicRead && name && !nameErr && (
-            <span className="hint">
-              Public URL: <span className="mono">{publicUrl(name)}</span>
             </span>
           )}
         </div>

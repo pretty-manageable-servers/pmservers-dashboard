@@ -147,7 +147,7 @@ A failed resource has `status_message` with a sentence that the user can act on.
   Create body: `name`, `size`, `image`, `disk_gb`, `ssh_public_key`.
 - **Container:** `id`, `name`, `status`, `status_message`, `image`, `port`, `size`, `env` (map), `scale_to_zero` (bool), `url`, `replicas_ready`, `replicas_desired`, `created_at`.
   Create body: `name`, `image`, `port`, `size`, `env`, `scale_to_zero`.
-- **Bucket:** `id`, `name`, `status`, `access` (`private` / `public-read`), `size_limit_gb`, `used_bytes`, `object_count`, `endpoint`, `created_at`.
+- **Bucket:** `id`, `name`, `status`, `size_limit_gb`, `used_bytes`, `object_count`, `endpoint`, `created_at`.
 - **AI key:** `id`, `name`, `status`, `prefix`, `models` (string list), `budget_usd`, `spend_usd` (this month), `rate_limit_rpm`, `created_at`. The create response also has `secret`.
 - **Event:** `id`, `time`, `level` (`info` / `success` / `warning` / `error`), `resource_id`, `resource_name`, `message`.
 

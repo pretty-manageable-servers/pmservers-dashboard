@@ -46,8 +46,9 @@ export function validateKeyName(name: string): string | null {
   return length >= 1 && length <= 64 ? null : 'Enter a name of 1 to 64 characters.';
 }
 
-/** The public URL of a bucket with public read. Website mode: no listing of the folders. */
-export const publicUrl = (bucket: string) => `https://${bucket}-pub.pmservers.org/`;
+/** Share an object with a presigned URL. The link works without a key until it expires (max 7 days). */
+export const SHARE_COMMAND =
+  'aws s3 presign s3://<bucket>/<key> --expires-in 3600 --endpoint-url https://s3.pmservers.org';
 
 // Usage thresholds, as a percent of the account limit. The API applies them.
 export const USAGE_MARKS = [90, 100, 125] as const;
@@ -81,7 +82,7 @@ export const STORAGE_STATUS_HELP: Partial<Record<StorageStatus, string>> = {
   read_only:
     'Your account uses all of the storage limit. Writes fail. Reads and deletes still work. Delete files to make space. Writes start again below 90 percent.',
   suspended:
-    'Your account uses much more than the storage limit, so all access is blocked and public buckets are off. Contact support.',
+    'Your account uses much more than the storage limit, so all access is blocked. Contact support.',
   disabling: 'We are turning off object storage and removing its data.',
   failed: 'Setup failed. We try again by ourselves. You do not need to do anything.',
 };
