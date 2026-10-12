@@ -81,9 +81,9 @@ describe('storageAccount', () => {
 });
 
 describe('isNotAvailable', () => {
-  it('is true for the 403 of a switched-off feature', () => {
+  it('is true for the not_available code of a switched-off feature', () => {
     expect(
-      isNotAvailable(new ApiError('not_allowed', 'Object storage is not available now.', 403)),
+      isNotAvailable(new ApiError('not_available', 'Object storage is not available now.', 403)),
     ).toBe(true);
   });
   it('is false for the approval 403 and other errors', () => {
@@ -91,6 +91,10 @@ describe('isNotAvailable', () => {
       isNotAvailable(new ApiError('not_allowed', 'Object storage is for approved accounts.', 403)),
     ).toBe(false);
     expect(isNotAvailable(new Error('not available'))).toBe(false);
+  });
+  it('does not read the message text', () => {
+    expect(isNotAvailable(new ApiError('not_allowed', 'not available', 403))).toBe(false);
+    expect(isNotAvailable(new ApiError('not_available', 'Some other text', 403))).toBe(true);
   });
 });
 
@@ -113,8 +117,13 @@ describe('snippets and links', () => {
     expect(awsCliSnippet('photos')).toContain('aws s3 cp ./photo.jpg s3://photos/photo.jpg');
     expect(awsCliSnippet(undefined)).toContain('s3://my-bucket/photo.jpg');
   });
+  it('sets path style in the AWS CLI example', () => {
+    expect(awsCliSnippet('photos')).toContain(
+      'aws configure set default.s3.addressing_style path',
+    );
+  });
   it('builds the public URL', () => {
-    expect(publicUrl('site-assets')).toBe('https://site-assets.pub.pmservers.org/');
+    expect(publicUrl('site-assets')).toBe('https://site-assets-pub.pmservers.org/');
   });
   it('labels the bucket scope of a key', () => {
     expect(keyBucketsLabel('all')).toBe('All buckets');

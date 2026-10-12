@@ -44,7 +44,7 @@ export function validateKeyName(name: string): string | null {
 }
 
 /** The public URL of a bucket with public read. Website mode: no listing of the folders. */
-export const publicUrl = (bucket: string) => `https://${bucket}.pub.pmservers.org/`;
+export const publicUrl = (bucket: string) => `https://${bucket}-pub.pmservers.org/`;
 
 // Usage thresholds, as a percent of the account limit. The API applies them.
 export const USAGE_MARKS = [90, 100, 125] as const;
@@ -76,7 +76,7 @@ export const STORAGE_STATUS_LABEL: Record<StorageStatus, string> = {
 export const STORAGE_STATUS_HELP: Partial<Record<StorageStatus, string>> = {
   provisioning: 'We are setting up object storage. This takes about one minute.',
   read_only:
-    'Your account uses all of the storage limit. Writes fail. Reads still work. Delete files to make space. Writes start again below 90 percent.',
+    'Your account uses all of the storage limit. Writes fail. Reads and deletes still work. Delete files to make space. Writes start again below 90 percent.',
   suspended:
     'Your account uses much more than the storage limit, so all access is blocked and public buckets are off. Contact support.',
   disabling: 'We are turning off object storage and removing its data.',
@@ -116,9 +116,8 @@ export function storageAccount(project: Project): string | undefined {
   return project.role === 'owner' ? undefined : project.owner_id;
 }
 
-/** The API says the feature is not available for this account now (the global switch is off). */
-export const isNotAvailable = (e: unknown) =>
-  e instanceof ApiError && e.code === 'not_allowed' && /not available/i.test(e.message);
+/** The API says the feature is not available now (the global switch is off). Checks the code only. */
+export const isNotAvailable = (e: unknown) => e instanceof ApiError && e.code === 'not_available';
 
 export const ENV_SNIPPET_TITLE = 'Env vars';
 export const CLI_SNIPPET_TITLE = 'AWS CLI';
@@ -143,11 +142,19 @@ export function awsCliSnippet(bucket: string | undefined): string {
   return [
     '# Set the variables of the Env vars tab first.',
     '# AWS CLI v2 reads AWS_ENDPOINT_URL. Older versions need --endpoint-url https://s3.pmservers.org',
+    '# Use path style (once): aws configure set default.s3.addressing_style path',
     'aws s3 ls',
     `aws s3 cp ./photo.jpg s3://${b}/photo.jpg`,
     `aws s3 cp s3://${b}/photo.jpg ./photo.jpg`,
   ].join('\n');
 }
+
+/** The SDK settings for path style. Only path style works: no virtual host style. */
+export const PATH_STYLE_SETTINGS = [
+  { sdk: 'AWS CLI', setting: 'aws configure set default.s3.addressing_style path' },
+  { sdk: 'boto3', setting: 'Config(s3={"addressing_style": "path"})' },
+  { sdk: 'JavaScript SDK v3', setting: 'forcePathStyle: true' },
+];
 
 /** The SDK settings for the checksum problem. Garage returns a wrong checksum for some multipart objects. */
 export const CHECKSUM_SETTINGS = [

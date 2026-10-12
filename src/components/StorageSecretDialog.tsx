@@ -8,6 +8,7 @@ import {
   CHECKSUM_SETTINGS,
   CLI_SNIPPET_TITLE,
   ENV_SNIPPET_TITLE,
+  PATH_STYLE_SETTINGS,
   awsCliSnippet,
   envSnippet,
 } from '@/lib/storage';
@@ -46,6 +47,16 @@ export function StorageSecretDialog(props: {
         <div style={{ display: 'grid', gap: 8 }}>
           <b style={{ fontSize: 13.5 }}>Use the key</b>
           {k && <CodeSample samples={samples} copyable />}
+        </div>
+        <div className="hint" style={{ display: 'grid', gap: 4 }}>
+          <span>Use path style. Virtual host style does not work:</span>
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {PATH_STYLE_SETTINGS.map((c) => (
+              <li key={c.sdk}>
+                {c.sdk}: <code>{c.setting}</code>
+              </li>
+            ))}
+          </ul>
         </div>
         <div className="hint" style={{ display: 'grid', gap: 4 }}>
           <span>

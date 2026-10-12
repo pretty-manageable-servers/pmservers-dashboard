@@ -162,7 +162,7 @@ export const storageHandlers = (isApproved: () => boolean) => {
           'not_allowed',
           'Object storage is for approved accounts. Ask the PMServers team.',
         );
-      if (unavailable) return err(403, 'not_allowed', 'Object storage is not available now.');
+      if (unavailable) return err(403, 'not_available', 'Object storage is not available now.');
       if (st.status === null) {
         st.status = 'provisioning';
         st.status_message = null;
