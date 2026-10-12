@@ -696,6 +696,12 @@ button {
 .dot.read_only {
   color: var(--warn);
 }
+.dot.connected {
+  color: var(--ok);
+}
+.dot.disconnected {
+  color: var(--bad);
+}
 .dot.stopped,
 .dot.sleeping,
 .dot.unknown {

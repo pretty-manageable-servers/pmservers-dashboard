@@ -44,23 +44,17 @@ export function CreateContainerDialog({
   const [env, setEnv] = useState<EnvRow[]>([]);
   const [runtime, setRuntime] = useState<Runtime>('gvisor');
   const [portsText, setPortsText] = useState('');
-  const [tunnelToken, setTunnelToken] = useState('');
-  const [tunnelPort, setTunnelPort] = useState('');
   const [touched, setTouched] = useState(false);
 
   const nameErr = validateContainerName(name);
   const imageErr = validateImage(image);
   const envErr = validateEnv(env);
   const portsErr = validatePorts(portsText);
-  const declaredPorts = parsePorts(portsText) ?? [];
-  const tunnelErr = tunnelToken && (!tunnelPort || !declaredPorts.includes(Number(tunnelPort)))
-    ? 'Choose a tunnel port that is also declared in Ports.'
-    : null;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (nameErr || imageErr || envErr || portsErr || tunnelErr || !size) return;
+    if (nameErr || imageErr || envErr || portsErr || !size) return;
     create.mutate(
       {
         name,
@@ -71,7 +65,6 @@ export function CreateContainerDialog({
         env: envMap(env),
         runtime,
         ports: parsePorts(portsText) ?? [],
-        ...(tunnelToken ? { tunnel_port: Number(tunnelPort), tunnel_token: tunnelToken } : {}),
       },
       { onSuccess: () => onOpenChange(false) },
     );
@@ -113,27 +106,10 @@ export function CreateContainerDialog({
           error={portsErr}
           touched={touched}
         />
-        <div className="field">
-          <span className="fl">Managed Cloudflare Tunnel (optional)</span>
-          <label htmlFor="ct-tunnel-port">Origin port</label>
-          <select id="ct-tunnel-port" value={tunnelPort} onChange={(e) => setTunnelPort(e.target.value)}>
-            <option value="">Choose a declared port</option>
-            {declaredPorts.map((port) => <option key={port} value={port}>{port}</option>)}
-          </select>
-          <label htmlFor="ct-tunnel-token">Connector token</label>
-          <input id="ct-tunnel-token" type="password" value={tunnelToken}
-            onChange={(e) => setTunnelToken(e.target.value)} autoComplete="new-password"
-            placeholder="Paste or type the Cloudflare token" />
-          {touched && tunnelErr ? <span className="err-t">{tunnelErr}</span> : (
-            <span className="hint">Encrypted by PMS and hidden after saving. Your tunnel can reach any service in this project. Use a separate project to limit this.</span>
-          )}
-        </div>
         <EnvEditor rows={env} setRows={setEnv} error={envErr} touched={touched} />
       </form>
       <footer>
-        <span className="cost">
-          {tunnelToken ? 'Connector uses 0.05 vCPU and 128 MiB from your compute allowance' : 'Counts against project limits'}
-        </span>
+        <span className="cost">Counts against project limits</span>
         <button className="btn" type="button" onClick={() => onOpenChange(false)}>
           Cancel
         </button>

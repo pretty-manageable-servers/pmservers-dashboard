@@ -7,6 +7,11 @@ import type {
   ApiToken,
   ApiTokenCreate,
   ApiTokenCreated,
+  Connector,
+  ConnectorKind,
+  ConnectorPut,
+  ConnectorTarget,
+  ConnectorTargetInput,
   Container,
   ContainerCreate,
   ContainerUpdate,
@@ -19,8 +24,6 @@ import type {
   RegistryCredential,
   RegistryCredentialCreate,
   Sandbox,
-  SshKey,
-  SshKeyCreate,
   StreamEvent,
 } from '@/lib/api/types';
 import { validateDatabaseName } from '@/lib/databases';
@@ -43,6 +46,7 @@ import {
   seedCredentials,
   seedState,
   series,
+  TAILNET,
   type ProjectState,
 } from './data';
 
@@ -78,7 +82,6 @@ const sandboxesEmpty = () =>
   new URLSearchParams(location.search).get('mockSandboxes') === 'empty';
 let projects: Project[] = structuredClone(seedProjects);
 let state = seedState();
-let sshKeys: SshKey[] = [];
 let members: Record<string, Member[]> = {};
 let credentials: RegistryCredential[] = seedCredentials();
 let apiTokens: Record<string, ApiToken[]> = {};
@@ -89,11 +92,11 @@ const id = (p: string) => `${p}_${(counter++).toString(36)}`;
 export function resetMockState() {
   projects = structuredClone(seedProjects);
   state = seedState();
-  sshKeys = [];
   members = {};
   credentials = seedCredentials();
   apiTokens = {};
   sandboxes = seedSandboxes();
+  tailnetNames.clear();
   access = approvedAccess();
   mockAccessParam = null;
   resetStorageMock();
@@ -236,10 +239,6 @@ function startContainer(c: Container, s: ProjectState) {
 // The same user as the mock sign-in in lib/auth.tsx.
 const MOCK_USER = { id: '5b1c0e2a-8d41-4f3e-9a77-1e0c3d2b6f90', email: 'robert@example.com' };
 
-// The key data is the second field. The real API makes a SHA256 fingerprint of it.
-const fingerprintOf = (publicKey: string) =>
-  `SHA256:${(publicKey.split(/\s+/)[1] ?? '').slice(-43)}`;
-
 const err = (status: number, code: string, message: string) =>
   HttpResponse.json({ error: { code, message } }, { status });
 
@@ -271,6 +270,117 @@ const pushEvent = (
   broadcast({ ...e, project_id: projectOf(s) });
 };
 
+/** Remove the targets of a container or database that is being deleted, from each connector. */
+function dropTargets(s: ProjectState, kind: 'container' | 'database', targetId: string) {
+  for (const c of s.connectors) {
+    c.targets = c.targets.filter((t) => !(t.kind === kind && t.id === targetId));
+    c.updated_at = new Date().toISOString();
+  }
+}
+
+/** The device name of each connected Tailscale connector. It is known after the first connect. */
+const tailnetNames = new Map<string, string>();
+
+/** The address of a target. Tailscale needs a device name, so it is null until the connector connects. */
+function addressOf(c: Connector, t: ConnectorTarget, s: ProjectState): string | null {
+  if (c.kind === 'cloudflared') {
+    return t.kind === 'container' ? `http://${t.name}:${t.port}` : `tcp://${t.id.replaceAll('_', '-')}:5432`;
+  }
+  // A connector from the seed data is connected but has no entry in the map.
+  const connected = c.status === 'connected';
+  const device =
+    tailnetNames.get(c.id) ??
+    (connected ? `${projectOf(s).replace('prj_', '')}.${TAILNET}` : null);
+  return device ? `${device}:${t.external_port}` : null;
+}
+
+function refreshAddresses(c: Connector, s: ProjectState) {
+  c.targets = c.targets.map((t) => ({ ...t, address: addressOf(c, t, s) }));
+}
+
+/** Connect after 2.5 s, like the reconciler. The mock does not check a real token. */
+function startConnector(c: Connector, s: ProjectState) {
+  c.status = 'provisioning';
+  c.message = 'Starting connector.';
+  setTimeout(() => {
+    if (c.status !== 'provisioning' || !s.connectors.includes(c)) return;
+    const slug = projectOf(s).replace('prj_', '');
+    if (c.kind === 'tailscale') tailnetNames.set(c.id, `${slug}.${TAILNET}`);
+    c.status = 'connected';
+    c.message = c.kind === 'tailscale' ? 'Connected to your tailnet.' : 'Connected to Cloudflare.';
+    c.observed_at = new Date().toISOString();
+    refreshAddresses(c, s);
+    pushEvent(s, 'success', c.id, c.kind, `${c.kind} connector is connected`);
+  }, 2500);
+}
+
+const TOKEN_LIMIT = 4096;
+
+/** The same token rules as the API. */
+function tokenProblem(kind: ConnectorKind, token: string): string | null {
+  if (token.trim() === '' || token.length > TOKEN_LIMIT)
+    return 'The connector token is empty or too long.';
+  if (kind === 'tailscale' && !token.startsWith('tskey-'))
+    return 'A Tailscale auth key starts with tskey-.';
+  return null;
+}
+
+/** Check the targets of a PUT, the same way as the API. Returns the targets to store, or the error. */
+function checkTargets(
+  kind: ConnectorKind,
+  s: ProjectState,
+  inputs: ConnectorTargetInput[],
+): { targets: ConnectorTarget[] } | { error: string } {
+  const seen = new Set<string>();
+  const externalPorts = new Set<number>();
+  const targets: ConnectorTarget[] = [];
+  for (const input of inputs) {
+    const key = `${input.kind}:${input.id}:${input.port}`;
+    if (seen.has(key)) return { error: 'The same target and port are in the list twice.' };
+    seen.add(key);
+    let external: number | null = null;
+    if (kind === 'cloudflared') {
+      if (input.external_port != null)
+        return { error: 'A cloudflared connector has no external port. Remove external_port.' };
+    } else {
+      external = input.external_port ?? input.port;
+      if (externalPorts.has(external))
+        return {
+          error: `Two services use external port ${external}. Set another external port.`,
+        };
+      externalPorts.add(external);
+    }
+    let name: string;
+    if (input.kind === 'container') {
+      const c = s.containers.find((x) => x.id === input.id && x.status !== 'deleting');
+      if (!c)
+        return {
+          error: `Container ${input.id} is not in this project, or it is being deleted.`,
+        };
+      if (!c.ports.includes(input.port))
+        return { error: `Port ${input.port} is not in the Ports of ${c.name}.` };
+      name = c.name;
+    } else {
+      const d = s.databases.find((x) => x.id === input.id && x.status !== 'deleting');
+      if (!d)
+        return { error: `Database ${input.id} is not in this project, or it is being deleted.` };
+      if (input.port !== 5432) return { error: 'A database uses port 5432.' };
+      name = d.name;
+    }
+    targets.push({
+      kind: input.kind,
+      id: input.id,
+      name,
+      port: input.port,
+      external_port: external,
+      address: null,
+    });
+  }
+  return { targets };
+}
+
+const CONNECTOR_KINDS_MOCK = ['tailscale', 'cloudflared'];
+
 const base = '*/v1';
 
 export const handlers = [
@@ -281,43 +391,6 @@ export const handlers = [
   http.get(`${base}/catalog`, async () => {
     await delay(LATENCY);
     return HttpResponse.json(catalog);
-  }),
-
-  http.get(`${base}/ssh-keys`, async () => {
-    await delay(LATENCY);
-    return HttpResponse.json({ items: sshKeys });
-  }),
-  http.post(`${base}/ssh-keys`, async ({ request }) => {
-    await delay(LATENCY);
-    const body = (await request.json()) as SshKeyCreate;
-    const publicKey = body.public_key.trim();
-    if (/PRIVATE KEY/.test(publicKey))
-      return err(
-        422,
-        'validation_error',
-        'That looks like a private key. Paste the public key only.',
-      );
-    if (!/^(ssh-ed25519|ssh-rsa|ecdsa-sha2-\S+)\s+\S+/.test(publicKey))
-      return err(422, 'validation_error', 'Paste a public SSH key.');
-    const fingerprint = fingerprintOf(publicKey);
-    if (sshKeys.some((k) => k.fingerprint === fingerprint))
-      return err(409, 'conflict', 'This SSH key is already saved.');
-    if (sshKeys.length >= 20) return err(409, 'quota_exceeded', 'You can save up to 20 SSH keys.');
-    const k: SshKey = {
-      id: id('sshkey'),
-      name: body.name,
-      public_key: publicKey,
-      fingerprint,
-      created_at: new Date().toISOString(),
-    };
-    sshKeys.unshift(k);
-    return HttpResponse.json(k, { status: 201 });
-  }),
-  http.delete(`${base}/ssh-keys/:kid`, async ({ params }) => {
-    await delay(LATENCY);
-    if (!sshKeys.some((k) => k.id === params.kid)) return notFound();
-    sshKeys = sshKeys.filter((k) => k.id !== params.kid);
-    return new HttpResponse(null, { status: 204 });
   }),
 
   http.get(`${base}/projects`, async () => {
@@ -341,6 +414,7 @@ export const handlers = [
     state[p.id] = {
       containers: [],
       databases: [],
+      connectors: [],
       aiKeys: [],
       events: [],
       usageSeries: {
@@ -649,15 +723,6 @@ export const handlers = [
       runtime: body.runtime ?? 'gvisor',
       ports: body.ports ?? [],
       internal_host: body.ports?.length ? body.name : null,
-      tunnel: body.tunnel_port
-        ? {
-            port: body.tunnel_port,
-            origin: `http://${body.name}:${body.tunnel_port}`,
-            status: 'provisioning',
-            observed_at: null,
-            message: 'Starting connector.',
-          }
-        : null,
       status: 'provisioning',
       status_message: 'Creating',
       created_at: now,
@@ -709,43 +774,9 @@ export const handlers = [
       c.ports = body.ports;
       c.internal_host = body.ports.length ? c.name : null;
     }
-    if (body.detach_tunnel) c.tunnel = null;
-    else if (body.tunnel_port != null && c.tunnel) {
-      c.tunnel = {
-        ...c.tunnel,
-        port: body.tunnel_port,
-        origin: `http://${c.name}:${body.tunnel_port}`,
-        status: 'provisioning',
-      };
-    }
-    if (body.tunnel_token && body.tunnel_port != null && !c.tunnel) {
-      c.tunnel = {
-        port: body.tunnel_port,
-        origin: `http://${c.name}:${body.tunnel_port}`,
-        status: 'provisioning',
-        observed_at: null,
-        message: 'Starting connector.',
-      };
-    }
     c.updated_at = new Date().toISOString();
-    const appChange = [
-      'image',
-      'size',
-      'registry_credential_id',
-      'env',
-      'env_set',
-      'env_unset',
-      'runtime',
-      'ports',
-    ].some((field) => field in body);
-    pushEvent(
-      s,
-      'info',
-      c.id,
-      c.name,
-      appChange ? 'Redeploying container' : 'Updating tunnel attachment',
-    );
-    if (appChange) startContainer(c, s);
+    pushEvent(s, 'info', c.id, c.name, 'Redeploying container');
+    startContainer(c, s);
     return HttpResponse.json(c, { status: 202 });
   }),
   http.delete(`${base}/projects/:pid/containers/:cid`, async ({ params }) => {
@@ -753,6 +784,7 @@ export const handlers = [
     const s = state[params.pid as string];
     const c = s?.containers.find((x) => x.id === params.cid);
     if (!s || !c) return notFound();
+    dropTargets(s, 'container', c.id);
     c.status = 'deleting';
     pushEvent(s, 'info', c.id, c.name, 'Deleting container');
     setTimeout(() => {
@@ -781,6 +813,94 @@ export const handlers = [
     if (!c) return notFound();
     const previous = new URL(request.url).searchParams.get('previous') === 'true';
     return HttpResponse.json({ lines: mockLogs(c, previous) });
+  }),
+
+  // Network connectors
+  http.get(`${base}/projects/:pid/connectors`, async ({ params }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    if (!s) return notFound();
+    readMockAccess();
+    if (access.access !== 'approved')
+      return err(403, 'not_allowed', 'Containers need approval. Request access on the Account page.');
+    return HttpResponse.json({ connectors: s.connectors });
+  }),
+  http.get(`${base}/projects/:pid/connectors/available-targets`, async ({ params }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    if (!s) return notFound();
+    const targets = [
+      ...s.containers
+        .filter((c) => c.status !== 'deleting')
+        .map((c) => ({ kind: 'container' as const, id: c.id, name: c.name, ports: c.ports })),
+      ...s.databases
+        .filter((d) => d.status !== 'deleting')
+        .map((d) => ({ kind: 'database' as const, id: d.id, name: d.name, ports: [5432] })),
+    ];
+    return HttpResponse.json({ targets });
+  }),
+  http.put(`${base}/projects/:pid/connectors/:kind`, async ({ params, request }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    if (!s) return notFound();
+    const kind = params.kind as ConnectorKind;
+    if (!CONNECTOR_KINDS_MOCK.includes(kind)) return notFound();
+    const denied = accessError();
+    if (denied) return denied;
+    const body = (await request.json()) as ConnectorPut;
+    const existing = s.connectors.find((c) => c.kind === kind);
+    if (existing?.status === 'deleting') return err(409, 'conflict', 'The connector is deleting.');
+    if (body.token != null) {
+      const problem = tokenProblem(kind, body.token);
+      if (problem) return err(422, 'validation_error', problem);
+    } else if (!existing) {
+      return err(422, 'validation_error', 'A new connector needs a token.');
+    }
+    let planned: ConnectorTarget[] | null = null;
+    if (body.targets != null) {
+      const checked = checkTargets(kind, s, body.targets);
+      if ('error' in checked) return err(422, 'validation_error', checked.error);
+      planned = checked.targets;
+    }
+    const now = new Date().toISOString();
+    const label = kind === 'tailscale' ? 'Tailscale' : 'Cloudflare Tunnel';
+    let c = existing;
+    if (!c) {
+      c = {
+        id: id('ncn'),
+        kind,
+        status: 'provisioning',
+        message: 'Starting connector.',
+        observed_at: null,
+        targets: [],
+        created_at: now,
+        updated_at: now,
+      };
+      s.connectors.push(c);
+      pushEvent(s, 'info', c.id, kind, `Enabling ${label} connector`);
+    } else {
+      pushEvent(s, 'info', c.id, kind, `Updating ${label} connector`);
+    }
+    if (planned) c.targets = planned;
+    c.updated_at = now;
+    refreshAddresses(c, s);
+    // A token or a target change restarts the connector.
+    if (body.token != null || planned) startConnector(c, s);
+    return HttpResponse.json(c, { status: 200 });
+  }),
+  http.delete(`${base}/projects/:pid/connectors/:kind`, async ({ params }) => {
+    await delay(LATENCY);
+    const s = state[params.pid as string];
+    const c = s?.connectors.find((x) => x.kind === params.kind);
+    if (!s || !c) return notFound();
+    c.status = 'deleting';
+    c.message = 'The connector is being deleted.';
+    pushEvent(s, 'info', c.id, c.kind, `Disabling ${c.kind} connector`);
+    setTimeout(() => {
+      s.connectors = s.connectors.filter((x) => x.id !== c.id);
+      tailnetNames.delete(c.id);
+    }, 2000);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   // Databases
@@ -855,6 +975,7 @@ export const handlers = [
     const s = state[params.pid as string];
     const x = s?.databases.find((y) => y.id === params.did);
     if (!s || !x) return notFound();
+    dropTargets(s, 'database', x.id);
     x.status = 'deleting';
     pushEvent(s, 'info', x.id, x.name, 'Deleting database');
     setTimeout(() => {

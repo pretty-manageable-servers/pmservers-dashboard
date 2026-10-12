@@ -237,6 +237,65 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/projects/{project_id}/connectors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Connectors */
+        get: operations["listConnectors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/connectors/available-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Available Targets
+         * @description The containers (with their ports) and the databases (port 5432) that a connector can reach.
+         */
+        get: operations["listAvailableTargets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{project_id}/connectors/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Connector
+         * @description Make the connector, or change its token or targets. A new connector needs a token. A missing `targets`
+         *     keeps the current targets. A change gives the connector a new revision.
+         */
+        put: operations["updateConnector"];
+        post?: never;
+        /** Delete Connector */
+        delete: operations["deleteConnector"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/projects/{project_id}/containers": {
         parameters: {
             query?: never;
@@ -563,41 +622,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/ssh-keys": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Ssh Keys */
-        get: operations["listSshKeys"];
-        put?: never;
-        /** Create Ssh Key */
-        post: operations["createSshKey"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/ssh-keys/{key_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Delete Ssh Key */
-        delete: operations["deleteSshKey"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v1/storage": {
         parameters: {
             query?: never;
@@ -646,8 +670,9 @@ export interface paths {
         post?: never;
         /**
          * Delete Bucket
-         * @description The reconciler deletes the bucket. A bucket with objects is refused here (409), by the size the reconciler
-         *     last read. The reconciler checks again: Garage refuses a bucket that is not empty, and then the bucket stays.
+         * @description A bucket with objects is refused with 409. Garage is asked for the object count when it can be reached; if it
+         *     cannot, the sizes of the last minute check decide. The reconciler deletes the bucket. It checks again: Garage
+         *     refuses a bucket that is not empty, and then the bucket goes back to active with its objects.
          */
         delete: operations["deleteBucket"];
         options?: never;
@@ -707,8 +732,8 @@ export interface paths {
         put?: never;
         /**
          * Create Key
-         * @description The row first, then the key in Garage. If Garage does not take the key, the row goes and the request is 502.
-         *     The secret is in this response only.
+         * @description The row first, then the key in Garage and its access. If Garage does not take the key or the access, the key
+         *     and the row go and the request is 502. The secret is in this response only.
          */
         post: operations["createStorageKey"];
         delete?: never;
@@ -738,7 +763,7 @@ export interface paths {
         head?: never;
         /**
          * Update Key
-         * @description The reconciler applies the permission and the buckets to Garage.
+         * @description A new permission or new buckets are given to Garage at once. If Garage refuses, nothing changes.
          */
         patch: operations["updateStorageKey"];
         trace?: never;
@@ -1009,6 +1034,25 @@ export interface components {
              */
             token: string;
         };
+        /** AvailableTarget */
+        AvailableTarget: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "container" | "database";
+            /** Name */
+            name: string;
+            /** Ports */
+            ports: number[];
+        };
+        /** AvailableTargetList */
+        AvailableTargetList: {
+            /** Targets */
+            targets: components["schemas"]["AvailableTarget"][];
+        };
         /** Bucket */
         Bucket: {
             /**
@@ -1079,6 +1123,67 @@ export interface components {
             price_per_minute: number | null;
             type: components["schemas"]["AiModelType"];
         };
+        /** Connector */
+        Connector: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "tailscale" | "cloudflared";
+            /** Message */
+            message: string | null;
+            /** Observed At */
+            observed_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "provisioning" | "connected" | "disconnected" | "stopped" | "deleting";
+            /** Targets */
+            targets: components["schemas"]["ConnectorTarget"][];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ConnectorList */
+        ConnectorList: {
+            /** Connectors */
+            connectors: components["schemas"]["Connector"][];
+        };
+        /** ConnectorPut */
+        ConnectorPut: {
+            /** Targets */
+            targets?: components["schemas"]["TargetInput"][] | null;
+            /** Token */
+            token?: string | null;
+        };
+        /** ConnectorTarget */
+        ConnectorTarget: {
+            /** Address */
+            address: string | null;
+            /** External Port */
+            external_port: number | null;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "container" | "database";
+            /** Name */
+            name: string;
+            /** Port */
+            port: number;
+        };
         /** Container */
         Container: {
             /**
@@ -1108,7 +1213,6 @@ export interface components {
             status: components["schemas"]["ContainerStatus"];
             /** Status Message */
             status_message: string | null;
-            tunnel: components["schemas"]["TunnelConnection"] | null;
             type: components["schemas"]["ContainerType"];
             /**
              * Updated At
@@ -1146,10 +1250,6 @@ export interface components {
             runtime: components["schemas"]["Runtime"];
             /** Size */
             size: string;
-            /** Tunnel Port */
-            tunnel_port?: number | null;
-            /** Tunnel Token */
-            tunnel_token?: string | null;
             /** @default worker */
             type: components["schemas"]["ContainerType"];
         };
@@ -1179,8 +1279,6 @@ export interface components {
         ContainerType: "worker";
         /** ContainerUpdate */
         ContainerUpdate: {
-            /** Detach Tunnel */
-            detach_tunnel?: boolean | null;
             /** Env */
             env?: {
                 [key: string]: string;
@@ -1200,10 +1298,6 @@ export interface components {
             runtime?: components["schemas"]["Runtime"] | null;
             /** Size */
             size?: string | null;
-            /** Tunnel Port */
-            tunnel_port?: number | null;
-            /** Tunnel Token */
-            tunnel_token?: string | null;
         };
         /** CredentialCreate */
         CredentialCreate: {
@@ -1246,12 +1340,8 @@ export interface components {
              * @constant
              */
             port: 5432;
-            /** Private Ip */
-            private_ip: string;
             /** Size */
             size: string;
-            /** Ssh Host */
-            ssh_host: string;
             status: components["schemas"]["DatabaseStatus"];
             /** Status Message */
             status_message: string | null;
@@ -1345,12 +1435,8 @@ export interface components {
              * @constant
              */
             port: 5432;
-            /** Private Ip */
-            private_ip: string;
             /** Size */
             size: string;
-            /** Ssh Host */
-            ssh_host: string;
             status: components["schemas"]["DatabaseStatus"];
             /** Status Message */
             status_message: string | null;
@@ -1462,11 +1548,6 @@ export interface components {
         ItemList_SandboxItem_: {
             /** Items */
             items: components["schemas"]["SandboxItem"][];
-        };
-        /** ItemList[SshKey] */
-        ItemList_SshKey_: {
-            /** Items */
-            items: components["schemas"]["SshKey"][];
         };
         /** ItemList[StorageKey] */
         ItemList_StorageKey_: {
@@ -1628,29 +1709,6 @@ export interface components {
             /** Vcpu */
             vcpu: number;
         };
-        /** SshKey */
-        SshKey: {
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Fingerprint */
-            fingerprint: string;
-            /** Id */
-            id: string;
-            /** Name */
-            name: string;
-            /** Public Key */
-            public_key: string;
-        };
-        /** SshKeyCreate */
-        SshKeyCreate: {
-            /** Name */
-            name: string;
-            /** Public Key */
-            public_key: string;
-        };
         /** Storage */
         Storage: {
             /** Buckets Count */
@@ -1751,26 +1809,24 @@ export interface components {
          * @enum {string}
          */
         StorageStatus: "provisioning" | "active" | "read_only" | "suspended" | "disabling" | "failed";
+        /** TargetInput */
+        TargetInput: {
+            /** External Port */
+            external_port?: number | null;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "container" | "database";
+            /** Port */
+            port: number;
+        };
         /** Ticket */
         Ticket: {
             /** Ticket */
             ticket: string;
-        };
-        /** TunnelConnection */
-        TunnelConnection: {
-            /** Message */
-            message: string | null;
-            /** Observed At */
-            observed_at: string | null;
-            /** Origin */
-            origin: string;
-            /** Port */
-            port: number;
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "provisioning" | "connected" | "disconnected" | "stopped" | "unknown";
         };
         /** Usage */
         Usage: {
@@ -2399,6 +2455,134 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AiKeyCreated"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listConnectors: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectorList"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listAvailableTargets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailableTargetList"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateConnector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                kind: "tailscale" | "cloudflared";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectorPut"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Connector"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteConnector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                kind: "tailscale" | "cloudflared";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -3231,97 +3415,6 @@ export interface operations {
             header?: never;
             path: {
                 credential_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    listSshKeys: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ItemList_SshKey_"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    createSshKey: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SshKeyCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SshKey"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    deleteSshKey: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                key_id: string;
             };
             cookie?: never;
         };

@@ -7,7 +7,6 @@ import { PageHead } from '@/components/PageHead';
 import { Modal } from '@/components/Modal';
 import { MembersCard } from '@/components/MembersCard';
 import { SettingsTabs } from '@/components/SettingsTabs';
-import { SshKeysCard } from '@/components/SshKeysCard';
 import { RegistryCredentialsCard } from '@/components/RegistryCredentialsCard';
 import { useSession } from '@/lib/auth';
 import { useDeleteProject, useMe, useRenameProject } from '@/lib/api/hooks';
@@ -118,7 +117,6 @@ function Settings() {
         </form>
       </section>
       <MembersCard />
-      <SshKeysCard />
       <RegistryCredentialsCard />
       {project.role === 'owner' && (
         <section

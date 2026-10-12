@@ -18,7 +18,7 @@ function Databases() {
     <>
       <PageHead
         title="Databases"
-        description="Postgres, with optional pgvector. Reachable only from your containers in this account."
+        description="Postgres, with optional pgvector. Reachable from your containers in this project, and through Networking."
         action={
           <button className="btn primary" type="button" onClick={() => create('/databases', 'db')}>
             <Plus aria-hidden="true" />
