@@ -107,7 +107,7 @@ Generate `src/lib/api/schema.d.ts` from it with `pnpm api:types`. Do not edit th
 
 - Base path: `/v1`. JSON only.
 - Auth: `Authorization: Bearer <supabase access token>` on all calls. A missing or bad token gives `401`.
-- IDs: string with a type prefix, for example `prj_...`, `vm_...`, `ct_...`, `bkt_...`, `key_...`.
+- IDs: string with a type prefix, for example `prj_...`, `ct_...`, `bkt_...`, `key_...`.
 - Times: ISO 8601 UTC strings.
 - Errors: `{ "error": { "code": "quota_exceeded", "message": "This project has no vCPU left. Delete a container or ask for more." } }`.
 - Lists: `{ "items": [...] }`. Do not add pagination now.
