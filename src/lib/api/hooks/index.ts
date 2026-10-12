@@ -836,7 +836,8 @@ export function useUpdateConnector(project: string) {
       );
       qc.invalidateQueries({ queryKey: keys.connectors(project) });
       qc.invalidateQueries({ queryKey: keys.events(project) });
-      toast.success(`Saved ${CONNECTOR_NAME[c.kind]}`);
+      if (c.status === 'provisioning') toast(`${CONNECTOR_NAME[c.kind]} connector is setting up.`);
+      else toast.success(`Saved ${CONNECTOR_NAME[c.kind]}`);
     },
   });
 }

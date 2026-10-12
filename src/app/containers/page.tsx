@@ -32,7 +32,7 @@ function Containers() {
     <>
       <PageHead
         title="Containers"
-        description="Workers that run your image all the time. No inbound traffic, no disk."
+        description="Workers that run your image all the time, with no disk. No public inbound traffic by default. To reach a port, expose it on the Networking page."
         action={
           <button className="btn primary" type="button" onClick={() => create('/containers', 'ct')}>
             <Plus aria-hidden="true" />

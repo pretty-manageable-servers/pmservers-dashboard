@@ -24,6 +24,7 @@ export function applyEvent(qc: QueryClient, e: StreamEvent) {
     keys.databases(p),
     keys.aiKeys(p),
     keys.events(p),
+    keys.connectors(p),
     keys.usage(p),
     keys.access,
   ]) {
