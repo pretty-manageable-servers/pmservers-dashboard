@@ -13,7 +13,10 @@ export const MEMBER_TEXT = 'The project owner must request access.';
 function About() {
   return (
     <ul className="muted" style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 4 }}>
-      <li>A container is a worker. It connects out only. It gets no inbound traffic and no URL.</li>
+      <li>
+        A container is a worker. It connects out only. It gets no public inbound traffic and no
+        public URL by default. To reach a port, expose it on the Networking page.
+      </li>
       <li>It has no disk. Files are lost when it restarts.</li>
       <li>Images must be linux/amd64 and run as a non-root user (user 1000).</li>
       <li>Containers need approval. We review each request.</li>
