@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { SideSheet } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { StatusDot } from './StatusDot';
@@ -17,7 +18,7 @@ import {
   useRegistryCredentials,
   useRotateAiKey,
 } from '@/lib/api/hooks';
-import { useProject } from '@/lib/project';
+import { projectHref, useProject } from '@/lib/project';
 import { isBusy } from '@/lib/status';
 import { timeAgo, timeAgoLong } from '@/lib/utils';
 import { runtimeLabel, sizeLabel } from '@/lib/containers';
@@ -322,26 +323,6 @@ export function ContainerSheet({ c, onClose }: { c: Container; onClose: () => vo
                 ] as [string, React.ReactNode],
               ]
             : []),
-          ...(c.tunnel
-            ? [
-                [
-                  'Managed tunnel',
-                  <span key="tunnel" style={{ display: 'grid', gap: 4 }}>
-                    <b>{c.tunnel.status}</b>
-                    <span className="mono">{c.tunnel.origin}</span>
-                    {c.tunnel.message && <span className="hint">{c.tunnel.message}</span>}
-                    <span className="hint">
-                      Connected means Cloudflare has an edge connection; it does not confirm DNS,
-                      TLS, or origin health. Your tunnel can reach any service in this project. Use
-                      a separate project to limit this.
-                    </span>
-                    {c.tunnel.observed_at && (
-                      <span className="hint">Observed {timeAgoLong(c.tunnel.observed_at)}</span>
-                    )}
-                  </span>,
-                ] as [string, React.ReactNode],
-              ]
-            : []),
           ['Registry credential', credential],
           [
             'Variables',
@@ -362,6 +343,10 @@ export function ContainerSheet({ c, onClose }: { c: Container; onClose: () => vo
           ['Updated', timeAgoLong(c.updated_at)],
         ]}
       />
+      <p className="hint" style={{ margin: 0 }}>
+        To reach a port from outside the project, open{' '}
+        <Link href={projectHref('/networking', project.id)}>Networking</Link>.
+      </p>
       {editing && (
         <EditContainerDialog container={c} onOpenChange={(o) => !o && setEditing(false)} />
       )}
@@ -516,7 +501,8 @@ export function DatabaseSheet({
         ]}
       />
       <p className="hint" style={{ margin: 0 }}>
-        Reachable only from your containers in this account. There are no backups.
+        Reachable from your containers in this project, and through the connectors you turn on. There
+        are no backups. To reach it from your computer, open <Link href={projectHref('/networking', project.id)}>Networking</Link>.
       </p>
       <ConfirmDialog
         open={confirm === 'reset'}

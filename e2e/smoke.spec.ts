@@ -1,20 +1,5 @@
 import { expect, test } from '@playwright/test';
 
-test('save an SSH key', async ({ page }) => {
-  await page.goto('/login');
-  await page.getByLabel('Email').fill('robert@example.com');
-  await page.getByLabel('Password').fill('correct-horse');
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'discord-bots' })).toBeVisible();
-
-  // Navigate in the app. A reload would reset the mock state.
-  await page.getByRole('link', { name: /Settings/ }).click();
-  await page.getByLabel('Key name').fill('my-laptop');
-  await page.getByLabel('Public key').fill('ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK3x me@laptop');
-  await page.getByRole('button', { name: 'Save key' }).click();
-  await expect(page.getByText('SHA256:')).toBeVisible();
-});
-
 test('invite a member, then remove them', async ({ page }) => {
   await page.goto('/login');
   await page.getByLabel('Email').fill('robert@example.com');

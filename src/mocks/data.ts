@@ -2,6 +2,7 @@ import type {
   AiKey,
   ApiEvent,
   Catalog,
+  Connector,
   Container,
   Database,
   Project,
@@ -107,6 +108,9 @@ export const catalog: Catalog = {
   ],
 };
 
+/** The tailnet name of the mock account. A device name is the project name, then this. */
+export const TAILNET = 'example-tailnet.ts.net';
+
 export const DB_STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024;
 
 export const databaseSizeSpec = (id: string) => catalog.database_sizes.find((s) => s.id === id);
@@ -129,8 +133,6 @@ export const mockDatabase = (
   status,
   status_message: null,
   host: `${name}.${id}.svc`,
-  private_ip: '',
-  ssh_host: '',
   port: 5432,
   database: 'app',
   user: 'app',
@@ -174,7 +176,6 @@ const container = (
     runtime: 'gvisor',
     ports: [],
     internal_host: null,
-    tunnel: null,
     status,
     status_message: null,
     created_at: ago(age),
@@ -208,6 +209,7 @@ export const projects: Project[] = [
 export interface ProjectState {
   containers: Container[];
   databases: Database[];
+  connectors: Connector[];
   aiKeys: AiKey[];
   events: ApiEvent[];
   usageSeries: Record<string, number[]>;
@@ -260,7 +262,12 @@ export function seedState(): Record<string, ProjectState> {
           'ghcr.io/robert/relay-bot:1.4',
           'pms-c-250m-512',
           5 * DAY,
-          { registry_credential_id: 'reg_ghcr', env_names: ['DISCORD_TOKEN', 'LOG_LEVEL'] },
+          {
+            registry_credential_id: 'reg_ghcr',
+            env_names: ['DISCORD_TOKEN', 'LOG_LEVEL'],
+            ports: [8080],
+            internal_host: 'relay-bot',
+          },
         ),
         container(
           'ctr_cron-worker',
@@ -280,6 +287,35 @@ export function seedState(): Record<string, ProjectState> {
           used_bytes: 48 * 1024 * 1024,
         }),
       ],
+      connectors: [
+        {
+          id: 'ncn_tailscale',
+          kind: 'tailscale',
+          status: 'connected',
+          message: 'Connected to your tailnet.',
+          observed_at: ago(30_000),
+          targets: [
+            {
+              kind: 'container',
+              id: 'ctr_relay-bot',
+              name: 'relay-bot',
+              port: 8080,
+              external_port: 8080,
+              address: `discord-bots.${TAILNET}:8080`,
+            },
+            {
+              kind: 'database',
+              id: 'db_main',
+              name: 'main',
+              port: 5432,
+              external_port: 5432,
+              address: `discord-bots.${TAILNET}:5432`,
+            },
+          ],
+          created_at: ago(5 * DAY),
+          updated_at: ago(5 * DAY),
+        },
+      ],
       aiKeys: [
         key('key_triage-bot', 'triage-bot', 'pms_sk_7f3a', ['vane', 'stratus'], 0.41, 2, 6 * DAY),
         key('key_laptop', 'laptop', 'pms_sk_c19e', ['cirrus', 'nimbus'], 0.83, 3, 14 * DAY),
@@ -297,6 +333,7 @@ export function seedState(): Record<string, ProjectState> {
     'prj_personal-site': {
       containers: [],
       databases: [],
+      connectors: [],
       aiKeys: [],
       events: [],
       usageSeries: {

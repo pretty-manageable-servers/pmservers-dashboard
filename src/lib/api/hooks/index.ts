@@ -1,10 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, ApiError, unwrap } from '../client';
+import { CONNECTOR_NAME } from '@/lib/connectors';
 import type {
   AiKeyCreate,
   ApiTokenCreate,
   ApiTokenCreated,
+  Connector,
+  ConnectorKind,
+  ConnectorPut,
   ContainerCreate,
   ContainerUpdate,
   DatabaseCreate,
@@ -31,6 +35,8 @@ export const keys = {
   containers: (p: string) => ['containers', p] as const,
   databases: (p: string) => ['databases', p] as const,
   tokens: (p: string) => ['tokens', p] as const,
+  connectors: (p: string) => ['connectors', p] as const,
+  availableTargets: (p: string) => ['available-targets', p] as const,
   sandboxes: (p: string) => ['sandboxes', p] as const,
   containerLogs: (p: string, id: string, previous: boolean) =>
     ['container-logs', p, id, previous] as const,
@@ -373,8 +379,7 @@ export const useContainers = (project: string, enabled = true) =>
       query.state.data?.some(
         (c) =>
           c.status === 'provisioning' ||
-          c.status === 'deleting' ||
-          c.tunnel?.status === 'provisioning',
+          c.status === 'deleting',
       )
         ? 5000
         : false,
@@ -408,23 +413,9 @@ export function useUpdateContainer(project: string) {
           body: v.body,
         }),
       ),
-    onSuccess: (c, v) => {
+    onSuccess: (c) => {
       refresh(project, 'containers', 'events', 'usage');
-      const appFields = [
-        'image',
-        'size',
-        'registry_credential_id',
-        'runtime',
-        'ports',
-        'env',
-        'env_set',
-        'env_unset',
-      ];
-      toast(
-        Object.keys(v.body).some((key) => appFields.includes(key))
-          ? `Redeploying ${c.name}`
-          : `Updating tunnel for ${c.name}`,
-      );
+      toast(`Redeploying ${c.name}`);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -816,6 +807,86 @@ export function useDeleteStorageKey(account?: string) {
     onSuccess: (_d, v) => {
       qc.invalidateQueries({ queryKey: keys.storage(account) });
       toast(`Deleted ${v.name}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+}
+
+/** The network connectors of the project. A connector that is setting up or deleting refreshes often. */
+export const useConnectors = (project: string, enabled = true) =>
+  useQuery({
+    queryKey: keys.connectors(project),
+    queryFn: async () =>
+      unwrap(
+        await api.GET('/v1/projects/{project_id}/connectors', {
+          params: { path: { project_id: project } },
+        }),
+      ).connectors,
+    enabled: !!project && enabled,
+    // A 403 is a state, not a failure. Do not retry it.
+    retry: (n, e) => !isNotAllowed(e) && n < 1,
+    refetchInterval: (query) =>
+      query.state.data?.some((c) => c.status === 'provisioning' || c.status === 'deleting')
+        ? 5000
+        : 30_000,
+  });
+
+/** The containers (with their ports) and databases that a connector can reach. */
+export const useAvailableTargets = (project: string, enabled = true) =>
+  useQuery({
+    queryKey: keys.availableTargets(project),
+    queryFn: async () =>
+      unwrap(
+        await api.GET('/v1/projects/{project_id}/connectors/available-targets', {
+          params: { path: { project_id: project } },
+        }),
+      ).targets,
+    enabled: !!project && enabled,
+    retry: (n, e) => !isNotAllowed(e) && n < 1,
+  });
+
+/**
+ * Make a connector, change its token or its targets. The error is not toasted: the page and the
+ * card show it inline. A successful answer replaces the connector in the list at once.
+ */
+export function useUpdateConnector(project: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { kind: ConnectorKind; body: ConnectorPut }) =>
+      unwrap(
+        await api.PUT('/v1/projects/{project_id}/connectors/{kind}', {
+          params: { path: { project_id: project, kind: v.kind } },
+          body: v.body,
+        }),
+      ),
+    onSuccess: (c: Connector) => {
+      qc.setQueryData<Connector[]>(keys.connectors(project), (list) =>
+        list
+          ? list.some((x) => x.kind === c.kind)
+            ? list.map((x) => (x.kind === c.kind ? c : x))
+            : [...list, c]
+          : list,
+      );
+      qc.invalidateQueries({ queryKey: keys.connectors(project) });
+      qc.invalidateQueries({ queryKey: keys.events(project) });
+      toast.success(`Saved ${CONNECTOR_NAME[c.kind]}`);
+    },
+  });
+}
+
+export function useDeleteConnector(project: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (kind: ConnectorKind) =>
+      unwrap(
+        await api.DELETE('/v1/projects/{project_id}/connectors/{kind}', {
+          params: { path: { project_id: project, kind } },
+        }),
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.connectors(project) });
+      qc.invalidateQueries({ queryKey: keys.events(project) });
+      toast('Disabling the connector');
     },
     onError: (e) => toast.error(e.message),
   });

@@ -40,9 +40,6 @@ export function EditContainerDialog({
   const { chosen } = useCredentialChoice(image, picked);
   const [runtime, setRuntime] = useState<Runtime>(c.runtime);
   const [portsText, setPortsText] = useState(formatPorts(c.ports));
-  const [tunnelPort, setTunnelPort] = useState(c.tunnel ? String(c.tunnel.port) : '');
-  const [tunnelToken, setTunnelToken] = useState('');
-  const [detachTunnel, setDetachTunnel] = useState(false);
   // The API never returns values. Each current name has an empty value. A typed value changes it.
   const [values, setValues] = useState<Record<string, string>>({});
   const [removed, setRemoved] = useState<string[]>([]);
@@ -53,11 +50,6 @@ export function EditContainerDialog({
   const edit = { names: c.env_names, values, removed, added };
   const envErr = validateEnvEdit(edit);
   const portsErr = validatePorts(portsText);
-  const declaredPorts = parsePorts(portsText) ?? [];
-  const tunnelErr = !detachTunnel && (tunnelToken || (!c.tunnel && tunnelPort)) &&
-    (!tunnelPort || !declaredPorts.includes(Number(tunnelPort)) || (!c.tunnel && !tunnelToken))
-    ? 'Choose a declared port and provide a connector token to attach a tunnel.'
-    : null;
   const body = changedFields(c, {
     image,
     size,
@@ -66,17 +58,12 @@ export function EditContainerDialog({
     ports: parsePorts(portsText) ?? c.ports,
     env: envChanges(edit),
   });
-  if (detachTunnel) body.detach_tunnel = true;
-  else {
-    if (tunnelPort && Number(tunnelPort) !== c.tunnel?.port) body.tunnel_port = Number(tunnelPort);
-    if (tunnelToken) body.tunnel_token = tunnelToken;
-  }
   const nothing = Object.keys(body).length === 0;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (imageErr || envErr || portsErr || tunnelErr || nothing) return;
+    if (imageErr || envErr || portsErr || nothing) return;
     update.mutate({ id: c.id, body }, { onSuccess: () => onOpenChange(false) });
   };
 
@@ -85,7 +72,7 @@ export function EditContainerDialog({
       open
       onOpenChange={onOpenChange}
       title={`Edit ${c.name}`}
-      description="App changes restart the container. Tunnel changes restart only the connector."
+      description="App changes restart the container."
     >
       <form id="ct-edit-form" onSubmit={submit} noValidate>
         <ImageField
@@ -105,28 +92,6 @@ export function EditContainerDialog({
           error={portsErr}
           touched={touched}
         />
-        <div className="field">
-          <span className="fl">Managed Cloudflare Tunnel</span>
-          {c.tunnel && <span className="hint">Status: {c.tunnel.status}{c.tunnel.message ? ` · ${c.tunnel.message}` : ''}</span>}
-          {!detachTunnel && <>
-            <label htmlFor="ct-edit-tunnel-port">Origin port</label>
-            <select id="ct-edit-tunnel-port" value={tunnelPort} onChange={(e) => setTunnelPort(e.target.value)}>
-              {!c.tunnel && <option value="">No tunnel attached</option>}
-              {declaredPorts.map((port) => <option key={port} value={port}>{port}</option>)}
-            </select>
-            <label htmlFor="ct-edit-tunnel-token">{c.tunnel ? 'Replace connector token (optional)' : 'Connector token'}</label>
-            <input id="ct-edit-tunnel-token" type="password" value={tunnelToken}
-              onChange={(e) => setTunnelToken(e.target.value)} autoComplete="new-password"
-              placeholder={c.tunnel ? 'Leave empty to keep the current token' : 'Paste or type the Cloudflare token'} />
-          </>}
-          {c.tunnel && <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input type="checkbox" checked={detachTunnel} onChange={(e) => setDetachTunnel(e.target.checked)} />
-            Detach tunnel and delete the PMS connector
-          </label>}
-          {tunnelErr ? <span className="err-t">{tunnelErr}</span> : (
-            <span className="hint">Your tunnel can reach any service in this project. Use a separate project to limit this.</span>
-          )}
-        </div>
         <div className="field">
           <span className="fl">Environment variables</span>
           {c.env_names.map((name) => {
@@ -223,7 +188,7 @@ export function EditContainerDialog({
           className="btn primary"
           form="ct-edit-form"
           type="submit"
-          disabled={update.isPending || nothing || !!envErr || !!tunnelErr}
+          disabled={update.isPending || nothing || !!envErr}
         >
           Save changes
         </button>

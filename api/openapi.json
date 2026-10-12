@@ -680,6 +680,57 @@
         "title": "ApiTokenCreated",
         "type": "object"
       },
+      "AvailableTarget": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "container",
+              "database"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "ports": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Ports",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "name",
+          "ports"
+        ],
+        "title": "AvailableTarget",
+        "type": "object"
+      },
+      "AvailableTargetList": {
+        "properties": {
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/AvailableTarget"
+            },
+            "title": "Targets",
+            "type": "array"
+          }
+        },
+        "required": [
+          "targets"
+        ],
+        "title": "AvailableTargetList",
+        "type": "object"
+      },
       "Bucket": {
         "properties": {
           "created_at": {
@@ -867,6 +918,190 @@
         "title": "CatalogModel",
         "type": "object"
       },
+      "Connector": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "tailscale",
+              "cloudflared"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "status": {
+            "enum": [
+              "provisioning",
+              "connected",
+              "disconnected",
+              "stopped",
+              "deleting"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/ConnectorTarget"
+            },
+            "title": "Targets",
+            "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "message",
+          "observed_at",
+          "targets",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Connector",
+        "type": "object"
+      },
+      "ConnectorList": {
+        "properties": {
+          "connectors": {
+            "items": {
+              "$ref": "#/components/schemas/Connector"
+            },
+            "title": "Connectors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "connectors"
+        ],
+        "title": "ConnectorList",
+        "type": "object"
+      },
+      "ConnectorPut": {
+        "properties": {
+          "targets": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TargetInput"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Targets"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "format": "password",
+                "type": "string",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          }
+        },
+        "title": "ConnectorPut",
+        "type": "object"
+      },
+      "ConnectorTarget": {
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "external_port": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Port"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "container",
+              "database"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "port": {
+            "title": "Port",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "name",
+          "port",
+          "external_port",
+          "address"
+        ],
+        "title": "ConnectorTarget",
+        "type": "object"
+      },
       "Container": {
         "properties": {
           "created_at": {
@@ -954,16 +1189,6 @@
             ],
             "title": "Status Message"
           },
-          "tunnel": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/TunnelConnection"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "type": {
             "$ref": "#/components/schemas/ContainerType"
           },
@@ -996,7 +1221,6 @@
           "runtime",
           "ports",
           "internal_host",
-          "tunnel",
           "env_names",
           "status",
           "status_message",
@@ -1062,32 +1286,6 @@
           "size": {
             "title": "Size",
             "type": "string"
-          },
-          "tunnel_port": {
-            "anyOf": [
-              {
-                "maximum": 65535.0,
-                "minimum": 1.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tunnel Port"
-          },
-          "tunnel_token": {
-            "anyOf": [
-              {
-                "format": "password",
-                "type": "string",
-                "writeOnly": true
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tunnel Token"
           },
           "type": {
             "$ref": "#/components/schemas/ContainerType",
@@ -1162,17 +1360,6 @@
       },
       "ContainerUpdate": {
         "properties": {
-          "detach_tunnel": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Detach Tunnel"
-          },
           "env": {
             "anyOf": [
               {
@@ -1271,32 +1458,6 @@
               }
             ],
             "title": "Size"
-          },
-          "tunnel_port": {
-            "anyOf": [
-              {
-                "maximum": 65535.0,
-                "minimum": 1.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tunnel Port"
-          },
-          "tunnel_token": {
-            "anyOf": [
-              {
-                "format": "password",
-                "type": "string",
-                "writeOnly": true
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tunnel Token"
           }
         },
         "title": "ContainerUpdate",
@@ -1383,16 +1544,8 @@
             "title": "Port",
             "type": "integer"
           },
-          "private_ip": {
-            "title": "Private Ip",
-            "type": "string"
-          },
           "size": {
             "title": "Size",
-            "type": "string"
-          },
-          "ssh_host": {
-            "title": "Ssh Host",
             "type": "string"
           },
           "status": {
@@ -1457,8 +1610,6 @@
           "port",
           "database",
           "user",
-          "private_ip",
-          "ssh_host",
           "used_bytes",
           "storage_limit_bytes",
           "created_at",
@@ -1606,16 +1757,8 @@
             "title": "Port",
             "type": "integer"
           },
-          "private_ip": {
-            "title": "Private Ip",
-            "type": "string"
-          },
           "size": {
             "title": "Size",
-            "type": "string"
-          },
-          "ssh_host": {
-            "title": "Ssh Host",
             "type": "string"
           },
           "status": {
@@ -1680,8 +1823,6 @@
           "port",
           "database",
           "user",
-          "private_ip",
-          "ssh_host",
           "used_bytes",
           "storage_limit_bytes",
           "created_at",
@@ -1946,22 +2087,6 @@
           "items"
         ],
         "title": "ItemList[SandboxItem]",
-        "type": "object"
-      },
-      "ItemList_SshKey_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/SshKey"
-            },
-            "title": "Items",
-            "type": "array"
-          }
-        },
-        "required": [
-          "items"
-        ],
-        "title": "ItemList[SshKey]",
         "type": "object"
       },
       "ItemList_StorageKey_": {
@@ -2354,61 +2479,6 @@
         "title": "SandboxItem",
         "type": "object"
       },
-      "SshKey": {
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "fingerprint": {
-            "title": "Fingerprint",
-            "type": "string"
-          },
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "public_key": {
-            "title": "Public Key",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "public_key",
-          "fingerprint",
-          "created_at"
-        ],
-        "title": "SshKey",
-        "type": "object"
-      },
-      "SshKeyCreate": {
-        "properties": {
-          "name": {
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Name",
-            "type": "string"
-          },
-          "public_key": {
-            "maxLength": 8192,
-            "title": "Public Key",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "public_key"
-        ],
-        "title": "SshKeyCreate",
-        "type": "object"
-      },
       "Storage": {
         "properties": {
           "buckets_count": {
@@ -2705,6 +2775,48 @@
         "title": "StorageStatus",
         "type": "string"
       },
+      "TargetInput": {
+        "properties": {
+          "external_port": {
+            "anyOf": [
+              {
+                "maximum": 65535.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Port"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "container",
+              "database"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "port": {
+            "maximum": 65535.0,
+            "minimum": 1.0,
+            "title": "Port",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "port"
+        ],
+        "title": "TargetInput",
+        "type": "object"
+      },
       "Ticket": {
         "properties": {
           "ticket": {
@@ -2716,61 +2828,6 @@
           "ticket"
         ],
         "title": "Ticket",
-        "type": "object"
-      },
-      "TunnelConnection": {
-        "properties": {
-          "message": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Message"
-          },
-          "observed_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Observed At"
-          },
-          "origin": {
-            "title": "Origin",
-            "type": "string"
-          },
-          "port": {
-            "title": "Port",
-            "type": "integer"
-          },
-          "status": {
-            "enum": [
-              "provisioning",
-              "connected",
-              "disconnected",
-              "stopped",
-              "unknown"
-            ],
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "port",
-          "origin",
-          "status",
-          "observed_at",
-          "message"
-        ],
-        "title": "TunnelConnection",
         "type": "object"
       },
       "Usage": {
@@ -3664,6 +3721,191 @@
           }
         },
         "summary": "Rotate Key"
+      }
+    },
+    "/v1/projects/{project_id}/connectors": {
+      "get": {
+        "operationId": "listConnectors",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List Connectors"
+      }
+    },
+    "/v1/projects/{project_id}/connectors/available-targets": {
+      "get": {
+        "description": "The containers (with their ports) and the databases (port 5432) that a connector can reach.",
+        "operationId": "listAvailableTargets",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailableTargetList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List Available Targets"
+      }
+    },
+    "/v1/projects/{project_id}/connectors/{kind}": {
+      "delete": {
+        "operationId": "deleteConnector",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "tailscale",
+                "cloudflared"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete Connector"
+      },
+      "put": {
+        "description": "Make the connector, or change its token or targets. A new connector needs a token. A missing `targets`\nkeeps the current targets. A change gives the connector a new revision.",
+        "operationId": "updateConnector",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "tailscale",
+                "cloudflared"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectorPut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connector"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Update Connector"
       }
     },
     "/v1/projects/{project_id}/containers": {
@@ -4844,102 +5086,6 @@
         "summary": "Delete Credential"
       }
     },
-    "/v1/ssh-keys": {
-      "get": {
-        "operationId": "listSshKeys",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ItemList_SshKey_"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            },
-            "description": "Error"
-          }
-        },
-        "summary": "List Ssh Keys"
-      },
-      "post": {
-        "operationId": "createSshKey",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SshKeyCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SshKey"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            },
-            "description": "Error"
-          }
-        },
-        "summary": "Create Ssh Key"
-      }
-    },
-    "/v1/ssh-keys/{key_id}": {
-      "delete": {
-        "operationId": "deleteSshKey",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "key_id",
-            "required": true,
-            "schema": {
-              "title": "Key Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            },
-            "description": "Error"
-          }
-        },
-        "summary": "Delete Ssh Key"
-      }
-    },
     "/v1/storage": {
       "get": {
         "operationId": "getStorage",
@@ -5091,7 +5237,7 @@
     },
     "/v1/storage/buckets/{name}": {
       "delete": {
-        "description": "The reconciler deletes the bucket. A bucket with objects is refused here (409), by the size the reconciler\nlast read. The reconciler checks again: Garage refuses a bucket that is not empty, and then the bucket stays.",
+        "description": "A bucket with objects is refused with 409. Garage is asked for the object count when it can be reached; if it\ncannot, the sizes of the last minute check decide. The reconciler deletes the bucket. It checks again: Garage\nrefuses a bucket that is not empty, and then the bucket goes back to active with its objects.",
         "operationId": "deleteBucket",
         "parameters": [
           {
@@ -5341,7 +5487,7 @@
         "summary": "List Keys"
       },
       "post": {
-        "description": "The row first, then the key in Garage. If Garage does not take the key, the row goes and the request is 502.\nThe secret is in this response only.",
+        "description": "The row first, then the key in Garage and its access. If Garage does not take the key or the access, the key\nand the row go and the request is 502. The secret is in this response only.",
         "operationId": "createStorageKey",
         "parameters": [
           {
@@ -5501,7 +5647,7 @@
         "summary": "Get Key"
       },
       "patch": {
-        "description": "The reconciler applies the permission and the buckets to Garage.",
+        "description": "A new permission or new buckets are given to Garage at once. If Garage refuses, nothing changes.",
         "operationId": "updateStorageKey",
         "parameters": [
           {
