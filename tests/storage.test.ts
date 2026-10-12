@@ -24,7 +24,7 @@ describe('validateBucketName', () => {
     'rejects %j',
     (n) => expect(validateBucketName(n)).not.toBeNull(),
   );
-  it.each(['www', 'api', 'admin', 'pub', 'pmservers', 'mail'])('reserves %s', (n) =>
+  it.each(['www', 'api', 'admin', 'pub', 'pmservers', 'mail', 'auth', 'sandbox', 'jump'])('reserves %s', (n) =>
     expect(validateBucketName(n)).toBe('This name is reserved. Choose another name.'),
   );
 });

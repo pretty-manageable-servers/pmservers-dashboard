@@ -22,6 +22,9 @@ const RESERVED_BUCKET_NAMES = new Set([
   'docs',
   'status',
   'mail',
+  'auth',
+  'sandbox',
+  'jump',
 ]);
 
 export const BUCKET_RULES = [
