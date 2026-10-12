@@ -301,10 +301,21 @@ export function useRequestAccess() {
   });
 }
 
-export const useRegistryCredentials = () =>
+/**
+ * The caller's registry credentials. With `project`, the API also returns the project owner's,
+ * so a member can pick the owner's credential. Invalidating `keys.registryCredentials` also
+ * refreshes the project variant, because it is a prefix of that key.
+ */
+export const useRegistryCredentials = (project?: string) =>
   useQuery({
-    queryKey: keys.registryCredentials,
-    queryFn: async () => unwrap(await api.GET('/v1/registry-credentials')).items,
+    queryKey: project ? [...keys.registryCredentials, project] : keys.registryCredentials,
+    queryFn: async () =>
+      unwrap(
+        await api.GET(
+          '/v1/registry-credentials',
+          project ? { params: { query: { project_id: project } } } : {},
+        ),
+      ).items,
   });
 
 export function useCreateRegistryCredential() {

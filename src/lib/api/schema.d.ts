@@ -2626,7 +2626,9 @@ export interface operations {
     };
     listRegistryCredentials: {
         parameters: {
-            query?: never;
+            query?: {
+                project_id?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;

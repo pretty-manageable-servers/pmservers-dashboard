@@ -462,6 +462,7 @@ export const handlers = [
   }),
 
   // Registry credentials (account level)
+  // With ?project_id, the real API also returns the project owner's credentials. The mock returns the same list.
   http.get(`${base}/registry-credentials`, async () => {
     await delay(LATENCY);
     return HttpResponse.json({ items: credentials });

@@ -9,7 +9,8 @@ import type { Runtime } from '@/lib/api/types';
 
 /** The credential to use: the picked one only if its host matches the image. */
 export function useCredentialChoice(image: string, picked: string | null) {
-  const { data } = useRegistryCredentials();
+  const { project } = useProject();
+  const { data } = useRegistryCredentials(project.id);
   const usable = credentialsFor(image, data ?? []);
   // Until the list loads, keep the picked credential. Else an edit sends null and drops it.
   if (!data) return { usable, chosen: picked };
